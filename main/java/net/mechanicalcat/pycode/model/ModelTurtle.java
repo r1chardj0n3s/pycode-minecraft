@@ -2,14 +2,13 @@ package net.mechanicalcat.pycode.model;
 
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+
 @SideOnly(Side.CLIENT)
 public class ModelTurtle extends ModelBase {
-    //fields
     ModelRenderer turtle;
 
     public ModelTurtle() {
@@ -32,7 +31,7 @@ public class ModelTurtle extends ModelBase {
         turtle = new ModelRenderer(this, "turtle");
         turtle.setRotationPoint(0F, 0F, 0F);
         setRotation(turtle, 0F, 0F, 0F);
-        turtle.mirror = true;
+//        turtle.mirror = true;
         turtle.addBox("Shape9", 0F, 1F, -7F, 1, 2, 1);
         turtle.addBox("Shape12", -1F, 1F, 1F, 3, 4, 7);
         turtle.addBox("Shape14", -1F, -3F, 2F, 3, 4, 1);
@@ -48,10 +47,8 @@ public class ModelTurtle extends ModelBase {
         turtle.addBox("Shape7", 0F, 6F, 1F, 1, 1, 4);
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        super.render(entity, f, f1, f2, f3, f4, f5);
-//        setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        turtle.render(f5);
+    public void render(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
+        turtle.render(scale);
     }
 
     private void setRotation(ModelRenderer model, float x, float y, float z) {
@@ -59,9 +56,4 @@ public class ModelTurtle extends ModelBase {
         model.rotateAngleY = y;
         model.rotateAngleZ = z;
     }
-
-//    public void setRotationAngles(float f, float f1, float f2, float f3, float f4, float f5, Entity entity) {
-//        super.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-//    }
-
 }

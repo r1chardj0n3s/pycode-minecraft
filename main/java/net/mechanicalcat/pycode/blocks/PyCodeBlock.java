@@ -44,6 +44,7 @@ public final class PyCodeBlock extends Block implements ITileEntityProvider {
             return true;
         }
         TileEntity entity = worldIn.getTileEntity(pos);
+        WorldServer worldserver = (WorldServer) worldIn;
         if (entity instanceof PyCodeBlockTileEntity) {
             PyCodeBlockTileEntity code_block = (PyCodeBlockTileEntity) entity;
             if (heldItem != null) {
@@ -51,7 +52,9 @@ public final class PyCodeBlock extends Block implements ITileEntityProvider {
                 if (held_item == ModItems.python_wand) {
                     try {
                         code_block.runCode(playerIn);
+                        worldserver.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5, 20, 0, 0, 0, .5, new int[0]);
                     } catch (ScriptException e) {
+                        worldserver.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5, 20, 0, 0, 0, .5, new int[0]);
                         System.out.println("Error running code: " + e.getMessage());
                     }
                 } else if (held_item instanceof ItemWritableBook) {
@@ -73,9 +76,9 @@ public final class PyCodeBlock extends Block implements ITileEntityProvider {
                         if (i > 0) sbStr.append("\n");
                         sbStr.append(s);
                     }
+                    // TODO have setCode actually compile the code to check its syntax
                     code_block.setCode(sbStr.toString());
                     System.out.println("Code set to:" + code_block.getCode());
-                    WorldServer worldserver = (WorldServer) worldIn;
                     worldserver.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5, 20, 0, 0, 0, .5, new int[0]);
                 }
             }

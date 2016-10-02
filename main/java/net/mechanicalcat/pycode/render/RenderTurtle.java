@@ -17,7 +17,6 @@ import javax.annotation.Nonnull;
 public class RenderTurtle extends Render<TurtleEntity> {
     private static ResourceLocation turtleTexture;
     private static ModelBase model = new ModelTurtle();
-//    public static final Factory FACTORY = new Factory();
 
     public RenderTurtle(RenderManager manager) {
         super(manager);
@@ -45,7 +44,6 @@ public class RenderTurtle extends Render<TurtleEntity> {
             GlStateManager.enableOutlineMode(this.getTeamColor(entity));
         }
 
-        // TODO consider whether all this scaling is necessary
         GlStateManager.scale(-1.0F, -1.0F, 1.0F);
         model.render(entity, 0.0F, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F);
         GlStateManager.popMatrix();
@@ -59,14 +57,4 @@ public class RenderTurtle extends Render<TurtleEntity> {
 
         super.doRender(entity, x, y, z, entityYaw, partialTicks);
     }
-
-//    private static class Factory implements IRenderFactory<TurtleEntity> {
-//        @Override
-//        public Render<? super TurtleEntity> createRenderFor(RenderManager manager) {
-//            System.out.println("FACTORY INVOKED");
-//            return new RenderTurtle(manager);
-//        }
-//
-//    }
-
 }
