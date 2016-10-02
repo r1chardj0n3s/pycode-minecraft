@@ -6,8 +6,8 @@ import net.minecraft.item.Item;
 
 public class PythonWandItem extends Item{
     public PythonWandItem() {
-        setUnlocalizedName(Reference.PyCodeItems.WAND.getUnlocalizedName());
-        setRegistryName(Reference.PyCodeItems.WAND.getRegistryName());
+        setUnlocalizedName(Reference.PyCodeRegistrations.WAND.getUnlocalizedName());
+        setRegistryName(Reference.PyCodeRegistrations.WAND.getRegistryName());
         setCreativeTab(CreativeTabs.TOOLS);
     }
 }

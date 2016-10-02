@@ -2,6 +2,7 @@ package net.mechanicalcat.pycode.proxy;
 
 
 public interface CommonProxy {
-    public void registerEvents();
-    public void registerRenders();
+    public void preInit();
+    public void init();
+    public void postInit();
 }

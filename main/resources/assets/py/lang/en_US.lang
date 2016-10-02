@@ -1,3 +1,6 @@
 item.python_wand.name=Python Wand
+item.python_turtle.name=Python Turtle
 
 tile.python_block.name=Python Code Block
+
+entity.py.python_turtle.name=Python Turtle

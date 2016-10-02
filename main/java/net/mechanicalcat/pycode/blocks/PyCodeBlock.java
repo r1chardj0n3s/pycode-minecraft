@@ -1,7 +1,7 @@
 package net.mechanicalcat.pycode.blocks;
 
 import net.mechanicalcat.pycode.Reference;
-import net.mechanicalcat.pycode.init.PyCodeItems;
+import net.mechanicalcat.pycode.init.ModItems;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
@@ -9,7 +9,6 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemWritableBook;
@@ -30,8 +29,8 @@ import javax.script.ScriptException;
 public final class PyCodeBlock extends Block implements ITileEntityProvider {
     public PyCodeBlock() {
         super(Material.CLAY);
-        setUnlocalizedName(Reference.PyCodeBlocks.PYCODE.getUnlocalizedName());
-        setRegistryName(Reference.PyCodeBlocks.PYCODE.getRegistryName());
+        setUnlocalizedName(Reference.PyCodeRegistrations.BLOCK.getUnlocalizedName());
+        setRegistryName(Reference.PyCodeRegistrations.BLOCK.getRegistryName());
         setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
         setHardness(1.0f);
     }
@@ -49,7 +48,7 @@ public final class PyCodeBlock extends Block implements ITileEntityProvider {
             PyCodeBlockTileEntity code_block = (PyCodeBlockTileEntity) entity;
             if (heldItem != null) {
                 Item held_item = heldItem.getItem();
-                if (held_item == PyCodeItems.python_wand) {
+                if (held_item == ModItems.python_wand) {
                     try {
                         code_block.runCode(playerIn);
                     } catch (ScriptException e) {

@@ -6,10 +6,10 @@ import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 
-public class PyCodeCrafting {
+public class ModCrafting {
     public static void register() {
         GameRegistry.addShapedRecipe(
-            new ItemStack(PyCodeBlocks.python_block),
+            new ItemStack(ModBlocks.python_block),
                 "CLC",
                 "LRY",
                 "CYC",
@@ -19,7 +19,7 @@ public class PyCodeCrafting {
                 'R', Items.REDSTONE
         );
         GameRegistry.addShapedRecipe(
-                new ItemStack(PyCodeItems.python_wand),
+                new ItemStack(ModItems.python_wand),
                 "  L",
                 " RY",
                 "S  ",

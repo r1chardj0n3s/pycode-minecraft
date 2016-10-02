@@ -9,7 +9,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 
-public final class PyCodeBlocks {
+public final class ModBlocks {
     public static Block python_block;
     public static ItemBlock python_block_item;
 
@@ -33,7 +33,6 @@ public final class PyCodeBlocks {
     }
 
     public static void registerRender(Block block) {
-        System.out.println("My BLOCK NAME IS '" + block.getRegistryName() + "'");
         Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(
                 Item.getItemFromBlock(block),
                 0,

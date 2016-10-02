@@ -8,33 +8,15 @@ public class Reference {
     public static final String SERVER_PROXY_CLASS = "net.mechanicalcat.pycode.proxy.ServerProxy";
     public static final String ACCEPTED_VERSIONS = "[1.9.4,1.10.2]";
 
-    public static enum PyCodeItems {
-        WAND("python_wand", "PythonWandItem");
+    public static enum PyCodeRegistrations {
+        WAND("python_wand", "PythonWandItem"),
+        BLOCK("python_block", "PyCodeBlock"),
+        TURTLE("python_turtle", "TurtleItem");
 
         private String unlocalizedName;
         private String registryName;
 
-        PyCodeItems(String unlocalizedName, String registryName) {
-            this.unlocalizedName = unlocalizedName;
-            this.registryName = registryName;
-        }
-
-        public String getRegistryName() {
-            return registryName;
-        }
-
-        public String getUnlocalizedName() {
-            return unlocalizedName;
-        }
-    }
-
-    public static enum PyCodeBlocks {
-        PYCODE("python_block", "PyCodeBlock");
-
-        private String unlocalizedName;
-        private String registryName;
-
-        PyCodeBlocks(String unlocalizedName, String registryName) {
+        PyCodeRegistrations(String unlocalizedName, String registryName) {
             this.unlocalizedName = unlocalizedName;
             this.registryName = registryName;
         }

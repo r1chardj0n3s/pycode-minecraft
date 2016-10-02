@@ -1,8 +1,9 @@
 package net.mechanicalcat.pycode;
 
-import net.mechanicalcat.pycode.init.PyCodeBlocks;
-import net.mechanicalcat.pycode.init.PyCodeCrafting;
-import net.mechanicalcat.pycode.init.PyCodeItems;
+import net.mechanicalcat.pycode.init.ModBlocks;
+import net.mechanicalcat.pycode.init.ModCrafting;
+import net.mechanicalcat.pycode.init.ModEntities;
+import net.mechanicalcat.pycode.init.ModItems;
 import net.mechanicalcat.pycode.proxy.CommonProxy;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
 import net.minecraftforge.fml.common.Mod;
@@ -25,23 +26,28 @@ public class PyCode {
     public void preinit(FMLPreInitializationEvent event) {
 //        proxy.registerEvents();
 
-        PyCodeBlocks.init();
-        PyCodeBlocks.register();
+        ModBlocks.init();
+        ModBlocks.register();
 
-        PyCodeItems.init();
-        PyCodeItems.register();
+        ModItems.init();
+        ModItems.register();
 
-        PyCodeCrafting.register();
+        ModEntities.register();
+
+        ModCrafting.register();
+
+        proxy.preInit();
 
         GameRegistry.registerTileEntity(PyCodeBlockTileEntity.class, Reference.MODID + "PyCodeBlockTileEntity");
     }
 
     @EventHandler
     public void init(FMLInitializationEvent event) {
-        proxy.registerRenders();
+        proxy.init();
     }
 
     @EventHandler
     public void postinit(FMLPostInitializationEvent event) {
+        proxy.postInit();
     }
 }
