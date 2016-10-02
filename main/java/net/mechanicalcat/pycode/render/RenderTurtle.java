@@ -36,7 +36,7 @@ public class RenderTurtle extends Render<TurtleEntity> {
         this.bindEntityTexture(entity);
         float f3 = entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partialTicks;
 
-        GlStateManager.translate((float)x, (float)y + 0.375F, (float)z);
+        GlStateManager.translate((float)x, (float)y + 0.7F, (float)z);
         GlStateManager.rotate(180.0F - entityYaw, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(-f3, 0.0F, 0.0F, 1.0F);
 
