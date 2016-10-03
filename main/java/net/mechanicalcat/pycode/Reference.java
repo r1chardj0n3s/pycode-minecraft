@@ -10,7 +10,8 @@ public class Reference {
 
     public static enum PyCodeRegistrations {
         WAND("python_wand", "PythonWandItem"),
-        BLOCK("python_block", "PyCodeBlock"),
+        BOOK("python_book", "PythonBookItem"),
+        BLOCK("python_block", "PythonBlock"),
         TURTLE("python_turtle", "TurtleItem");
 
         private String unlocalizedName;

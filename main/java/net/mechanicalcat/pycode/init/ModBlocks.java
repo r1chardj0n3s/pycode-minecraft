@@ -1,7 +1,6 @@
 package net.mechanicalcat.pycode.init;
 
-import net.mechanicalcat.pycode.Reference;
-import net.mechanicalcat.pycode.blocks.PyCodeBlock;
+import net.mechanicalcat.pycode.blocks.PythonBlock;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -14,7 +13,7 @@ public final class ModBlocks {
     public static ItemBlock python_block_item;
 
     public static void init() {
-        python_block = new PyCodeBlock();
+        python_block = new PythonBlock();
     }
 
     public static void register() {

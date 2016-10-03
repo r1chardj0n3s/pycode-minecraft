@@ -2,6 +2,7 @@ package net.mechanicalcat.pycode.blocks;
 
 import net.mechanicalcat.pycode.Reference;
 import net.mechanicalcat.pycode.init.ModItems;
+import net.mechanicalcat.pycode.items.PythonBookItem;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
@@ -26,8 +27,8 @@ import javax.annotation.Nullable;
 import javax.script.ScriptException;
 
 
-public final class PyCodeBlock extends Block implements ITileEntityProvider {
-    public PyCodeBlock() {
+public final class PythonBlock extends Block implements ITileEntityProvider {
+    public PythonBlock() {
         super(Material.CLAY);
         setUnlocalizedName(Reference.PyCodeRegistrations.BLOCK.getUnlocalizedName());
         setRegistryName(Reference.PyCodeRegistrations.BLOCK.getRegistryName());
@@ -57,7 +58,7 @@ public final class PyCodeBlock extends Block implements ITileEntityProvider {
                         worldserver.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5, 20, 0, 0, 0, .5, new int[0]);
                         System.out.println("Error running code: " + e.getMessage());
                     }
-                } else if (held_item instanceof ItemWritableBook) {
+                } else if (held_item instanceof PythonBookItem || held_item instanceof ItemWritableBook) {
                     NBTTagCompound bookData = heldItem.getTagCompound();
                     NBTTagList pages;
                     try {

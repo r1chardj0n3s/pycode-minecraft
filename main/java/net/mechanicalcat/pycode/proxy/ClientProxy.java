@@ -1,10 +1,13 @@
 package net.mechanicalcat.pycode.proxy;
 
 import net.mechanicalcat.pycode.events.PyCodeEventHandler;
+import net.mechanicalcat.pycode.gui.GuiPythonBook;
 import net.mechanicalcat.pycode.init.ModBlocks;
 import net.mechanicalcat.pycode.init.ModEntities;
 import net.mechanicalcat.pycode.init.ModItems;
-import net.minecraftforge.common.MinecraftForge;
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 
 public class ClientProxy implements CommonProxy {
     private PyCodeEventHandler handler = new PyCodeEventHandler();
@@ -26,5 +29,10 @@ public class ClientProxy implements CommonProxy {
     @Override
     public void postInit() {
 
+    }
+
+    @Override
+    public void openBook(EntityPlayer player, ItemStack book) {
+        Minecraft.getMinecraft().displayGuiScreen(new GuiPythonBook(player, book));
     }
 }

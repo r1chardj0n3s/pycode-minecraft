@@ -1,6 +1,9 @@
 package net.mechanicalcat.pycode.proxy;
 
 
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+
 public class ServerProxy implements CommonProxy {
     @Override
     public void preInit() {}
@@ -10,4 +13,7 @@ public class ServerProxy implements CommonProxy {
 
     @Override
     public void postInit() {}
+
+    @Override
+    public void openBook(EntityPlayer player, ItemStack book) {}
 }

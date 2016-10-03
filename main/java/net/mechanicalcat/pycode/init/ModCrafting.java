@@ -28,5 +28,10 @@ public class ModCrafting {
                 'Y', new ItemStack(Items.DYE, 1, EnumDyeColor.YELLOW.getDyeDamage()),
                 'R', Items.REDSTONE
         );
+        GameRegistry.addShapelessRecipe(
+                new ItemStack(ModItems.python_book),
+                ModItems.python_wand,
+                Items.WRITABLE_BOOK
+        );
     }
 }
