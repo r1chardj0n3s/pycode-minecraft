@@ -96,14 +96,4 @@ public class PythonCode {
         this.code = compound.getString("code");
     }
 
-
-    /*
-     * Convenience for setting a block
-     */
-    public void setBlock(Block block, BlockPos pos) {
-        ((World) engine.get("world")).setBlockState(pos, block.getDefaultState());
-
-//        Block block = Block.REGISTRY.getObject(new ResourceLocation(recipe.getID()));
-//        Item item = Item.REGISTRY.getObject(new ResourceLocation(recipe.getID()));
-    }
 }

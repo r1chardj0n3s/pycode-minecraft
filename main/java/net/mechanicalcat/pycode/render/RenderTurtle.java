@@ -22,6 +22,7 @@ public class RenderTurtle extends Render<TurtleEntity> {
         super(manager);
         turtleTexture = new ResourceLocation(Reference.MODID + ":textures/entities/turtle.png");
         this.shadowSize = 0.5F;
+        this.renderOutlines = true;
     }
 
     @Nonnull

@@ -1,7 +1,9 @@
 package net.mechanicalcat.pycode.tileentity;
 
+import net.mechanicalcat.pycode.script.BlockMethods;
 import net.mechanicalcat.pycode.script.IHasPythonCode;
 import net.mechanicalcat.pycode.script.PythonCode;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -24,8 +26,10 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode 
         this.code = new PythonCode();
     }
 
+    public Entity getEntity() { return null; }
+
     public boolean handleInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
-        this.code.put("block", this);
+        this.code.put("block", new BlockMethods(this));
         return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);
     }
 
