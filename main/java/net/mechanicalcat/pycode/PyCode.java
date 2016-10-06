@@ -24,8 +24,6 @@ public class PyCode {
 
     @EventHandler
     public void preinit(FMLPreInitializationEvent event) {
-//        proxy.registerEvents();
-
         ModBlocks.init();
         ModBlocks.register();
 

@@ -2,59 +2,48 @@ package net.mechanicalcat.pycode.entities;
 
 
 import net.mechanicalcat.pycode.init.ModItems;
+import net.mechanicalcat.pycode.script.IHasPythonCode;
+import net.mechanicalcat.pycode.script.PythonCode;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.annotation.Nullable;
 
-public class TurtleEntity extends Entity {
-    private String code = "print 'hello world'";
-    private ScriptEngine engine;
+public class TurtleEntity extends Entity implements IHasPythonCode {
     private static net.minecraftforge.common.IMinecartCollisionHandler collisionHandler = null;
+    private PythonCode code;
 
     public TurtleEntity(World worldIn) {
         super(worldIn);
         this.preventEntitySpawning = true;
         this.isImmuneToFire = true;
         this.setSize(0.98F, 0.7F);
-        ScriptEngineManager manager = new ScriptEngineManager();
-        engine = manager.getEngineByName("python");
-        if (engine == null) {
-            System.out.println("FAILED to get Python");
-        } else {
-            System.out.println("Got Python");
-        }
+        this.initCode();
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void initCode() {
+        this.code = new PythonCode();
     }
 
-    public String getCode() {
-        return this.code;
-    }
-
-    public void runCode(EntityPlayer player) throws ScriptException {
-        engine.put("turtle", this);
-        engine.put("blocks", Blocks.class);
-        engine.put("items", Items.class);
-        engine.eval(this.code);
+    public boolean handleInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
+        this.code.put("turtle", this);
+        return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);
     }
 
     protected void writeEntityToNBT(NBTTagCompound compound) {
-        compound.setString("code", this.code);
+        this.code.writeToNBT(compound);
     }
 
     protected void readEntityFromNBT(NBTTagCompound compound) {
-        this.code = compound.getString("code");
+        this.code.readFromNBT(compound);
     }
 
     public TurtleEntity(World worldIn, double x, double y, double z) {
@@ -79,6 +68,11 @@ public class TurtleEntity extends Entity {
 
     public boolean canBeCollidedWith() {
         return true;
+    }
+
+    public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand) {
+        World world = player.getEntityWorld();
+        return world.isRemote || this.handleInteraction(world, player, this.getPosition(), stack);
     }
 
     /**

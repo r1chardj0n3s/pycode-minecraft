@@ -1,10 +1,13 @@
 package net.mechanicalcat.pycode.proxy;
 
 
+import net.mechanicalcat.pycode.events.PyCodeEventHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.MinecraftForge;
 
 public class ServerProxy implements CommonProxy {
+
     @Override
     public void preInit() {}
 

@@ -27,8 +27,7 @@ public class PythonBookItem extends Item {
     }
 
     @Nonnull
-    public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
-    {
+    public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand) {
         PyCode.proxy.openBook(playerIn, itemStackIn);
         return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
     }

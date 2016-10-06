@@ -45,44 +45,9 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
             return true;
         }
         TileEntity entity = worldIn.getTileEntity(pos);
-        WorldServer worldserver = (WorldServer) worldIn;
         if (entity instanceof PyCodeBlockTileEntity) {
             PyCodeBlockTileEntity code_block = (PyCodeBlockTileEntity) entity;
-            if (heldItem != null) {
-                Item held_item = heldItem.getItem();
-                if (held_item == ModItems.python_wand) {
-                    try {
-                        code_block.runCode(playerIn);
-                        worldserver.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5, 20, 0, 0, 0, .5, new int[0]);
-                    } catch (ScriptException e) {
-                        worldserver.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5, 20, 0, 0, 0, .5, new int[0]);
-                        System.out.println("Error running code: " + e.getMessage());
-                    }
-                } else if (held_item instanceof PythonBookItem || held_item instanceof ItemWritableBook) {
-                    NBTTagCompound bookData = heldItem.getTagCompound();
-                    NBTTagList pages;
-                    try {
-                        // pages are all of type TAG_String == 8
-                        pages = bookData.getTagList("pages", 8);
-                    } catch (NullPointerException e) {
-                        // this should not happen!
-                        System.out.println("Could not get pages from the book!?");
-                        return true;
-                    }
-                    // collapse the pages into one string
-                    StringBuilder sbStr = new StringBuilder();
-                    for(int i = 0;i<pages.tagCount();i++) {
-                        String s = pages.getStringTagAt(i);
-                        System.out.println("Line: '" + s + "'");
-                        if (i > 0) sbStr.append("\n");
-                        sbStr.append(s);
-                    }
-                    // TODO have setCode actually compile the code to check its syntax
-                    code_block.setCode(sbStr.toString());
-                    System.out.println("Code set to:" + code_block.getCode());
-                    worldserver.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5, 20, 0, 0, 0, .5, new int[0]);
-                }
-            }
+            code_block.handleInteraction(worldIn, playerIn, pos, heldItem);
         }
         return true;
     }

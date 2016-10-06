@@ -8,6 +8,7 @@ import net.mechanicalcat.pycode.init.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.MinecraftForge;
 
 public class ClientProxy implements CommonProxy {
     private PyCodeEventHandler handler = new PyCodeEventHandler();
@@ -15,7 +16,6 @@ public class ClientProxy implements CommonProxy {
     @Override
     public void preInit() {
 //        MinecraftForge.EVENT_BUS.register(handler);
-
         // unlike the other renders, this has to be registered preInit or it just fails without error
         ModEntities.registerRenders();
     }
