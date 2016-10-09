@@ -1,7 +1,17 @@
 package net.mechanicalcat.pycode.script;
 
-/**
- * Created by richard on 6/10/2016.
- */
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.text.TextComponentString;
+import org.python.bouncycastle.jcajce.provider.symmetric.ARC4;
+
 public class BaseMethods {
+    protected EntityPlayer player;
+
+    protected BaseMethods(EntityPlayer player) {
+        this.player = player;
+    }
+
+    public void chat(String message) {
+        this.player.addChatComponentMessage(new TextComponentString(message));
+    }
 }

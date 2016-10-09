@@ -29,7 +29,7 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode 
     public Entity getEntity() { return null; }
 
     public boolean handleInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
-        this.code.put("block", new BlockMethods(this));
+        this.code.put("block", new BlockMethods(this, player));
         return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);
     }
 

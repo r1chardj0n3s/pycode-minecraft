@@ -2,7 +2,9 @@ package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.entities.TurtleEntity;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -10,7 +12,8 @@ public class TurtleMethods extends BaseMethods {
     private TurtleEntity turtle;
     private Block poop;
 
-    public TurtleMethods(TurtleEntity turtle) {
+    public TurtleMethods(TurtleEntity turtle, EntityPlayer player) {
+        super(player);
         this.turtle = turtle;
     }
 
@@ -27,29 +30,35 @@ public class TurtleMethods extends BaseMethods {
     public void left() {
         this.left(90);
     }
-    public void left(float amount) {
+    public void back() {
+        this.left(180);
+    }
+    private void left(float amount) {
         this.turtle.moveYaw(-amount);
     }
 
     public void right() {
         this.right(90);
     }
-    public void right(float amount) {
+    private void right(float amount) {
         this.turtle.moveYaw(amount);
     }
 
-    public void setPoop(Block block) {
-        this.poop = block;
+    public void line(int distance, Block block) {
+        IBlockState block_state = block.getDefaultState();
+        World world = this.turtle.getEntityWorld();
+        BlockPos pos = this.turtle.getPosition();
+        for (int i=0; i<distance; i++) {
+            world.setBlockState(pos.add(0, 0, i + 1), block_state);
+        }
     }
 
-    public void stopPoop() {
-        this.poop = null;
-    }
+//    public void setPoop(Block block) {
+//        this.poop = block;
+//    }
+//
+//    public void stopPoop() {
+//        this.poop = null;
+//    }
 
-    public void setBlock(BlockPos pos, Block block) {
-        this.turtle.getEntityWorld().setBlockState(pos, block.getDefaultState());
-
-//        Block block = Block.REGISTRY.getObject(new ResourceLocation(recipe.getID()));
-//        Item item = Item.REGISTRY.getObject(new ResourceLocation(recipe.getID()));
-    }
 }

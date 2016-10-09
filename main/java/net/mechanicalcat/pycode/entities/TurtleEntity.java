@@ -38,7 +38,7 @@ public class TurtleEntity extends Entity implements IHasPythonCode {
     }
 
     public boolean handleInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
-        this.code.put("turtle", new TurtleMethods(this));
+        this.code.put("turtle", new TurtleMethods(this, player));
         return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);
     }
 
