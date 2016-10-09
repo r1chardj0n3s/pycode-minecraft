@@ -33,6 +33,8 @@ public class TurtleEntity extends Entity implements IHasPythonCode {
         this.initCode();
     }
 
+    // TODO initial facing based on direction faced when placed
+
     public void initCode() {
         this.code = new PythonCode();
     }

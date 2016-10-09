@@ -7,11 +7,14 @@ import net.mechanicalcat.pycode.items.PythonBookItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiScreenBook;
 import net.minecraft.client.gui.GuiUtilRenderComponents;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemWritableBook;
+import net.minecraft.item.ItemWrittenBook;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
@@ -33,7 +36,7 @@ import java.util.List;
 
 
 public class GuiPythonBook extends GuiScreen {
-    static final ResourceLocation texture = new ResourceLocation("minecraft:textures/gui/book.png");
+    static final ResourceLocation texture = new ResourceLocation("py:textures/gui/code_book.png");
 
     /** Update ticks since the gui was opened for cursor animation */
     private int updateCount;
@@ -44,9 +47,6 @@ public class GuiPythonBook extends GuiScreen {
     private int bookTotalPages = 1;
     private boolean bookIsModified;
     private int currPage = 0;
-
-    private List<ITextComponent> cachedComponents;
-    private int cachedPage = -1;
 
     private static final int BUTTON_DONE = 0;
     private static final int BUTTON_CANCEL = 1;
@@ -88,16 +88,16 @@ public class GuiPythonBook extends GuiScreen {
         Keyboard.enableRepeatEvents(true);
 
         // func_189646_b adds a button to the buttonList
-        this.buttonDone = this.func_189646_b(new GuiButton(BUTTON_DONE, this.width / 2 - 100, 196, 98, 20, I18n.format("gui.done", new Object[0])));
-        this.buttonCancel = this.func_189646_b(new GuiButton(BUTTON_CANCEL, this.width / 2 + 2, 196, 98, 20, I18n.format("gui.cancel", new Object[0])));
+        int side = this.width / 2 + 252 / 2;
+        this.buttonDone = this.func_189646_b(new GuiButton(BUTTON_DONE, side + 2, this.height / 2 - 24, 70, 20, I18n.format("gui.done", new Object[0])));
+        this.buttonCancel = this.func_189646_b(new GuiButton(BUTTON_CANCEL, side + 2, this.height / 2 + 4, 70, 20, I18n.format("gui.cancel", new Object[0])));
 
-        int i = (this.width - 192) / 2;
-        int j = 2;
+        int i = (this.width - 252) / 2;
         this.buttonNextPage = this.func_189646_b(
-            new GuiPythonBook.NextPageButton(BUTTON_NEXT, i + 120, 156, true)
+            new GuiPythonBook.NextPageButton(BUTTON_NEXT, i + 120, 10, true)
         );
         this.buttonPreviousPage = this.func_189646_b(
-            new GuiPythonBook.NextPageButton(BUTTON_PREV, i + 38, 156, false)
+            new GuiPythonBook.NextPageButton(BUTTON_PREV, i + 38, 10, false)
         );
         this.updateButtons();
     }
@@ -109,7 +109,7 @@ public class GuiPythonBook extends GuiScreen {
 
     private void updateButtons()
     {
-        this.buttonNextPage.visible = this.currPage < this.bookTotalPages - 1;
+        this.buttonNextPage.visible = true; // this.currPage < this.bookTotalPages - 1;
         this.buttonPreviousPage.visible = this.currPage > 0;
         this.buttonDone.visible = true;
         this.buttonCancel.visible = true;
@@ -178,27 +178,27 @@ public class GuiPythonBook extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         this.mc.getTextureManager().bindTexture(texture);
-        int i = (this.width - 192) / 2;
+        int i = (this.width - 252) / 2;
         int j = 2;
-        this.drawTexturedModalRect(i, 2, 0, 0, 192, 192);
+        this.drawTexturedModalRect(i, 2, 0, 0, 252, 216);
 
-        String s4 = I18n.format("book.pageIndicator", this.currPage + 1, this.bookTotalPages);
-        String s5 = "";
+        String page_pos = I18n.format("book.pageIndicator", this.currPage + 1, this.bookTotalPages);
+        String content = "";
 
         if (this.bookPages != null && this.currPage >= 0 && this.currPage < this.bookPages.tagCount()) {
-            s5 = this.bookPages.getStringTagAt(this.currPage);
-        }
-        if (this.fontRendererObj.getBidiFlag()) {
-            s5 = s5 + "_";
-        } else if (this.updateCount / 6 % 2 == 0) {
-            s5 = s5 + "" + TextFormatting.BLACK + "_";
-        } else {
-            s5 = s5 + "" + TextFormatting.GRAY + "_";
+            content = this.bookPages.getStringTagAt(this.currPage);
         }
 
-        int j1 = this.fontRendererObj.getStringWidth(s4);
-        this.fontRendererObj.drawString(s4, i - j1 + 192 - 44, 18, 0);
-        this.fontRendererObj.drawSplitString(s5, i + 36, 34, 116, 0);
+        // TODO cursor position as a separate thing
+        if (this.updateCount / 6 % 2 == 0) {
+            content = content + "" + TextFormatting.BLACK + "_";
+        } else {
+            content = content + "" + TextFormatting.GRAY + "_";
+        }
+
+        int stringWidth = this.fontRendererObj.getStringWidth(page_pos);
+        this.fontRendererObj.drawString(page_pos, i - stringWidth + 252 / 2, 15, 0);
+        this.fontRendererObj.drawSplitString(content, i + 17, 23, 230, 0);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -262,9 +262,9 @@ public class GuiPythonBook extends GuiScreen {
     private void pageInsertIntoCurrent(String text) {
         String s = this.pageGetCurrent();
         String s1 = s + text;
-        int i = this.fontRendererObj.splitStringWidth(s1 + "" + TextFormatting.BLACK + "_", 118);
+        int height = this.fontRendererObj.splitStringWidth(s1 + "" + TextFormatting.BLACK + "_", 230);
 
-        if (i <= 128 && s1.length() < 256) {
+        if (height <= 180 && s1.length() < 256) {
             this.pageSetCurrent(s1);
         }
     }
@@ -275,10 +275,7 @@ public class GuiPythonBook extends GuiScreen {
      */
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         if (mouseButton == 0) {
-            ITextComponent itextcomponent = this.getClickedComponentAt(mouseX, mouseY);
-            if (itextcomponent != null && this.handleComponentClick(itextcomponent)) {
-                return;
-            }
+            // TODO move cursor
         }
         super.mouseClicked(mouseX, mouseY, mouseButton);
     }
@@ -316,53 +313,14 @@ public class GuiPythonBook extends GuiScreen {
         }
     }
 
-    @Nullable
-    public ITextComponent getClickedComponentAt(int p_175385_1_, int p_175385_2_) {
-        if (this.cachedComponents == null) {
-            return null;
-        } else {
-            int i = p_175385_1_ - (this.width - 192) / 2 - 36;
-            int j = p_175385_2_ - 2 - 16 - 16;
-
-            if (i >= 0 && j >= 0) {
-                int k = Math.min(128 / this.fontRendererObj.FONT_HEIGHT, this.cachedComponents.size());
-
-                if (i <= 116 && j < this.mc.fontRendererObj.FONT_HEIGHT * k + k) {
-                    int l = j / this.mc.fontRendererObj.FONT_HEIGHT;
-
-                    if (l >= 0 && l < this.cachedComponents.size()) {
-                        ITextComponent itextcomponent = (ITextComponent)this.cachedComponents.get(l);
-                        int i1 = 0;
-
-                        for (ITextComponent itextcomponent1 : itextcomponent) {
-                            if (itextcomponent1 instanceof TextComponentString) {
-                                i1 += this.mc.fontRendererObj.getStringWidth(((TextComponentString)itextcomponent1).getText());
-
-                                if (i1 > i) {
-                                    return itextcomponent1;
-                                }
-                            }
-                        }
-                    }
-
-                    return null;
-                } else {
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        }
-    }
-
     @SideOnly(Side.CLIENT)
     static class NextPageButton extends GuiButton
     {
         private final boolean isForward;
 
-        public NextPageButton(int p_i46316_1_, int p_i46316_2_, int p_i46316_3_, boolean p_i46316_4_) {
-            super(p_i46316_1_, p_i46316_2_, p_i46316_3_, 23, 13, "");
-            this.isForward = p_i46316_4_;
+        public NextPageButton(int id, int x, int y, boolean isForward) {
+            super(id, x, y, 23, 13, "");
+            this.isForward = isForward;
         }
 
         /**
@@ -374,7 +332,7 @@ public class GuiPythonBook extends GuiScreen {
                 GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                 mc.getTextureManager().bindTexture(GuiPythonBook.texture);
                 int i = 0;
-                int j = 192;
+                int j = 217;
 
                 if (flag) {
                     i += 23;

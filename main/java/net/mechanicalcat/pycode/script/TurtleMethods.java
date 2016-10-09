@@ -21,16 +21,16 @@ public class TurtleMethods extends BaseMethods {
         this.forward(1);
     }
     public void forward(float distance) {
-        if (this.poop != null) {
-            this.turtle.getEntityWorld().setBlockState(this.turtle.getPosition(), this.poop.getDefaultState());
-        }
+//        if (this.poop != null) {
+//            this.turtle.getEntityWorld().setBlockState(this.turtle.getPosition(), this.poop.getDefaultState());
+//        }
         this.turtle.moveForward(distance);
     }
 
     public void left() {
         this.left(90);
     }
-    public void back() {
+    public void reverse() {
         this.left(180);
     }
     private void left(float amount) {
@@ -45,6 +45,7 @@ public class TurtleMethods extends BaseMethods {
     }
 
     public void line(int distance, Block block) {
+        // TODO in the direction faced
         IBlockState block_state = block.getDefaultState();
         World world = this.turtle.getEntityWorld();
         BlockPos pos = this.turtle.getPosition();
