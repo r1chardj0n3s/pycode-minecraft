@@ -5,10 +5,7 @@ import com.google.gson.JsonParseException;
 import io.netty.buffer.Unpooled;
 import net.mechanicalcat.pycode.items.PythonBookItem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiScreenBook;
-import net.minecraft.client.gui.GuiUtilRenderComponents;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
@@ -32,6 +29,7 @@ import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -47,6 +45,10 @@ public class GuiPythonBook extends GuiScreen {
     private int bookTotalPages = 1;
     private boolean bookIsModified;
     private int currPage = 0;
+
+    private int cursorRow = 0;
+    private int cursorColumn = 0;
+    private String[] lines;
 
     private static final int BUTTON_DONE = 0;
     private static final int BUTTON_CANCEL = 1;
@@ -68,18 +70,18 @@ public class GuiPythonBook extends GuiScreen {
             this.bookPages = this.bookPages.copy();
             this.bookTotalPages = this.bookPages.tagCount();
 
-            if (this.bookTotalPages < 1)
-            {
+            if (this.bookTotalPages < 1) {
                 this.bookTotalPages = 1;
             }
         }
 
-        if (this.bookPages == null)
-        {
+        if (this.bookPages == null) {
             this.bookPages = new NBTTagList();
-            this.bookPages.appendTag(new NBTTagString(""));
+            this.bookPages.appendTag(new NBTTagString("\n"));
             this.bookTotalPages = 1;
         }
+
+        this.lines = this.pageGetCurrent().split("\n");
     }
 
     @Override
@@ -90,14 +92,14 @@ public class GuiPythonBook extends GuiScreen {
         // func_189646_b adds a button to the buttonList
         int side = this.width / 2 + 252 / 2;
         this.buttonDone = this.func_189646_b(new GuiButton(BUTTON_DONE, side + 2, this.height / 2 - 24, 70, 20, I18n.format("gui.done", new Object[0])));
-        this.buttonCancel = this.func_189646_b(new GuiButton(BUTTON_CANCEL, side + 2, this.height / 2 + 4, 70, 20, I18n.format("gui.cancel", new Object[0])));
+        this.buttonCancel = this.func_189646_b(new GuiButton(BUTTON_CANCEL, side + 2, this.height / 2 + 14, 70, 20, I18n.format("gui.cancel", new Object[0])));
 
         int i = (this.width - 252) / 2;
         this.buttonNextPage = this.func_189646_b(
-            new GuiPythonBook.NextPageButton(BUTTON_NEXT, i + 120, 10, true)
+            new GuiPythonBook.NextPageButton(BUTTON_NEXT, side - 44, 13, true)
         );
         this.buttonPreviousPage = this.func_189646_b(
-            new GuiPythonBook.NextPageButton(BUTTON_PREV, i + 38, 10, false)
+            new GuiPythonBook.NextPageButton(BUTTON_PREV, i + 8, 13, false)
         );
         this.updateButtons();
     }
@@ -107,8 +109,7 @@ public class GuiPythonBook extends GuiScreen {
         ++this.updateCount;
     }
 
-    private void updateButtons()
-    {
+    private void updateButtons() {
         this.buttonNextPage.visible = true; // this.currPage < this.bookTotalPages - 1;
         this.buttonPreviousPage.visible = this.currPage > 0;
         this.buttonDone.visible = true;
@@ -121,6 +122,7 @@ public class GuiPythonBook extends GuiScreen {
 
     @Override
     protected void actionPerformed(GuiButton button) throws IOException {
+        boolean updateLines = false;
         if (button.enabled) {
             if (button.id == BUTTON_DONE) {
                 this.mc.displayGuiScreen(null);
@@ -128,19 +130,26 @@ public class GuiPythonBook extends GuiScreen {
             } else if (button.id == BUTTON_NEXT) {
                 if (this.currPage < this.bookTotalPages - 1) {
                     ++this.currPage;
+                    updateLines = true;
                 } else {
                     this.addNewPage();
 
                     if (this.currPage < this.bookTotalPages - 1) {
                         ++this.currPage;
+                        updateLines = true;
                     }
                 }
             } else if (button.id == BUTTON_PREV) {
                 if (this.currPage > 0) {
                     --this.currPage;
+                    updateLines = true;
                 }
             } else if (button.id == BUTTON_CANCEL) {
                 this.mc.displayGuiScreen(null);
+            }
+
+            if (updateLines) {
+                this.lines = this.pageGetCurrent().split("\n");
             }
 
             this.updateButtons();
@@ -182,23 +191,41 @@ public class GuiPythonBook extends GuiScreen {
         int j = 2;
         this.drawTexturedModalRect(i, 2, 0, 0, 252, 216);
 
-        String page_pos = I18n.format("book.pageIndicator", this.currPage + 1, this.bookTotalPages);
+        int line_width;
+        if (this.cursorRow == this.lines.length) {
+            line_width = 0;
+        } else {
+            line_width = this.lines[this.cursorRow].length();
+        }
+
+        // TODO debug stuff, make it go away
+        String page_pos = "row:" + this.cursorRow + " col:" + this.cursorColumn + " lines:" + this.lines.length + " len:" + line_width;    // I18n.format("book.pageIndicator", this.currPage + 1, this.bookTotalPages);
         String content = "";
 
         if (this.bookPages != null && this.currPage >= 0 && this.currPage < this.bookPages.tagCount()) {
             content = this.bookPages.getStringTagAt(this.currPage);
         }
 
-        // TODO cursor position as a separate thing
-        if (this.updateCount / 6 % 2 == 0) {
-            content = content + "" + TextFormatting.BLACK + "_";
+        content = content.replace("\n", "\u2424\n");
+
+        // draw cursor
+        if (this.cursorRow == this.lines.length) {
+            // current line is empty
+            line_width = 0;
         } else {
-            content = content + "" + TextFormatting.GRAY + "_";
+            line_width = this.fontRendererObj.getStringWidth(this.lines[this.cursorRow].substring(0, this.cursorColumn));
+        }
+        int cursor_x = i + 15 + line_width;
+        int cursor_y = 24 + this.cursorRow * this.fontRendererObj.FONT_HEIGHT;
+        if (this.updateCount / 6 % 2 == 0) {
+            this.drawTexturedModalRect(cursor_x, cursor_y, 49, 217, 3, 11);
+        } else {
+            this.drawTexturedModalRect(cursor_x, cursor_y, 54, 217, 3, 11);
         }
 
         int stringWidth = this.fontRendererObj.getStringWidth(page_pos);
         this.fontRendererObj.drawString(page_pos, i - stringWidth + 252 / 2, 15, 0);
-        this.fontRendererObj.drawSplitString(content, i + 17, 23, 230, 0);
+        this.fontRendererObj.drawSplitString(content, i + 17, 26, 230, 0);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -212,28 +239,106 @@ public class GuiPythonBook extends GuiScreen {
         if (GuiScreen.isKeyComboCtrlV(keyCode)) {
             this.pageInsertIntoCurrent(GuiScreen.getClipboardString());
         } else {
+            int line_width;
+            int num_lines = this.lines.length;
             switch (keyCode) {
                 case Keyboard.KEY_BACK:
-                    String s = this.pageGetCurrent();
-                    if (!s.isEmpty()) {
-                        this.pageSetCurrent(s.substring(0, s.length() - 1));
+                    String line = this.lines[this.cursorRow];
+                    if (this.cursorColumn == 0) {
+                        if (this.cursorRow == 0) {
+                            return;
+                        }
+                        String s = this.lines[this.cursorRow - 1];
+                        this.lines[this.cursorRow - 1] = s.substring(0, s.length()) + this.lines[this.cursorRow];
+                        this.cursorColumn = s.length();
+                        List<String> temp = new LinkedList<>();
+                        for (int i = 0; i < this.lines.length; i++) {
+                            if (i != this.cursorRow) {
+                                temp.add(this.lines[i]);
+                            }
+                        }
+                        this.pageSetCurrent(String.join("\n", temp));
+                        this.cursorRow--;
+                    } else {
+                        String newline = line.substring(0, this.cursorColumn - 1) + line.substring(this.cursorColumn, line.length());
+                        this.lines[this.cursorRow] = newline;
+                        this.pageSetCurrent(String.join("\n", this.lines));
+                        this.cursorColumn -= 1;
                     }
                     return;
                 case Keyboard.KEY_RETURN:
                 case Keyboard.KEY_NUMPADENTER:
                     this.pageInsertIntoCurrent("\n");
                     return;
+                case Keyboard.KEY_LEFT:
+                    this.cursorColumn--;
+                    if (this.cursorColumn < 0) {
+                        if (this.cursorRow > 0) {
+                            this.cursorRow--;
+                            this.cursorColumn = this.lines[this.cursorRow].length();
+                        } else {
+                            this.cursorColumn = 0;
+                        }
+                    }
+                    return;
+                case Keyboard.KEY_RIGHT:
+                    this.cursorColumn++;
+                    if (this.cursorRow == this.lines.length) {
+                        line_width = 0;
+                    } else {
+                        line_width = this.lines[this.cursorRow].length();
+                    }
+                    if (this.cursorRow < num_lines) {
+                        if (this.cursorColumn > line_width || this.cursorColumn > 40) {
+                            this.cursorColumn = 0;
+                            this.moveCursorToRow(this.cursorRow + 1);
+                        }
+                    } else {
+                        if (this.cursorColumn > line_width) {
+                            this.cursorColumn = line_width;
+                        } else if (this.cursorColumn > 40) {
+                            this.cursorColumn = 40;
+                        }
+                    }
+                    return;
+                case Keyboard.KEY_UP:
+                    this.moveCursorToRow(this.cursorRow - 1);
+                    return;
+                case Keyboard.KEY_DOWN:
+                    this.moveCursorToRow(this.cursorRow + 1);
+                    return;
                 default:
                     if (ChatAllowedCharacters.isAllowedCharacter(typedChar)) {
                         this.pageInsertIntoCurrent(Character.toString(typedChar));
+                        this.cursorColumn++;
                     }
             }
         }
     }
 
+    private void moveCursorToRow(int row) {
+        this.cursorRow = row;
+        int num_lines = this.lines.length;
+        if (this.cursorRow < 0) this.cursorRow = 0;
+        else if (this.cursorRow > num_lines) this.cursorRow = num_lines;
+        else if (this.cursorRow > 20) this.cursorRow = 20;
+        this.fixCursorColumn();
+    }
+
+    private void fixCursorColumn() {
+        int num_lines = this.lines.length;
+        int line_width;
+        if (this.cursorRow == num_lines) {
+            line_width = 0;
+        } else {
+            line_width = this.lines[this.cursorRow].length();
+        }
+        if (this.cursorColumn > line_width) this.cursorColumn = line_width;
+    }
+
     private void addNewPage() {
         if (this.bookPages != null && this.bookPages.tagCount() < 50) {
-            this.bookPages.appendTag(new NBTTagString(""));
+            this.bookPages.appendTag(new NBTTagString("\n"));
             ++this.bookTotalPages;
             this.bookIsModified = true;
         }
@@ -250,6 +355,7 @@ public class GuiPythonBook extends GuiScreen {
      * Sets the text of the current page as determined by currPage
      */
     private void pageSetCurrent(String text) {
+        this.lines = text.split("\n");
         if (this.bookPages != null && this.currPage >= 0 && this.currPage < this.bookPages.tagCount()) {
             this.bookPages.set(this.currPage, new NBTTagString(text));
             this.bookIsModified = true;
@@ -260,9 +366,16 @@ public class GuiPythonBook extends GuiScreen {
      * Processes any text getting inserted into the current page, enforcing the page size limit
      */
     private void pageInsertIntoCurrent(String text) {
-        String s = this.pageGetCurrent();
-        String s1 = s + text;
-        int height = this.fontRendererObj.splitStringWidth(s1 + "" + TextFormatting.BLACK + "_", 230);
+        String s1;
+        if (this.cursorRow == this.lines.length) {
+            s1 = String.join("\n", this.lines) + "\n" + text;
+        } else {
+            String line = this.lines[this.cursorRow];
+            String newline = line.substring(0, this.cursorColumn) + text + line.substring(this.cursorColumn, line.length());
+            this.lines[this.cursorRow] = newline;
+            s1 = String.join("\n", this.lines);
+        }
+        int height = this.fontRendererObj.splitStringWidth(s1, 230);
 
         if (height <= 180 && s1.length() < 256) {
             this.pageSetCurrent(s1);
