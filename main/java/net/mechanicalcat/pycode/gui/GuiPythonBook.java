@@ -263,6 +263,7 @@ public class GuiPythonBook extends GuiScreen {
                 case Keyboard.KEY_BACK:
                     String line = this.lines[this.cursorRow];
                     if (this.cursorColumn == 0) {
+                        // TODO joining long lines will be an issue
                         if (this.cursorRow == 0) {
                             return;
                         }
