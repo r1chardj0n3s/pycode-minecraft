@@ -39,7 +39,7 @@ public class GuiPythonBook extends GuiScreen {
     /** Update ticks since the gui was opened for cursor animation */
     private int updateCount;
 
-    private static final int MAX_ROWS = 20;
+    private static final int MAX_ROWS = 19;
     private static final int MAX_COLS = 40;
 
 //    private final EntityPlayer editingPlayer;
@@ -83,15 +83,20 @@ public class GuiPythonBook extends GuiScreen {
             this.bookPages.appendTag(new NBTTagString("\n"));
             this.bookTotalPages = 1;
         }
-
-        this.setLines(this.pageGetCurrent().split("\n"));
+        String s = this.pageGetCurrent();
+        this.setLines(s);
     }
 
-    private void setLines(String lines[]) {
-        this.lines = lines;
+    private void setLines(String text) {
+        String s = text;
+        // fudge the last line so it has content so a line is actually created
+        if (text.endsWith("\n")) {
+            s += " ";
+        }
+        this.lines = s.split("\n");
         int last = this.lines.length - 1;
-        if (this.lines[last].equals("")) {
-            this.lines[last] = "\n";
+        if (text.endsWith("\n")) {
+            this.lines[last] = "";
         }
     }
 
@@ -160,7 +165,7 @@ public class GuiPythonBook extends GuiScreen {
             }
 
             if (updateLines) {
-                this.setLines(this.pageGetCurrent().split("\n"));
+                this.setLines(this.pageGetCurrent());
             }
 
             this.updateButtons();
@@ -299,8 +304,8 @@ public class GuiPythonBook extends GuiScreen {
                     }
                     return;
                 case Keyboard.KEY_RIGHT:
-                    this.cursorColumn++;
                     line_width = this.lines[this.cursorRow].length();
+                    this.cursorColumn++;
                     if (this.cursorRow < last_line) {
                         if (this.cursorColumn > line_width || this.cursorColumn > 40) {
                             this.cursorColumn = 0;
@@ -320,10 +325,24 @@ public class GuiPythonBook extends GuiScreen {
                 case Keyboard.KEY_DOWN:
                     this.moveCursorToRow(this.cursorRow + 1);
                     return;
+                case Keyboard.KEY_HOME:
+                    this.cursorColumn = 0;
+                    return;
+                case Keyboard.KEY_END:
+                    this.cursorColumn = this.lines[this.cursorRow].length();
+                    return;
+                case Keyboard.KEY_PRIOR:
+                    this.moveCursorToRow(0);
+                    return;
+                case Keyboard.KEY_NEXT:
+                    this.moveCursorToRow(this.lines.length - 1);
+                    return;
                 default:
-                    if (ChatAllowedCharacters.isAllowedCharacter(typedChar)) {
-                        this.pageInsertIntoCurrent(Character.toString(typedChar));
-                        this.cursorColumn++;
+                    if (this.lines[this.cursorRow].length() < MAX_COLS) {
+                        if (ChatAllowedCharacters.isAllowedCharacter(typedChar)) {
+                            this.pageInsertIntoCurrent(Character.toString(typedChar));
+                            this.cursorColumn++;
+                        }
                     }
             }
         }
@@ -361,14 +380,14 @@ public class GuiPythonBook extends GuiScreen {
      * Returns the entire text of the current page as determined by currPage
      */
     private String pageGetCurrent() {
-        return this.bookPages != null && this.currPage >= 0 && this.currPage < this.bookPages.tagCount() ? this.bookPages.getStringTagAt(this.currPage) : "";
+        return this.bookPages != null && this.currPage >= 0 && this.currPage < this.bookPages.tagCount() ? this.bookPages.getStringTagAt(this.currPage) : "\n";
     }
 
     /**
      * Sets the text of the current page as determined by currPage
      */
     private void pageSetCurrent(String text) {
-        this.setLines(text.split("\n"));
+        this.setLines(text);
         if (this.bookPages != null && this.currPage >= 0 && this.currPage < this.bookPages.tagCount()) {
             this.bookPages.set(this.currPage, new NBTTagString(text));
             this.bookIsModified = true;
