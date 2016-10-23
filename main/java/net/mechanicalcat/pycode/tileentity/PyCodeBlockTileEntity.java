@@ -33,6 +33,7 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
     public Entity getEntity() { return null; }
 
     public boolean handleInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
+        // TODO document me
         this.code.put("block", new BlockMethods(this, player));
         this.code.put("powered", this.isPowered);
         return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);
@@ -42,9 +43,25 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         if (!this.hasWorldObj()) return;
         if (this.worldObj.isRemote) return;
 
-        this.isPowered = this.worldObj.isBlockPowered(pos);
+        boolean isPowered = this.worldObj.isBlockPowered(pos);
+        if (isPowered != this.isPowered) {
+            if (isPowered) {
+                // TODO document me
+                if (this.code.hasKey("powerOn")) {
+                    this.code.invoke((WorldServer) this.worldObj, pos, "powerOn");
+                }
+            } else {
+                // TODO document me
+                if (this.code.hasKey("powerOff")) {
+                    this.code.invoke((WorldServer) this.worldObj, pos, "powerOff");
+                }
+            }
+        }
+        this.isPowered = isPowered;
+        // TODO document me
         this.code.put("powered", this.isPowered);
         if (this.code.hasKey("tick")) {
+            // TODO document me
             this.code.invoke((WorldServer) this.worldObj, pos, "tick");
         }
     }

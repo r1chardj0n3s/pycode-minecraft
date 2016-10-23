@@ -64,6 +64,7 @@ public class PythonCode {
         }
         Item item = heldItem.getItem();
         if (item == ModItems.python_wand) {
+            // TODO document me
             this.engine.put("world", world);
             this.engine.put("pos", pos);
             this.engine.put("player", player);
