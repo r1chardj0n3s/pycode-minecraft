@@ -39,6 +39,9 @@ public class GuiPythonBook extends GuiScreen {
     /** Update ticks since the gui was opened for cursor animation */
     private int updateCount;
 
+    private static final int MAX_ROWS = 20;
+    private static final int MAX_COLS = 40;
+
 //    private final EntityPlayer editingPlayer;
     private final ItemStack bookObj;
     private NBTTagList bookPages;
@@ -81,7 +84,15 @@ public class GuiPythonBook extends GuiScreen {
             this.bookTotalPages = 1;
         }
 
-        this.lines = this.pageGetCurrent().split("\n");
+        this.setLines(this.pageGetCurrent().split("\n"));
+    }
+
+    private void setLines(String lines[]) {
+        this.lines = lines;
+        int last = this.lines.length - 1;
+        if (this.lines[last].equals("")) {
+            this.lines[last] = "\n";
+        }
     }
 
     @Override
@@ -125,8 +136,8 @@ public class GuiPythonBook extends GuiScreen {
         boolean updateLines = false;
         if (button.enabled) {
             if (button.id == BUTTON_DONE) {
-                this.mc.displayGuiScreen(null);
                 this.sendBookToServer();
+                this.mc.displayGuiScreen(null);
             } else if (button.id == BUTTON_NEXT) {
                 if (this.currPage < this.bookTotalPages - 1) {
                     ++this.currPage;
@@ -149,7 +160,7 @@ public class GuiPythonBook extends GuiScreen {
             }
 
             if (updateLines) {
-                this.lines = this.pageGetCurrent().split("\n");
+                this.setLines(this.pageGetCurrent().split("\n"));
             }
 
             this.updateButtons();
@@ -160,6 +171,8 @@ public class GuiPythonBook extends GuiScreen {
         if (!this.bookIsModified || this.bookPages == null) {
             return;
         }
+
+        System.out.println("Writing book to server");
 
         while (this.bookPages.tagCount() > 1) {
             String s = this.bookPages.getStringTagAt(this.bookPages.tagCount() - 1);
@@ -240,7 +253,7 @@ public class GuiPythonBook extends GuiScreen {
             this.pageInsertIntoCurrent(GuiScreen.getClipboardString());
         } else {
             int line_width;
-            int num_lines = this.lines.length;
+            int last_line = this.lines.length - 1;
             switch (keyCode) {
                 case Keyboard.KEY_BACK:
                     String line = this.lines[this.cursorRow];
@@ -268,7 +281,11 @@ public class GuiPythonBook extends GuiScreen {
                     return;
                 case Keyboard.KEY_RETURN:
                 case Keyboard.KEY_NUMPADENTER:
-                    this.pageInsertIntoCurrent("\n");
+                    if (this.cursorRow < MAX_ROWS) {
+                        this.pageInsertIntoCurrent("\n");
+                        this.cursorColumn = 0;
+                        this.cursorRow += 1;
+                    }
                     return;
                 case Keyboard.KEY_LEFT:
                     this.cursorColumn--;
@@ -283,12 +300,8 @@ public class GuiPythonBook extends GuiScreen {
                     return;
                 case Keyboard.KEY_RIGHT:
                     this.cursorColumn++;
-                    if (this.cursorRow == this.lines.length) {
-                        line_width = 0;
-                    } else {
-                        line_width = this.lines[this.cursorRow].length();
-                    }
-                    if (this.cursorRow < num_lines) {
+                    line_width = this.lines[this.cursorRow].length();
+                    if (this.cursorRow < last_line) {
                         if (this.cursorColumn > line_width || this.cursorColumn > 40) {
                             this.cursorColumn = 0;
                             this.moveCursorToRow(this.cursorRow + 1);
@@ -296,8 +309,8 @@ public class GuiPythonBook extends GuiScreen {
                     } else {
                         if (this.cursorColumn > line_width) {
                             this.cursorColumn = line_width;
-                        } else if (this.cursorColumn > 40) {
-                            this.cursorColumn = 40;
+                        } else if (this.cursorColumn > MAX_COLS) {
+                            this.cursorColumn = MAX_COLS;
                         }
                     }
                     return;
@@ -320,8 +333,8 @@ public class GuiPythonBook extends GuiScreen {
         this.cursorRow = row;
         int num_lines = this.lines.length;
         if (this.cursorRow < 0) this.cursorRow = 0;
-        else if (this.cursorRow > num_lines) this.cursorRow = num_lines;
-        else if (this.cursorRow > 20) this.cursorRow = 20;
+        else if (this.cursorRow >= num_lines) this.cursorRow = num_lines - 1;
+        else if (this.cursorRow > MAX_ROWS) this.cursorRow = MAX_ROWS;
         this.fixCursorColumn();
     }
 
@@ -355,7 +368,7 @@ public class GuiPythonBook extends GuiScreen {
      * Sets the text of the current page as determined by currPage
      */
     private void pageSetCurrent(String text) {
-        this.lines = text.split("\n");
+        this.setLines(text.split("\n"));
         if (this.bookPages != null && this.currPage >= 0 && this.currPage < this.bookPages.tagCount()) {
             this.bookPages.set(this.currPage, new NBTTagString(text));
             this.bookIsModified = true;
@@ -366,20 +379,10 @@ public class GuiPythonBook extends GuiScreen {
      * Processes any text getting inserted into the current page, enforcing the page size limit
      */
     private void pageInsertIntoCurrent(String text) {
-        String s1;
-        if (this.cursorRow == this.lines.length) {
-            s1 = String.join("\n", this.lines) + "\n" + text;
-        } else {
-            String line = this.lines[this.cursorRow];
-            String newline = line.substring(0, this.cursorColumn) + text + line.substring(this.cursorColumn, line.length());
-            this.lines[this.cursorRow] = newline;
-            s1 = String.join("\n", this.lines);
-        }
-        int height = this.fontRendererObj.splitStringWidth(s1, 230);
-
-        if (height <= 180 && s1.length() < 256) {
-            this.pageSetCurrent(s1);
-        }
+        String line = this.lines[this.cursorRow];
+        String newline = line.substring(0, this.cursorColumn) + text + line.substring(this.cursorColumn, line.length());
+        this.lines[this.cursorRow] = newline;
+        this.pageSetCurrent(String.join("\n", this.lines));
     }
 
 
