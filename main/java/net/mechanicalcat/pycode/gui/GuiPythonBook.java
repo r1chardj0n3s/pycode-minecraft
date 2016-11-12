@@ -40,7 +40,7 @@ public class GuiPythonBook extends GuiScreen {
     private int updateCount;
 
     private static final int MAX_ROWS = 19;
-    private static final int MAX_COLS = 40;
+    private static final int MAX_COLS = 38;  // proportional FONT!!!
 
 //    private final EntityPlayer editingPlayer;
     private final ItemStack bookObj;
@@ -216,8 +216,8 @@ public class GuiPythonBook extends GuiScreen {
             line_width = this.lines[this.cursorRow].length();
         }
 
-        // TODO debug stuff, make it go away
-        String page_pos = "row:" + this.cursorRow + " col:" + this.cursorColumn + " lines:" + this.lines.length + " len:" + line_width;    // I18n.format("book.pageIndicator", this.currPage + 1, this.bookTotalPages);
+//        String page_pos = "row:" + this.cursorRow + " col:" + this.cursorColumn + " lines:" + this.lines.length + " len:" + line_width;
+        String page_pos = I18n.format("book.pageIndicator", this.currPage + 1, this.bookTotalPages);
         String content = "";
 
         if (this.bookPages != null && this.currPage >= 0 && this.currPage < this.bookPages.tagCount()) {
@@ -339,6 +339,7 @@ public class GuiPythonBook extends GuiScreen {
                     this.moveCursorToRow(this.lines.length - 1);
                     return;
                 default:
+                    // BUG this appears to be too restrictive
                     if (this.lines[this.cursorRow].length() < MAX_COLS) {
                         if (ChatAllowedCharacters.isAllowedCharacter(typedChar)) {
                             this.pageInsertIntoCurrent(Character.toString(typedChar));

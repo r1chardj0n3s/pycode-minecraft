@@ -3,9 +3,11 @@ package net.mechanicalcat.pycode.script;
 
 import com.google.common.collect.Lists;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
+import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemDye;
@@ -25,14 +27,14 @@ public class BlockMethods extends BaseMethods {
     private PyCodeBlockTileEntity block;
 
     public BlockMethods(PyCodeBlockTileEntity block, EntityPlayer player) {
-        super(player);
+        super(block.getWorld(), player);
         this.block = block;
     }
+    protected World getWorld() {return null;}
 
     // PyObject[] args, String[] keywords -- http://www.jython.org/archive/22/userfaq.html#supporting-args-and-kw-in-java-methods
     public void firework() {
-        World world = this.block.getWorld();
-        if (world.isRemote) return;
+        if (this.world.isRemote) return;
 
         ItemStack fireworkItem = new ItemStack(Items.FIREWORKS);
         NBTTagCompound nbttagcompound = new NBTTagCompound();
@@ -57,10 +59,10 @@ public class BlockMethods extends BaseMethods {
         fireworkItem.setTagCompound(nbttagcompound);
 
         BlockPos pos = this.block.getPos();
-        Entity firework = new EntityFireworkRocket(world,
+        Entity firework = new EntityFireworkRocket(this.world,
                 pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,
                 fireworkItem);
-        world.spawnEntityInWorld(firework);
+        this.world.spawnEntityInWorld(firework);
     }
 }
 
