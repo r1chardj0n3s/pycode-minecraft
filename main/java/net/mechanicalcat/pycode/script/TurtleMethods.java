@@ -34,14 +34,14 @@ public class TurtleMethods extends BaseMethods {
         this.left(180);
     }
     private void left(float amount) {
-        this.turtle.moveYaw(-amount);
+        this.turtle.moveYaw(amount);
     }
 
     public void right() {
         this.right(90);
     }
     private void right(float amount) {
-        this.turtle.moveYaw(amount);
+        this.turtle.moveYaw(-amount);
     }
 
     public void up() {this.up(1); }
@@ -70,67 +70,95 @@ public class TurtleMethods extends BaseMethods {
         }
     }
 
-    public void circle(int radius, Block block, boolean filled) {
-        this.ellipse(radius, radius, block, filled);
-    }
-
-    public void ellipse(int radius_x, int radius_z, Block block, boolean filled) {
-        double ratio = radius_x / radius_z;
-        int maxblocks_x, maxblocks_y;
+    public void circle(int radius, Block block, boolean fill) {
         IBlockState block_state = block.getDefaultState();
         BlockPos pos = this.turtle.getPosition();
 
-        if ((radius_x * 2) % 2 == 0) {
-            maxblocks_x = (int)Math.ceil(radius_x - .5) * 2 + 1;
-        } else {
-            maxblocks_x = (int)Math.ceil(radius_x) * 2;
-        }
-
-        if ((radius_z * 2) % 2 == 0) {
-            maxblocks_y = (int)Math.ceil(radius_z - .5) * 2 + 1;
-        } else {
-            maxblocks_y = (int)Math.ceil(radius_z) * 2;
-        }
-
-        for (int y = -maxblocks_y / 2 + 1; y <= maxblocks_y / 2 - 1; y++) {
-            for (int x = -maxblocks_x / 2 + 1; x <= maxblocks_x / 2 - 1; x++) {
-                boolean xfilled = false;
-
-                if (filled) {
-                    xfilled = this.filled(x, y, radius_x, ratio);
-                } else {
-                    xfilled = this.fatfilled(x, y, radius_x, ratio);
+        if (fill) {
+            int r_squared = radius * radius;
+            for (int y = -radius; y <= radius; y++) {
+                int y_squared = y * y;
+                for (int x = -radius; x <= radius; x++) {
+                    if ((x * x) + y_squared <= r_squared) {
+                        this.world.setBlockState(pos.add(x, 0, y), block_state);
+                    }
                 }
-//                    case "thin":
-//                        xfilled = fatfilled(x, y, radius_x, ratio) &&
-//                                !(fatfilled(x + (x > 0 ? 1 : -1), y, radius_x, ratio) &&
-//                                  fatfilled(x, y + (y > 0 ? 1 : -1), radius_x, ratio));
-//                        break;
-//                }
-                if (xfilled) this.world.setBlockState(pos.add(x, 0, y), block_state);
+            }
+        } else {
+            int l = (int) (radius * Math.cos(Math.PI / 4));
+            for (int x = 0; x <= l; x++) {
+                int y = (int) Math.sqrt ((double) (radius * radius) - (x * x));
+                this.world.setBlockState(pos.add(+x, 0, +y), block_state);
+                this.world.setBlockState(pos.add(+y, 0, +x), block_state);
+                this.world.setBlockState(pos.add(-y, 0, +x), block_state);
+                this.world.setBlockState(pos.add(-x, 0, +y), block_state);
+                this.world.setBlockState(pos.add(-x, 0, -y), block_state);
+                this.world.setBlockState(pos.add(-y, 0, -x), block_state);
+                this.world.setBlockState(pos.add(+y, 0, -x), block_state);
+                this.world.setBlockState(pos.add(+x, 0, -y), block_state);
             }
         }
     }
 
-    private double distance(double x, double y, double ratio) {
-        return Math.sqrt((Math.pow(y * ratio, 2)) + Math.pow(x, 2));
-    }
+    public void ellipse(int radius_x, int radius_z, Block block, boolean fill) {
+        IBlockState block_state = block.getDefaultState();
+        BlockPos pos = this.turtle.getPosition();
 
-    private boolean filled(int x, int y, double radius, double ratio) {
-        return distance(x, y, ratio) <= radius;
-    }
+        if (fill) {
+            for (int x=-radius_x; x <= radius_x; x++) {
+                int dy = (int) (Math.sqrt((radius_z * radius_z) * (1.0 - (double)(x * x) / (double)(radius_x * radius_x))));
+                for (int y=-dy; y <= dy; y++) {
+                    this.world.setBlockState(pos.add(x, 0, y), block_state);
+                }
+            }
+        } else {
+            double radius_x_sq = radius_x * radius_x;
+            double radius_z_sq = radius_z * radius_z;
+            int x = 0, y = radius_z;
+            double p, px = 0, py = 2 * radius_x_sq * y;
 
-    private boolean fatfilled(int x, int y, double radius, double ratio) {
-        return filled(x, y, radius, ratio) && !(
-               filled(x + 1, y, radius, ratio) &&
-               filled(x - 1, y, radius, ratio) &&
-               filled(x, y + 1, radius, ratio) &&
-               filled(x, y - 1, radius, ratio) &&
-               filled(x + 1, y + 1, radius, ratio) &&
-               filled(x + 1, y - 1, radius, ratio) &&
-               filled(x - 1, y - 1, radius, ratio) &&
-               filled(x - 1, y + 1, radius, ratio)
-        );
+            this.world.setBlockState(pos.add(+x, 0, +y), block_state);
+            this.world.setBlockState(pos.add(-x, 0, +y), block_state);
+            this.world.setBlockState(pos.add(+x, 0, -y), block_state);
+            this.world.setBlockState(pos.add(-x, 0, -y), block_state);
+
+            // Region 1
+            p = radius_z_sq - (radius_x_sq * radius_z) + (0.25 * radius_x_sq);
+            while (px < py) {
+                x++;
+                px = px + 2 * radius_z_sq;
+                if (p < 0) {
+                    p = p + radius_z_sq + px;
+                } else {
+                    y--;
+                    py = py - 2 * radius_x_sq;
+                    p = p + radius_z_sq + px - py;
+
+                }
+                this.world.setBlockState(pos.add(+x, 0, +y), block_state);
+                this.world.setBlockState(pos.add(-x, 0, +y), block_state);
+                this.world.setBlockState(pos.add(+x, 0, -y), block_state);
+                this.world.setBlockState(pos.add(-x, 0, -y), block_state);
+            }
+
+            // Region 2
+            p = radius_z_sq*(x+0.5)*(x+0.5) + radius_x_sq*(y-1)*(y-1) - radius_x_sq*radius_z_sq;
+            while (y > 0) {
+                y--;
+                py = py -2 * radius_x_sq;
+                if (p > 0) {
+                    p = p + radius_x_sq - py;
+                } else {
+                    x++;
+                    px = px + 2 * radius_z_sq;
+                    p = p + radius_x_sq - py + px;
+                }
+                this.world.setBlockState(pos.add(+x, 0, +y), block_state);
+                this.world.setBlockState(pos.add(-x, 0, +y), block_state);
+                this.world.setBlockState(pos.add(+x, 0, -y), block_state);
+                this.world.setBlockState(pos.add(-x, 0, -y), block_state);
+            }
+        }
     }
 
 //    public void setPoop(Block block) {
