@@ -11,6 +11,7 @@ import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -33,7 +34,17 @@ public class TurtleEntity extends Entity implements IHasPythonCode {
         this.initCode();
     }
 
-    // TODO initial facing based on direction faced when placed
+    public TurtleEntity(World worldIn, double x, double y, double z, float yaw) {
+        super(worldIn);
+        this.preventEntitySpawning = true;
+        this.isImmuneToFire = true;
+        this.setSize(0.98F, 0.7F);
+        this.setPositionAndRotation(x, y, z, yaw, 0);
+        this.motionX = 0.0D;
+        this.motionY = 0.0D;
+        this.motionZ = 0.0D;
+        this.initCode();
+    }
 
     public void initCode() {
         this.code = new PythonCode();
@@ -52,20 +63,9 @@ public class TurtleEntity extends Entity implements IHasPythonCode {
         this.code.readFromNBT(compound);
     }
 
-    public TurtleEntity(World worldIn, double x, double y, double z) {
-        this(worldIn);
-        this.setPosition(x, y, z);
-        this.motionX = 0.0D;
-        this.motionY = 0.0D;
-        this.motionZ = 0.0D;
-        this.prevPosX = x;
-        this.prevPosY = y;
-        this.prevPosZ = z;
-    }
-
     public void moveForward(float distance) {
         Vec3d pos = this.getPositionVector();
-        float f1 = MathHelper.sin(this.rotationYaw * 0.017453292F);
+        float f1 = -MathHelper.sin(this.rotationYaw * 0.017453292F);
         float f2 = MathHelper.cos(this.rotationYaw * 0.017453292F);
         pos = pos.addVector(distance * f1, 0, distance * f2);
         this.setPosition(pos.xCoord, pos.yCoord, pos.zCoord);

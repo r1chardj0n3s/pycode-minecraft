@@ -6,6 +6,8 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 
 public class TurtleMethods extends BaseMethods {
@@ -34,14 +36,14 @@ public class TurtleMethods extends BaseMethods {
         this.left(180);
     }
     private void left(float amount) {
-        this.turtle.moveYaw(amount);
+        this.turtle.moveYaw(-amount);
     }
 
     public void right() {
         this.right(90);
     }
     private void right(float amount) {
-        this.turtle.moveYaw(-amount);
+        this.turtle.moveYaw(amount);
     }
 
     public void up() {this.up(1); }
@@ -65,8 +67,10 @@ public class TurtleMethods extends BaseMethods {
         // TODO in the direction faced
         IBlockState block_state = block.getDefaultState();
         BlockPos pos = this.turtle.getPosition();
+        Vec3i direction = this.turtle.getHorizontalFacing().getDirectionVec();
         for (int i=0; i<distance; i++) {
-            this.world.setBlockState(pos.add(0, 0, i + 1), block_state);
+            pos = pos.add(direction);
+            this.world.setBlockState(pos, block_state);
         }
     }
 

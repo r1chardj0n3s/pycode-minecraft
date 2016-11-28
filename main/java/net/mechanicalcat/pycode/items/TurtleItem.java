@@ -23,7 +23,8 @@ public class TurtleItem extends Item {
     public EnumActionResult onItemUse(ItemStack stackIn, EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
         if (!world.isRemote) {
             if (stackIn.stackSize != 0) {
-                world.spawnEntityInWorld(new TurtleEntity(world, pos.getX() + .5, pos.getY() + 1.0, pos.getZ() + .5));
+                float yaw = player.getHorizontalFacing().getHorizontalAngle();
+                world.spawnEntityInWorld(new TurtleEntity(world, pos.getX() + .5, pos.getY() + 1.0, pos.getZ() + .5, yaw));
                 --stackIn.stackSize;
                 return EnumActionResult.SUCCESS;
             } else {

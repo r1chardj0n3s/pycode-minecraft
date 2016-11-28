@@ -29,10 +29,9 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
         setHardness(1.0f);
     }
 
-    // TODO onBlockPlaced and harvestBlock to activate/deactivate the engine? or maybe the tile entity is managed??
-
     @Override
-    public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
+    public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand,
+                                    @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
         if (world.isRemote) {
             // don't run on the client
             return true;
@@ -71,4 +70,6 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
 //        super.onNeighborChange(world, pos, neighbor);
 //    }
 
+
+    // TODO onBlockPlaced and harvestBlock to activate/deactivate the engine? or maybe the tile entity is managed??
 }

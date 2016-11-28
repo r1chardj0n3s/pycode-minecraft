@@ -115,7 +115,7 @@ public class GuiPythonBook extends GuiScreen {
             new GuiPythonBook.NextPageButton(BUTTON_NEXT, side - 44, 13, true)
         );
         this.buttonPreviousPage = this.func_189646_b(
-            new GuiPythonBook.NextPageButton(BUTTON_PREV, i + 8, 13, false)
+            new GuiPythonBook.NextPageButton(BUTTON_PREV, i + 16, 13, false)
         );
         this.updateButtons();
     }
@@ -254,8 +254,11 @@ public class GuiPythonBook extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        if (GuiScreen.isKeyComboCtrlV(keyCode)) {
-            this.pageInsertIntoCurrent(GuiScreen.getClipboardString());
+        if (GuiScreen.isKeyComboCtrlC(keyCode)) {
+            GuiScreen.setClipboardString(this.pageGetCurrent());
+        }
+        else if (GuiScreen.isKeyComboCtrlV(keyCode)) {
+            this.pageSetCurrent(GuiScreen.getClipboardString());
         } else {
             int line_width;
             int last_line = this.lines.length - 1;
