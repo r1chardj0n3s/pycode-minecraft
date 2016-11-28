@@ -24,26 +24,18 @@ import javax.annotation.Nullable;
 public class TurtleEntity extends Entity implements IHasPythonCode {
     private static net.minecraftforge.common.IMinecartCollisionHandler collisionHandler = null;
     private PythonCode code;
-    public boolean noClip = true;
 
     public TurtleEntity(World worldIn) {
         super(worldIn);
-        this.preventEntitySpawning = true;
-        this.isImmuneToFire = true;
-        this.setSize(0.98F, 0.7F);
-        this.initCode();
+        this.noClip = true;
     }
 
     public TurtleEntity(World worldIn, double x, double y, double z, float yaw) {
-        super(worldIn);
-        this.preventEntitySpawning = true;
-        this.isImmuneToFire = true;
-        this.setSize(0.98F, 0.7F);
+        this(worldIn);
         this.setPositionAndRotation(x, y, z, yaw, 0);
         this.motionX = 0.0D;
         this.motionY = 0.0D;
         this.motionZ = 0.0D;
-        this.initCode();
     }
 
     public void initCode() {
@@ -80,12 +72,10 @@ public class TurtleEntity extends Entity implements IHasPythonCode {
     }
 
     protected void entityInit() {
-//        this.dataManager.register(ROLLING_AMPLITUDE, Integer.valueOf(0));
-//        this.dataManager.register(ROLLING_DIRECTION, Integer.valueOf(1));
-//        this.dataManager.register(DAMAGE, Float.valueOf(0.0F));
-//        this.dataManager.register(DISPLAY_TILE, Integer.valueOf(0));
-//        this.dataManager.register(DISPLAY_TILE_OFFSET, Integer.valueOf(6));
-//        this.dataManager.register(SHOW_BLOCK, Boolean.valueOf(false));
+        this.preventEntitySpawning = true;
+        this.isImmuneToFire = true;
+        this.setSize(0.98F, 0.7F);
+        this.initCode();
     }
 
     public boolean canBeCollidedWith() {

@@ -2,9 +2,14 @@ package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.entities.TurtleEntity;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockDoor;
+import net.minecraft.block.BlockLadder;
+import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
@@ -12,7 +17,6 @@ import net.minecraft.world.World;
 
 public class TurtleMethods extends BaseMethods {
     private TurtleEntity turtle;
-    private Block poop;
 
     public TurtleMethods(TurtleEntity turtle, EntityPlayer player) {
         super(turtle.getEntityWorld(), player);
@@ -23,48 +27,48 @@ public class TurtleMethods extends BaseMethods {
         this.forward(1);
     }
     public void forward(float distance) {
-//        if (this.poop != null) {
-//            this.turtle.getEntityWorld().setBlockState(this.turtle.getPosition(), this.poop.getDefaultState());
-//        }
         this.turtle.moveForward(distance);
     }
 
-    public void left() {
-        this.left(90);
+    public void backward() {
+        this.backward(1);
     }
-    public void reverse() {
-        this.left(180);
-    }
-    private void left(float amount) {
-        this.turtle.moveYaw(-amount);
+    public void backward(float distance) {
+        this.turtle.moveForward(-distance);
     }
 
-    public void right() {
-        this.right(90);
+    public void face(String direction) {
+        EnumFacing turned = EnumFacing.byName(direction);
+        if (turned != null) {
+            this.turtle.setYaw(turned.getHorizontalAngle());
+        }
     }
-    private void right(float amount) {
-        this.turtle.moveYaw(amount);
+
+    public void left() {
+        this.turtle.moveYaw(-90);
+    }
+    public void right() {
+        this.turtle.moveYaw(90);
+    }
+    public void reverse() {
+        this.turtle.moveYaw(180);
     }
 
     public void up() {this.up(1); }
     public void up(float distance) {
         this.turtle.moveEntity(0, distance, 0);
-//        if (this.poop != null) {
-//            this.turtle.getEntityWorld().setBlockState(this.turtle.getPosition(), this.poop.getDefaultState());
-//        }
     }
 
-    public void down() {this.up(1); }
+    public void down() {this.down(1); }
     public void down(float distance) {
         this.turtle.moveEntity(0, -distance, 0);
-//        if (this.poop != null) {
-//            this.turtle.getEntityWorld().setBlockState(this.turtle.getPosition(), this.poop.getDefaultState());
-//        }
     }
 
+    public void move(int x, int y, int z) {
+        this.turtle.moveEntity(x, y, z);
+    }
 
     public void line(int distance, Block block) {
-        // TODO in the direction faced
         IBlockState block_state = block.getDefaultState();
         BlockPos pos = this.turtle.getPosition();
         Vec3i direction = this.turtle.getHorizontalFacing().getDirectionVec();
@@ -72,6 +76,62 @@ public class TurtleMethods extends BaseMethods {
             pos = pos.add(direction);
             this.world.setBlockState(pos, block_state);
         }
+    }
+
+    public void put(Block block) {
+        IBlockState block_state = block.getDefaultState();
+        BlockPos pos = this.turtle.getPosition();
+        EnumFacing facing = this.turtle.getHorizontalFacing();
+        BlockPos faced = pos.add(facing.getDirectionVec());
+        try {
+            PropertyDirection direction = (PropertyDirection)block.getClass().getField("FACING").get(block);
+            if (this.world.isAirBlock(faced)) {
+                pos = faced;
+            } else {
+                // attach
+                block_state = block_state.withProperty(direction, facing.getOpposite());
+            }
+        } catch (NoSuchFieldException|IllegalAccessException e) {
+            pos = faced;
+        }
+        this.world.setBlockState(pos, block_state);
+    }
+
+    public void door(BlockDoor block) {
+        IBlockState block_state = block.getDefaultState();
+        BlockPos pos = this.turtle.getPosition();
+        Vec3i direction = this.turtle.getHorizontalFacing().getDirectionVec();
+        pos = pos.add(direction);
+        block_state = block_state.withProperty(BlockDoor.FACING, this.turtle.getHorizontalFacing());
+        block_state = block_state.withProperty(BlockDoor.HALF, BlockDoor.EnumDoorHalf.LOWER);
+        this.world.setBlockState(pos, block_state);
+        block_state = block_state.withProperty(BlockDoor.HALF, BlockDoor.EnumDoorHalf.UPPER);
+        pos = pos.add(0, 1, 0);
+        this.world.setBlockState(pos, block_state);
+    }
+
+    public void ladder(int height, Block block) {
+        IBlockState block_state = block.getDefaultState().withProperty(BlockLadder.FACING,
+                this.turtle.getHorizontalFacing().getOpposite());
+        BlockPos pos = this.turtle.getPosition();
+        Vec3i direction = this.turtle.getHorizontalFacing().getDirectionVec();
+        pos = pos.add(direction);
+        for (int i=0; i<height; i++) {
+            this.world.setBlockState(pos, block_state);
+            pos = pos.add(0, 1, 0);
+        }
+    }
+
+    public void water() {
+        this.water(this.turtle.getPosition().add(this.turtle.getHorizontalFacing().getDirectionVec()));
+    }
+
+    public void lava() {
+        this.lava(this.turtle.getPosition().add(this.turtle.getHorizontalFacing().getDirectionVec()));
+    }
+
+    public void clear() {
+        this.clear(this.turtle.getPosition().add(this.turtle.getHorizontalFacing().getDirectionVec()));
     }
 
     public void circle(int radius, Block block, boolean fill) {
@@ -164,13 +224,4 @@ public class TurtleMethods extends BaseMethods {
             }
         }
     }
-
-//    public void setPoop(Block block) {
-//        this.poop = block;
-//    }
-//
-//    public void stopPoop() {
-//        this.poop = null;
-//    }
-
 }

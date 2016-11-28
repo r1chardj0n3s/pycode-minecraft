@@ -47,7 +47,7 @@ public class BaseMethods {
 
         Block b = this.world.getBlockState(pos).getBlock();
 
-        if (this.world.isAirBlock(pos)) {
+        if (!this.world.isAirBlock(pos)) {
             this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
         }
     }
