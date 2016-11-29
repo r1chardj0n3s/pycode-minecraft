@@ -258,6 +258,7 @@ public class GuiPythonBook extends GuiScreen {
         }
         else if (GuiScreen.isKeyComboCtrlV(keyCode)) {
             this.pageSetCurrent(GuiScreen.getClipboardString());
+            this.cursorColumn = this.cursorRow = 0;
         } else {
             int line_width;
             int last_line = this.lines.length - 1;

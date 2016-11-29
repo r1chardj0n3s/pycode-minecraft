@@ -2,14 +2,20 @@ package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.entities.HandEntity;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockBed;
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.BlockLadder;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemBed;
+import net.minecraft.item.ItemDoor;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
+import org.python.core.ArgParser;
+import org.python.core.PyObject;
 
 public class HandMethods extends BaseMethods {
     private HandEntity hand;
@@ -79,31 +85,36 @@ public class HandMethods extends BaseMethods {
         BlockPos pos = this.hand.getPosition();
         EnumFacing facing = this.hand.getHorizontalFacing();
         BlockPos faced = pos.add(facing.getDirectionVec());
-        try {
-            PropertyDirection direction = (PropertyDirection)block.getClass().getField("FACING").get(block);
-            if (this.world.isAirBlock(faced)) {
-                pos = faced;
-            } else {
-                // attach
-                block_state = block_state.withProperty(direction, facing.getOpposite());
-            }
-        } catch (NoSuchFieldException|IllegalAccessException e) {
-            pos = faced;
-        }
-        this.world.setBlockState(pos, block_state);
-    }
 
-    public void door(BlockDoor block) {
-        IBlockState block_state = block.getDefaultState();
-        BlockPos pos = this.hand.getPosition();
-        Vec3i direction = this.hand.getHorizontalFacing().getDirectionVec();
-        pos = pos.add(direction);
-        block_state = block_state.withProperty(BlockDoor.FACING, this.hand.getHorizontalFacing());
-        block_state = block_state.withProperty(BlockDoor.HALF, BlockDoor.EnumDoorHalf.LOWER);
-        this.world.setBlockState(pos, block_state);
-        block_state = block_state.withProperty(BlockDoor.HALF, BlockDoor.EnumDoorHalf.UPPER);
-        pos = pos.add(0, 1, 0);
-        this.world.setBlockState(pos, block_state);
+        if (block instanceof BlockDoor) {
+            ItemDoor.placeDoor(this.world, faced, facing, block, true);
+        } else if (block instanceof BlockBed) {
+            BlockPos headpos = faced.offset(facing);
+            if (this.world.getBlockState(faced.down()).isSideSolid(this.world, faced.down(), EnumFacing.UP) &&
+                    this.world.getBlockState(headpos.down()).isSideSolid(this.world, headpos.down(), EnumFacing.UP)) {
+                block_state = block_state
+                        .withProperty(BlockBed.OCCUPIED, false).withProperty(BlockBed.FACING, facing)
+                        .withProperty(BlockBed.PART, BlockBed.EnumPartType.FOOT);
+                if (this.world.setBlockState(faced, block_state, 11)) {
+                    block_state = block_state.withProperty(BlockBed.PART, BlockBed.EnumPartType.HEAD);
+                    this.world.setBlockState(headpos, block_state, 11);
+                }
+            }
+        } else {
+            try {
+                // TODO this only honors compass facings and not up/down
+                PropertyDirection direction = (PropertyDirection) block.getClass().getField("FACING").get(block);
+                if (this.world.isAirBlock(faced)) {
+                    pos = faced;
+                } else {
+                    // attach
+                    block_state = block_state.withProperty(direction, facing.getOpposite());
+                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                pos = faced;
+            }
+            this.world.setBlockState(pos, block_state);
+        }
     }
 
     public void ladder(int height, Block block) {
