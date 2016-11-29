@@ -1,37 +1,34 @@
 package net.mechanicalcat.pycode.render;
 
 import net.mechanicalcat.pycode.Reference;
-import net.mechanicalcat.pycode.entities.TurtleEntity;
-import net.mechanicalcat.pycode.model.ModelTurtle;
+import net.mechanicalcat.pycode.entities.HandEntity;
+import net.mechanicalcat.pycode.model.ModelHand;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.Render;
-import net.minecraft.client.renderer.entity.RenderEntity;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.client.registry.IRenderFactory;
 
 import javax.annotation.Nonnull;
 
-public class RenderTurtle extends Render<TurtleEntity> {
-    private static ResourceLocation turtleTexture;
-    private static ModelBase model = new ModelTurtle();
+public class RenderHand extends Render<HandEntity> {
+    private static ResourceLocation handTexture;
+    private static ModelBase model = new ModelHand();
 
-    public RenderTurtle(RenderManager manager) {
+    public RenderHand(RenderManager manager) {
         super(manager);
-        turtleTexture = new ResourceLocation(Reference.MODID + ":textures/entities/turtle.png");
+        handTexture = new ResourceLocation(Reference.MODID + ":textures/entities/hand.png");
         this.shadowSize = 0.5F;
         this.renderOutlines = true;
     }
 
     @Nonnull
-    protected ResourceLocation getEntityTexture(@Nonnull TurtleEntity entity) {
-        return turtleTexture;
+    protected ResourceLocation getEntityTexture(@Nonnull HandEntity entity) {
+        return handTexture;
     }
 
     // shamelessly stolen and stripped from RenderMinecart
-    public void doRender(@Nonnull TurtleEntity entity, double x, double y, double z, float entityYaw, float partialTicks) {
+    public void doRender(@Nonnull HandEntity entity, double x, double y, double z, float entityYaw, float partialTicks) {
         GlStateManager.pushMatrix();
         this.bindEntityTexture(entity);
         float f3 = entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partialTicks;

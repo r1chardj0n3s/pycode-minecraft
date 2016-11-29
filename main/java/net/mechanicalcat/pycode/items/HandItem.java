@@ -1,7 +1,7 @@
 package net.mechanicalcat.pycode.items;
 
 import net.mechanicalcat.pycode.Reference;
-import net.mechanicalcat.pycode.entities.TurtleEntity;
+import net.mechanicalcat.pycode.entities.HandEntity;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -12,10 +12,10 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class TurtleItem extends Item {
-    public TurtleItem() {
-        setUnlocalizedName(Reference.PyCodeRegistrations.TURTLE.getUnlocalizedName());
-        setRegistryName(Reference.PyCodeRegistrations.TURTLE.getRegistryName());
+public class HandItem extends Item {
+    public HandItem() {
+        setUnlocalizedName(Reference.PyCodeRegistrations.HAND.getUnlocalizedName());
+        setRegistryName(Reference.PyCodeRegistrations.HAND.getRegistryName());
         setCreativeTab(CreativeTabs.TOOLS);
     }
 
@@ -24,7 +24,7 @@ public class TurtleItem extends Item {
         if (!world.isRemote) {
             if (stackIn.stackSize != 0) {
                 float yaw = player.getHorizontalFacing().getHorizontalAngle();
-                world.spawnEntityInWorld(new TurtleEntity(world, pos.getX() + .5, pos.getY() + 1.0, pos.getZ() + .5, yaw));
+                world.spawnEntityInWorld(new HandEntity(world, pos.getX() + .5, pos.getY() + 1.0, pos.getZ() + .5, yaw));
                 --stackIn.stackSize;
                 return EnumActionResult.SUCCESS;
             } else {

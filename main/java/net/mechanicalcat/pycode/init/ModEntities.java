@@ -2,12 +2,8 @@ package net.mechanicalcat.pycode.init;
 
 
 import net.mechanicalcat.pycode.PyCode;
-import net.mechanicalcat.pycode.entities.TurtleEntity;
-import net.mechanicalcat.pycode.model.ModelTurtle;
-import net.mechanicalcat.pycode.render.RenderTurtle;
-import net.minecraft.client.renderer.entity.Render;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraftforge.fml.client.registry.IRenderFactory;
+import net.mechanicalcat.pycode.entities.HandEntity;
+import net.mechanicalcat.pycode.render.RenderHand;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 
@@ -15,7 +11,7 @@ public class ModEntities {
     private static int entityCount = 0;
 
     public static void register() {
-        registerEntity(TurtleEntity.class, "python_turtle");
+        registerEntity(HandEntity.class, "python_hand");
     }
 
     private static void registerEntity(Class entity, String name) {
@@ -24,6 +20,6 @@ public class ModEntities {
     }
 
     public static void registerRenders() {
-        RenderingRegistry.registerEntityRenderingHandler(TurtleEntity.class, RenderTurtle::new);
+        RenderingRegistry.registerEntityRenderingHandler(HandEntity.class, RenderHand::new);
     }
 }

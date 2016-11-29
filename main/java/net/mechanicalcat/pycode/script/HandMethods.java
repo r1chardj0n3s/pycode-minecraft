@@ -1,77 +1,73 @@
 package net.mechanicalcat.pycode.script;
 
-import net.mechanicalcat.pycode.entities.TurtleEntity;
+import net.mechanicalcat.pycode.entities.HandEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.BlockLadder;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.World;
 
-public class TurtleMethods extends BaseMethods {
-    private TurtleEntity turtle;
+public class HandMethods extends BaseMethods {
+    private HandEntity hand;
 
-    public TurtleMethods(TurtleEntity turtle, EntityPlayer player) {
-        super(turtle.getEntityWorld(), player);
-        this.turtle = turtle;
+    public HandMethods(HandEntity hand, EntityPlayer player) {
+        super(hand.getEntityWorld(), player);
+        this.hand = hand;
     }
 
     public void forward() {
         this.forward(1);
     }
     public void forward(float distance) {
-        this.turtle.moveForward(distance);
+        this.hand.moveForward(distance);
     }
 
     public void backward() {
         this.backward(1);
     }
     public void backward(float distance) {
-        this.turtle.moveForward(-distance);
+        this.hand.moveForward(-distance);
     }
 
     public void face(String direction) {
         EnumFacing turned = EnumFacing.byName(direction);
         if (turned != null) {
-            this.turtle.setYaw(turned.getHorizontalAngle());
+            this.hand.setYaw(turned.getHorizontalAngle());
         }
     }
 
     public void left() {
-        this.turtle.moveYaw(-90);
+        this.hand.moveYaw(-90);
     }
     public void right() {
-        this.turtle.moveYaw(90);
+        this.hand.moveYaw(90);
     }
     public void reverse() {
-        this.turtle.moveYaw(180);
+        this.hand.moveYaw(180);
     }
 
     public void up() {this.up(1); }
     public void up(float distance) {
-        this.turtle.moveEntity(0, distance, 0);
+        this.hand.moveEntity(0, distance, 0);
     }
 
     public void down() {this.down(1); }
     public void down(float distance) {
-        this.turtle.moveEntity(0, -distance, 0);
+        this.hand.moveEntity(0, -distance, 0);
     }
 
     public void move(int x, int y, int z) {
-        this.turtle.moveEntity(x, y, z);
+        this.hand.moveEntity(x, y, z);
     }
 
     public void line(int distance, Block block) {
         IBlockState block_state = block.getDefaultState();
-        BlockPos pos = this.turtle.getPosition();
-        Vec3i direction = this.turtle.getHorizontalFacing().getDirectionVec();
+        BlockPos pos = this.hand.getPosition();
+        Vec3i direction = this.hand.getHorizontalFacing().getDirectionVec();
         for (int i=0; i<distance; i++) {
             pos = pos.add(direction);
             this.world.setBlockState(pos, block_state);
@@ -80,8 +76,8 @@ public class TurtleMethods extends BaseMethods {
 
     public void put(Block block) {
         IBlockState block_state = block.getDefaultState();
-        BlockPos pos = this.turtle.getPosition();
-        EnumFacing facing = this.turtle.getHorizontalFacing();
+        BlockPos pos = this.hand.getPosition();
+        EnumFacing facing = this.hand.getHorizontalFacing();
         BlockPos faced = pos.add(facing.getDirectionVec());
         try {
             PropertyDirection direction = (PropertyDirection)block.getClass().getField("FACING").get(block);
@@ -99,10 +95,10 @@ public class TurtleMethods extends BaseMethods {
 
     public void door(BlockDoor block) {
         IBlockState block_state = block.getDefaultState();
-        BlockPos pos = this.turtle.getPosition();
-        Vec3i direction = this.turtle.getHorizontalFacing().getDirectionVec();
+        BlockPos pos = this.hand.getPosition();
+        Vec3i direction = this.hand.getHorizontalFacing().getDirectionVec();
         pos = pos.add(direction);
-        block_state = block_state.withProperty(BlockDoor.FACING, this.turtle.getHorizontalFacing());
+        block_state = block_state.withProperty(BlockDoor.FACING, this.hand.getHorizontalFacing());
         block_state = block_state.withProperty(BlockDoor.HALF, BlockDoor.EnumDoorHalf.LOWER);
         this.world.setBlockState(pos, block_state);
         block_state = block_state.withProperty(BlockDoor.HALF, BlockDoor.EnumDoorHalf.UPPER);
@@ -112,9 +108,9 @@ public class TurtleMethods extends BaseMethods {
 
     public void ladder(int height, Block block) {
         IBlockState block_state = block.getDefaultState().withProperty(BlockLadder.FACING,
-                this.turtle.getHorizontalFacing().getOpposite());
-        BlockPos pos = this.turtle.getPosition();
-        Vec3i direction = this.turtle.getHorizontalFacing().getDirectionVec();
+                this.hand.getHorizontalFacing().getOpposite());
+        BlockPos pos = this.hand.getPosition();
+        Vec3i direction = this.hand.getHorizontalFacing().getDirectionVec();
         pos = pos.add(direction);
         for (int i=0; i<height; i++) {
             this.world.setBlockState(pos, block_state);
@@ -123,20 +119,20 @@ public class TurtleMethods extends BaseMethods {
     }
 
     public void water() {
-        this.water(this.turtle.getPosition().add(this.turtle.getHorizontalFacing().getDirectionVec()));
+        this.water(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
     }
 
     public void lava() {
-        this.lava(this.turtle.getPosition().add(this.turtle.getHorizontalFacing().getDirectionVec()));
+        this.lava(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
     }
 
     public void clear() {
-        this.clear(this.turtle.getPosition().add(this.turtle.getHorizontalFacing().getDirectionVec()));
+        this.clear(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
     }
 
     public void circle(int radius, Block block, boolean fill) {
         IBlockState block_state = block.getDefaultState();
-        BlockPos pos = this.turtle.getPosition();
+        BlockPos pos = this.hand.getPosition();
 
         if (fill) {
             int r_squared = radius * radius;
@@ -166,7 +162,7 @@ public class TurtleMethods extends BaseMethods {
 
     public void ellipse(int radius_x, int radius_z, Block block, boolean fill) {
         IBlockState block_state = block.getDefaultState();
-        BlockPos pos = this.turtle.getPosition();
+        BlockPos pos = this.hand.getPosition();
 
         if (fill) {
             for (int x=-radius_x; x <= radius_x; x++) {

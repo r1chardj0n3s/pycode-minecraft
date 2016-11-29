@@ -4,14 +4,12 @@ package net.mechanicalcat.pycode.entities;
 import net.mechanicalcat.pycode.init.ModItems;
 import net.mechanicalcat.pycode.script.IHasPythonCode;
 import net.mechanicalcat.pycode.script.PythonCode;
-import net.mechanicalcat.pycode.script.TurtleMethods;
+import net.mechanicalcat.pycode.script.HandMethods;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -21,16 +19,16 @@ import net.minecraft.world.WorldServer;
 
 import javax.annotation.Nullable;
 
-public class TurtleEntity extends Entity implements IHasPythonCode {
+public class HandEntity extends Entity implements IHasPythonCode {
     private static net.minecraftforge.common.IMinecartCollisionHandler collisionHandler = null;
     private PythonCode code;
 
-    public TurtleEntity(World worldIn) {
+    public HandEntity(World worldIn) {
         super(worldIn);
         this.noClip = true;
     }
 
-    public TurtleEntity(World worldIn, double x, double y, double z, float yaw) {
+    public HandEntity(World worldIn, double x, double y, double z, float yaw) {
         this(worldIn);
         this.setPositionAndRotation(x, y, z, yaw, 0);
         this.motionX = 0.0D;
@@ -43,7 +41,7 @@ public class TurtleEntity extends Entity implements IHasPythonCode {
     }
 
     public boolean handleInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
-        this.code.put("turtle", new TurtleMethods(this, player));
+        this.code.put("hand", new HandMethods(this, player));
         return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);
     }
 
@@ -99,7 +97,7 @@ public class TurtleEntity extends Entity implements IHasPythonCode {
                 this.removePassengers();
                 this.setDead();
                 if (this.worldObj.getGameRules().getBoolean("doEntityDrops")) {
-                    ItemStack itemstack = new ItemStack(ModItems.python_turtle, 1);
+                    ItemStack itemstack = new ItemStack(ModItems.python_hand, 1);
 
                     if (this.getName() != null) {
                         itemstack.setStackDisplayName(this.getName());

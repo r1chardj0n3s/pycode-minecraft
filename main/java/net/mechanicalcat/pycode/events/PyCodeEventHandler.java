@@ -1,28 +1,5 @@
 package net.mechanicalcat.pycode.events;
 
-import net.mechanicalcat.pycode.entities.TurtleEntity;
-import net.mechanicalcat.pycode.script.IHasPythonCode;
-import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
-import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
-import javax.script.ScriptException;
-
 public class PyCodeEventHandler {
 //    @SubscribeEvent
 //    public void onBlockInteract(PlayerInteractEvent.RightClickBlock event) {

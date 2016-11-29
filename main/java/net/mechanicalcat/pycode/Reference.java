@@ -12,7 +12,7 @@ public class Reference {
         WAND("python_wand", "PythonWandItem"),
         BOOK("python_book", "PythonBookItem"),
         BLOCK("python_block", "PythonBlock"),
-        TURTLE("python_turtle", "TurtleItem");
+        HAND("python_hand", "HandItem");
 
         private String unlocalizedName;
         private String registryName;
