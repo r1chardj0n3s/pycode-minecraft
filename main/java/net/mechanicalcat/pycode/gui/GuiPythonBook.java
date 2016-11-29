@@ -40,7 +40,11 @@ public class GuiPythonBook extends GuiScreen {
     private int updateCount;
 
     private static final int MAX_ROWS = 19;
-    private static final int MAX_COLS = 38;  // proportional FONT!!!
+    private static final int BOOK_PX_WIDTH = 252;   // pixel width of the entire book
+    private static final int BOOK_PX_HEIGHT = 216;  // pixel height of the entire book
+    private static final int EDITOR_PX_WIDTH = 224; // pixel width of the editor
+    private int EDITOR_PX_HEIGHT;
+    private int PX_LEFT;
 
 //    private final EntityPlayer editingPlayer;
     private final ItemStack bookObj;
@@ -105,17 +109,19 @@ public class GuiPythonBook extends GuiScreen {
         this.buttonList.clear();
         Keyboard.enableRepeatEvents(true);
 
+        EDITOR_PX_HEIGHT = this.fontRendererObj.FONT_HEIGHT * MAX_ROWS;
+
         // func_189646_b adds a button to the buttonList
-        int side = this.width / 2 + 252 / 2;
+        int side = this.width / 2 + BOOK_PX_WIDTH / 2;
         this.buttonDone = this.func_189646_b(new GuiButton(BUTTON_DONE, side + 2, this.height / 2 - 24, 70, 20, I18n.format("gui.done", new Object[0])));
         this.buttonCancel = this.func_189646_b(new GuiButton(BUTTON_CANCEL, side + 2, this.height / 2 + 14, 70, 20, I18n.format("gui.cancel", new Object[0])));
 
-        int i = (this.width - 252) / 2;
+        PX_LEFT = (this.width - BOOK_PX_WIDTH) / 2;
         this.buttonNextPage = this.func_189646_b(
             new GuiPythonBook.NextPageButton(BUTTON_NEXT, side - 44, 13, true)
         );
         this.buttonPreviousPage = this.func_189646_b(
-            new GuiPythonBook.NextPageButton(BUTTON_PREV, i + 16, 13, false)
+            new GuiPythonBook.NextPageButton(BUTTON_PREV, PX_LEFT + 16, 13, false)
         );
         this.updateButtons();
     }
@@ -205,26 +211,19 @@ public class GuiPythonBook extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         this.mc.getTextureManager().bindTexture(texture);
-        int i = (this.width - 252) / 2;
         int j = 2;
-        this.drawTexturedModalRect(i, 2, 0, 0, 252, 216);
+        this.drawTexturedModalRect(PX_LEFT, j, 0, 0, BOOK_PX_WIDTH, BOOK_PX_HEIGHT);
 
         int line_width;
-        if (this.cursorRow == this.lines.length) {
-            line_width = 0;
-        } else {
-            line_width = this.lines[this.cursorRow].length();
-        }
 
-//        String page_pos = "row:" + this.cursorRow + " col:" + this.cursorColumn + " lines:" + this.lines.length + " len:" + line_width;
         String page_pos = I18n.format("book.pageIndicator", this.currPage + 1, this.bookTotalPages);
+        int stringWidth = this.fontRendererObj.getStringWidth(page_pos);
+
         String content = "";
 
         if (this.bookPages != null && this.currPage >= 0 && this.currPage < this.bookPages.tagCount()) {
             content = this.bookPages.getStringTagAt(this.currPage);
         }
-
-        content = content.replace("\n", "\u2424\n");
 
         // draw cursor
         if (this.cursorRow == this.lines.length) {
@@ -233,7 +232,7 @@ public class GuiPythonBook extends GuiScreen {
         } else {
             line_width = this.fontRendererObj.getStringWidth(this.lines[this.cursorRow].substring(0, this.cursorColumn));
         }
-        int cursor_x = i + 15 + line_width;
+        int cursor_x = PX_LEFT + 15 + line_width;
         int cursor_y = 24 + this.cursorRow * this.fontRendererObj.FONT_HEIGHT;
         if (this.updateCount / 6 % 2 == 0) {
             this.drawTexturedModalRect(cursor_x, cursor_y, 49, 217, 3, 11);
@@ -241,9 +240,9 @@ public class GuiPythonBook extends GuiScreen {
             this.drawTexturedModalRect(cursor_x, cursor_y, 54, 217, 3, 11);
         }
 
-        int stringWidth = this.fontRendererObj.getStringWidth(page_pos);
-        this.fontRendererObj.drawString(page_pos, i - stringWidth + 252 / 2, 15, 0);
-        this.fontRendererObj.drawSplitString(content, i + 17, 26, 230, 0);
+        // render the content
+        this.fontRendererObj.drawString(page_pos, PX_LEFT - stringWidth + BOOK_PX_WIDTH / 2, 15, 0);
+        this.fontRendererObj.drawSplitString(content, PX_LEFT + 17, 26, EDITOR_PX_WIDTH, 0);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -318,8 +317,6 @@ public class GuiPythonBook extends GuiScreen {
                     } else {
                         if (this.cursorColumn > line_width) {
                             this.cursorColumn = line_width;
-                        } else if (this.cursorColumn > MAX_COLS) {
-                            this.cursorColumn = MAX_COLS;
                         }
                     }
                     return;
@@ -342,10 +339,12 @@ public class GuiPythonBook extends GuiScreen {
                     this.moveCursorToRow(this.lines.length - 1);
                     return;
                 default:
-                    // BUG this appears to be too restrictive
-                    if (this.lines[this.cursorRow].length() < MAX_COLS) {
-                        if (ChatAllowedCharacters.isAllowedCharacter(typedChar)) {
-                            this.pageInsertIntoCurrent(Character.toString(typedChar));
+                    if (ChatAllowedCharacters.isAllowedCharacter(typedChar)) {
+                        // allow typing until the (proportional font) hits the side
+                        String typedString = Character.toString(typedChar);
+                        String s = this.lines[this.cursorRow] + typedString;
+                        if (this.fontRendererObj.getStringWidth(s) < EDITOR_PX_WIDTH) {
+                            this.pageInsertIntoCurrent(typedString);
                             this.cursorColumn++;
                         }
                     }
@@ -414,10 +413,32 @@ public class GuiPythonBook extends GuiScreen {
      * Called when the mouse is clicked. Args : mouseX, mouseY, clickedButton
      */
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        if (mouseButton == 0) {
-            // TODO move cursor
+        int modX = mouseX - (PX_LEFT + 17);
+        int modY = mouseY - 26;
+        if (mouseButton != 0 || modX < 0 || modY < 0 || modX > EDITOR_PX_WIDTH || modY > EDITOR_PX_HEIGHT) {
+            super.mouseClicked(mouseX, mouseY, mouseButton);
+            return;
         }
-        super.mouseClicked(mouseX, mouseY, mouseButton);
+        int row = modY / this.fontRendererObj.FONT_HEIGHT;
+        if (row >= this.lines.length) {
+            row = this.lines.length - 1;
+        } else if (row < 0) {
+            row = 0;
+        }
+        this.cursorRow = row;
+        String line = this.lines[this.cursorRow];
+        int width = 0;
+        boolean set = false;
+        for (int i = 0; i < line.length(); i++) {
+            width += this.fontRendererObj.getCharWidth(line.charAt(i));
+            if (width > modX) {
+                this.cursorColumn = i;
+                set = true;
+                break;
+            }
+        }
+        if (!set) this.cursorColumn = line.length();
+        this.fixCursorColumn();
     }
 
     /**
