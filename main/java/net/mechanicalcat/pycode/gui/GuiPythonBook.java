@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonParseException;
 import io.netty.buffer.Unpooled;
 import net.mechanicalcat.pycode.items.PythonBookItem;
+import net.mechanicalcat.pycode.script.PythonCode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
@@ -28,9 +29,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
+import javax.script.ScriptException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class GuiPythonBook extends GuiScreen {
@@ -43,6 +48,7 @@ public class GuiPythonBook extends GuiScreen {
     private static final int BOOK_PX_WIDTH = 252;   // pixel width of the entire book
     private static final int BOOK_PX_HEIGHT = 216;  // pixel height of the entire book
     private static final int EDITOR_PX_WIDTH = 224; // pixel width of the editor
+    private static final int EDITOR_PX_TOP = 24;    // pixel location at the top of the editor
     private int EDITOR_PX_HEIGHT;
     private int PX_LEFT;
 
@@ -65,6 +71,12 @@ public class GuiPythonBook extends GuiScreen {
     private GuiButton buttonCancel;
     private GuiButton buttonNextPage;
     private GuiButton buttonPreviousPage;
+
+    private PythonCode code;
+    private ScriptException codeException;
+    private int timeToCheck;
+    private String oldContent;
+    private boolean codeChecked;
 
     public GuiPythonBook(EntityPlayer player, ItemStack book) {
         this.bookObj = book;
@@ -89,6 +101,11 @@ public class GuiPythonBook extends GuiScreen {
         }
         String s = this.pageGetCurrent();
         this.setLines(s);
+
+        this.code = new PythonCode();
+        this.codeException = null;
+        this.oldContent = "";
+        this.codeChecked = false;
     }
 
     private void setLines(String text) {
@@ -233,7 +250,7 @@ public class GuiPythonBook extends GuiScreen {
             line_width = this.fontRendererObj.getStringWidth(this.lines[this.cursorRow].substring(0, this.cursorColumn));
         }
         int cursor_x = PX_LEFT + 15 + line_width;
-        int cursor_y = 24 + this.cursorRow * this.fontRendererObj.FONT_HEIGHT;
+        int cursor_y = EDITOR_PX_TOP + this.cursorRow * this.fontRendererObj.FONT_HEIGHT - 2;
         if (this.updateCount / 6 % 2 == 0) {
             this.drawTexturedModalRect(cursor_x, cursor_y, 49, 217, 3, 11);
         } else {
@@ -242,7 +259,61 @@ public class GuiPythonBook extends GuiScreen {
 
         // render the content
         this.fontRendererObj.drawString(page_pos, PX_LEFT - stringWidth + BOOK_PX_WIDTH / 2, 15, 0);
-        this.fontRendererObj.drawSplitString(content, PX_LEFT + 17, 26, EDITOR_PX_WIDTH, 0);
+        this.fontRendererObj.drawSplitString(content, PX_LEFT + 17, EDITOR_PX_TOP, EDITOR_PX_WIDTH, 0);
+
+        // test compilation
+        if (!this.oldContent.equals(content)) {
+            this.codeException = null;
+            this.timeToCheck = 60;
+            this.codeChecked = false;
+            this.oldContent = content;
+        }
+        if (!this.codeChecked && this.timeToCheck-- < 0) {
+            this.codeChecked = true;
+            try {
+                this.code.check(content);
+                this.codeException = null;
+            } catch (ScriptException e) {
+                this.codeException = e;
+            }
+        }
+        if (this.codeException != null) {
+            String err = this.codeException.getMessage();
+            if (err == null) {
+                err = this.codeException.getClass().getName();
+            } else {
+                // fracking Java encapsulation obsession I can't get to the gottamn detailMessage form the
+                // ScriptException subclass
+                Pattern p = Pattern.compile("^(\\p{Alpha}+: )(.+) in <script> at");
+                Matcher m = p.matcher(err);
+                if (m.find()) {
+                    err = m.group(2);
+                }
+                if (err.startsWith("no viable alternative at input ")) {
+                    err = "unexpected " + err.substring(31);
+                }
+            }
+
+            // now draw a marker
+            int row = this.codeException.getLineNumber() - this.currPage * MAX_ROWS - 1;
+            int col = this.codeException.getColumnNumber();
+            if (col > this.lines[row].length()) {
+                col = this.lines[row].length();
+            }
+            int x = PX_LEFT + 12 + this.fontRendererObj.getStringWidth(this.lines[row].substring(0, col));
+            int y = EDITOR_PX_TOP + (row + 1) * this.fontRendererObj.FONT_HEIGHT;
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            this.mc.getTextureManager().bindTexture(texture);
+            // TODO THIS DOES NOT DISPLAY!!
+            this.drawTexturedModalRect(x, y, 45, 231, 10, 7);
+
+            int w = this.fontRendererObj.getStringWidth(err);
+
+            x -= w/2;
+            y += 8;
+            Gui.drawRect(x - 2, y - 2, x + w + 2, y + this.fontRendererObj.FONT_HEIGHT + 2, 0xfff1e2b8);
+            this.fontRendererObj.drawString(err, x , y, 0);
+        }
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 

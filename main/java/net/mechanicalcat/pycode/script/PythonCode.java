@@ -2,7 +2,6 @@ package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.init.ModItems;
 import net.mechanicalcat.pycode.items.PythonBookItem;
-import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -13,9 +12,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import org.python.jsr223.PyScriptEngine;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -34,6 +32,10 @@ public class PythonCode {
         } else {
             System.out.println("Got Python");
         }
+    }
+
+    public void check(String code) throws ScriptException {
+        ((PyScriptEngine) this.engine).compile(code);
     }
 
     public void setCodeString(String code) {
