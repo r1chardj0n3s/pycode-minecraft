@@ -2,6 +2,7 @@ package net.mechanicalcat.pycode.items;
 
 import net.mechanicalcat.pycode.PyCode;
 import net.mechanicalcat.pycode.Reference;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -23,7 +24,7 @@ public class PythonBookItem extends Item {
         setUnlocalizedName(Reference.PyCodeRegistrations.BOOK.getUnlocalizedName());
         setRegistryName(Reference.PyCodeRegistrations.BOOK.getRegistryName());
         this.setMaxStackSize(1);
-        // TODO creative tab assignment
+        setCreativeTab(CreativeTabs.TOOLS);
     }
 
     @Nonnull

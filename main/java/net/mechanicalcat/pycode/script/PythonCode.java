@@ -59,23 +59,14 @@ public class PythonCode {
     }
 
     public boolean handleInteraction(WorldServer world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
+        // this is only ever invoked on the server
         if (heldItem == null) {
             return false;
         }
         Item item = heldItem.getItem();
         if (item == ModItems.python_wand) {
-            // TODO document me
-            this.engine.put("world", world);
-            this.engine.put("pos", pos);
-            this.engine.put("player", player);
-            this.engine.put("blocks", Blocks.class);
-            this.engine.put("items", Items.class);
-            try {
-                this.engine.eval(this.code);
-                world.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
-            } catch (ScriptException e) {
-                world.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
-                System.out.println("Error running code: " + e.getMessage());
+            if (this.hasKey("run")) {
+                this.invoke(world, pos, "run");
             }
             return true;
         } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
@@ -96,13 +87,29 @@ public class PythonCode {
                 if (i > 0) sbStr.append("\n");
                 sbStr.append(s);
             }
-            // TODO have setCode actually compile the code to check its syntax
             this.code = sbStr.toString();
             System.out.println("Code set to:" + this.code);
-            world.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5, 20, 0, 0, 0, .5, new int[0]);
+            this.eval(world, player, pos);
             return true;
         }
         return false;
+    }
+
+    private boolean eval(WorldServer world, EntityPlayer player, BlockPos pos) {
+        this.engine.put("world", world);
+        this.engine.put("pos", pos);
+        this.engine.put("player", player);
+        this.engine.put("blocks", Blocks.class);
+        this.engine.put("items", Items.class);
+        try {
+            this.engine.eval(this.code);
+            world.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
+            return true;
+        } catch (ScriptException e) {
+            world.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
+            System.out.println("Error running code: " + e.getMessage());
+            return false;
+        }
     }
 
     public void writeToNBT(NBTTagCompound compound) {
@@ -114,3 +121,5 @@ public class PythonCode {
     }
 
 }
+
+
