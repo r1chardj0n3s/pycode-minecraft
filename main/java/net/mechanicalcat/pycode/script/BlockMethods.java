@@ -2,6 +2,7 @@ package net.mechanicalcat.pycode.script;
 
 
 import com.google.common.collect.Lists;
+import net.mechanicalcat.pycode.entities.EntityEnum;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
@@ -64,6 +65,9 @@ public class BlockMethods extends BaseMethods {
                 fireworkItem);
         this.world.spawnEntityInWorld(firework);
     }
+
+    public void spawn(EntityEnum entityType) {
+        if (this.world.isRemote) return;
+        entityType.spawn(this.world, this.block.getPos().add(0.5, 1.0, 0.5));
+    }
 }
-
-
