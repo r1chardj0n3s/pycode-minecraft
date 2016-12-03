@@ -169,6 +169,27 @@ Wand
 Invokes run() in the hand or block.
 
 
+Building This Mod
+=================
+
+Three steps are needed to build this mod:
+
+1. Get Forge (for minecraft 1.10) going, using the instructions here for
+   IntelliJ setup:
+
+   http://www.minecraftforge.net/forum/index.php/topic,21354.0.html
+
+2. Add jython by including the following in the ``build.gradle``
+   dependencies section:
+
+       // https://mvnrepository.com/artifact/org.python/jython-standalone
+       compile group: 'org.python', name: 'jython-standalone', version: '2.7.0'
+
+3. Check this git repository out to replace the "src" folder of the Forge
+   folder.
+
+You should now be able to compile and run minecraft with this mod.
+
 
 TODO
 ====
