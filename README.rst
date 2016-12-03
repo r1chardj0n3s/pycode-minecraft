@@ -191,6 +191,12 @@ Three steps are needed to build this mod:
 You should now be able to compile and run minecraft with this mod.
 
 
+Distribution
+------------
+
+This section TBD.
+
+
 TODO
 ====
 
