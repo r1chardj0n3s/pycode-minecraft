@@ -9,6 +9,29 @@ in and added some extra stuff.
 What you can do
 ===============
 
+Once you've created a Python Block or Hand you can write some Python
+code in a Writeable Book (or the superior Python Code Book), right click
+it on a the Python Hand or Block and have that code be run.
+
+If you want to delay the running of your code you can put all the code
+in a run() function. That function will then be run only when you right
+click the Python Wand on the hand or block.
+
+Also, Python Blocks may have other events that they handle:
+
+Redstone Power
+
+   If you define a powerOn() or powerOff() function these will be called
+   when the block receives, or loses redstone power (eg from redstone
+   wiring, or just a button placed on the block.)
+
+Time Passsing
+
+   If you define a tick() function this will be called about 20 times
+   per second.
+
+
+
 Recipes
 -------
 
