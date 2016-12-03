@@ -6,7 +6,7 @@ I wanted to code Python stuff in Minecraft, so I smooshed jython
 in and added some extra stuff.
 
 
-.. image:: screenshots/editor.png
+.. image:: screenshot/editor.png
 
 
 What you can do
