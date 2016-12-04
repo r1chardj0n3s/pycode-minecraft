@@ -1,7 +1,7 @@
 item.python_wand.name=Python Wand
 item.python_hand.name=Python Hand
-item.python_book.name=Code Book
+item.python_book.name=Python Code Book
 
 tile.python_block.name=Python Code Block
 
-entity.py.python_hand.name=Python Hand
+entity.pycode.python_hand.name=Python Hand

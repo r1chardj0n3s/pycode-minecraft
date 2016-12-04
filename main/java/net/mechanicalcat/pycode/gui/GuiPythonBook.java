@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
 
 
 public class GuiPythonBook extends GuiScreen {
-    static final ResourceLocation texture = new ResourceLocation("py:textures/gui/code_book.png");
+    static final ResourceLocation texture = new ResourceLocation("pycode:textures/gui/code_book.png");
 
     /** Update ticks since the gui was opened for cursor animation */
     private int updateCount;

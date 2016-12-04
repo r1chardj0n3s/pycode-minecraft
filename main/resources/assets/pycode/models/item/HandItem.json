@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "py:items/pycode_hand"
+    "layer0": "pycode:items/pycode_hand"
   }
 }

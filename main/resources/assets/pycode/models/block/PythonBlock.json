@@ -1,6 +1,6 @@
 {
   "parent": "block/cube_all",
   "textures": {
-    "all": "py:blocks/python_block"
+    "all": "pycode:blocks/python_block"
   }
 }

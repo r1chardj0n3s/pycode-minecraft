@@ -1,6 +1,6 @@
 {
   "parent": "item/handheld",
   "textures": {
-    "layer0": "py:items/python_wand"
+    "layer0": "pycode:items/python_wand"
   }
 }

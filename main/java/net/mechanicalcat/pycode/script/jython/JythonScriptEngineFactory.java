@@ -146,7 +146,7 @@ public class JythonScriptEngineFactory implements ScriptEngineFactory {
         names = Collections.unmodifiableList(names);
         extensions = new ArrayList<String>(2);
         extensions.add("jy");
-        extensions.add("py");
+        extensions.add("pycode");
         extensions = Collections.unmodifiableList(extensions);
         mimeTypes = new ArrayList<String>(0);
         mimeTypes = Collections.unmodifiableList(mimeTypes);

@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "py:items/python_book"
+    "layer0": "pycode:items/python_book"
   }
 }
