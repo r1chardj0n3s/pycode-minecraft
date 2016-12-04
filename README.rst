@@ -197,11 +197,22 @@ You should now be able to compile and run minecraft with this mod.
 Distribution
 ------------
 
-This section TBD.
+Update the version string in::
 
+  build.gradle
+  main/resources/mcmod.info
+
+Then run::
+
+  ./gradlew build
+
+And upload the .jar file from ``build/libs/``.
 
 TODO
 ====
+
+*building*
+- distribute the build.gradle changes required to build
 
 *editing*
 - selection-based copy/cut/paste
