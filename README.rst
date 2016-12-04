@@ -8,6 +8,8 @@ in and added some extra stuff.
 
 .. image:: screenshot/editor.png
 
+Install using the download from https://minecraft.curseforge.com/projects/python-code
+
 
 What you can do
 ===============
