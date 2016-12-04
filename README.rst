@@ -46,39 +46,21 @@ Wand
 Wands are used to create Python Code Books and interact
 with Python Blocks and Python Hands.
 
-+------------+-------------+------------+
-|            |             | Lapis      |
-+------------+-------------+------------+
-|            | Redstone    | Yellow Dye |
-+------------+-------------+------------+
-| Stick      |             |            |
-+------------+-------------+------------+
+.. image:: screenshot/wand-recipe.png
 
 Python Block
 ~~~~~~~~~~~~
 
 Python blocks sit in the world and can do stuff.
 
-+-------------+-------------+------------+
-| Cobblestone | Lapis       | Cobblestone|
-+-------------+-------------+------------+
-| Lapis       | Redstone    | Yellow Dye |
-+-------------+-------------+------------+
-| Cobblestone | Yellow Dye  | Cobblestone|
-+-------------+-------------+------------+
+.. image:: screenshot/block-recipe.png
 
 Hand
 ~~~~
 
 Python hands can move around in the world and can do stuff.
 
-+-------------+-------------+------------+
-|             | Lapis       |            |
-+-------------+-------------+------------+
-| Wool        | Redstone    | Yellow Dye |
-+-------------+-------------+------------+
-|             | Wool        |            |
-+-------------+-------------+------------+
+.. image:: screenshot/hand-recipe.png
 
 Python Code Book
 ~~~~~~~~~~~~~~~~
@@ -86,6 +68,8 @@ Python Code Book
 Craft a Python Wand with a Writeable Book. It's a superior
 editable book that will also check your Python code for
 syntax errors.
+
+.. image:: screenshot/book-recipe.png
 
 
 Hand OR Block
