@@ -266,6 +266,19 @@ Then run::
 
 And upload the .jar file from ``build/libs/``.
 
+
+CHANGELOG
+=========
+
+**1.2**
+ - Moved chat/lava/water/clear to be top-level functions
+ - Lots of documentation
+**1.1**
+ - Packaging fixes (removed the .exe files from the jython redist)
+**1.0**
+ -  Initial release! Had the Python Code Book, Hand, Block and Wand.
+
+
 TODO
 ====
 
