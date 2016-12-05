@@ -43,7 +43,6 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
 
     public boolean handleInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
         this.code.put("block", new BlockMethods(this, player));
-        this.code.put("entities", EntityEnum.class);
         this.isPowered = world.isBlockPowered(pos);
         this.code.put("powered", this.isPowered);
         return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);

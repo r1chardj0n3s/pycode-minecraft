@@ -17,39 +17,4 @@ public class BaseMethods {
         this.world = world;
         this.player = player;
     }
-
-    public void chat(String message) {
-        this.player.addChatComponentMessage(new TextComponentString(message));
-    }
-
-    public void water(BlockPos pos) {
-        if (this.world.isRemote) return;
-
-        Block b = this.world.getBlockState(pos).getBlock();
-
-        if (this.world.isAirBlock(pos)) {
-            this.world.setBlockState(pos, Blocks.FLOWING_WATER.getDefaultState());
-        }
-    }
-
-    public void lava(BlockPos pos) {
-        if (this.world.isRemote) return;
-
-        Block b = this.world.getBlockState(pos).getBlock();
-
-        if (this.world.isAirBlock(pos)) {
-            this.world.setBlockState(pos, Blocks.FLOWING_LAVA.getDefaultState());
-        }
-    }
-
-    public void clear(BlockPos pos) {
-        if (this.world.isRemote) return;
-
-        Block b = this.world.getBlockState(pos).getBlock();
-
-        if (!this.world.isAirBlock(pos)) {
-            this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
-        }
-    }
-
 }

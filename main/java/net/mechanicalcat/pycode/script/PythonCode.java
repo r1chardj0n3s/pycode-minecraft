@@ -1,7 +1,9 @@
 package net.mechanicalcat.pycode.script;
 
+import net.mechanicalcat.pycode.entities.EntityEnum;
 import net.mechanicalcat.pycode.init.ModItems;
 import net.mechanicalcat.pycode.items.PythonBookItem;
+import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -13,6 +15,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import org.python.jsr223.PyScriptEngine;
 
@@ -24,6 +28,8 @@ import javax.script.ScriptException;
 public class PythonCode {
     private String code = "print 'hello world'";
     private ScriptEngine engine;
+    private World world;
+    private EntityPlayer player;
 
     public PythonCode() {
         ScriptEngineManager manager = new ScriptEngineManager();
@@ -99,11 +105,33 @@ public class PythonCode {
     }
 
     private boolean eval(WorldServer world, EntityPlayer player, BlockPos pos) {
+        this.world = world;
+        this.player = player;
         this.engine.put("world", world);
         this.engine.put("pos", pos);
         this.engine.put("player", player);
         this.engine.put("blocks", Blocks.class);
         this.engine.put("items", Items.class);
+        this.engine.put("entities", EntityEnum.class);
+
+        // I am reasonably certain that I can't just shove the methods below directly
+        // into the script engine namespace because I can't pass a Runnable as a
+        // value to be stored in the engine namespace.
+        this.engine.put("__utils__", this);
+
+        // So.. now I copy all those methods to set up the "functions"
+        try {
+            String s = "";
+            for (String n : functions) {
+                s += String.format("%s = utils.%s\n", n, n);
+            }
+            this.engine.eval(s);
+        } catch (ScriptException e) {
+            System.out.println("Error setting up utils: "  + e.getMessage());
+            return false;
+        }
+
+        // now execute the code
         try {
             this.engine.eval(this.code);
             world.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
@@ -112,6 +140,42 @@ public class PythonCode {
             world.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
             System.out.println("Error running code: " + e.getMessage());
             return false;
+        }
+    }
+
+    private String[] functions = {"chat", "water", "lava", "clear"};
+
+    public void chat(String message) {
+        this.player.addChatComponentMessage(new TextComponentString(message));
+    }
+
+    public void water(BlockPos pos) {
+        if (this.world.isRemote) return;
+
+        Block b = this.world.getBlockState(pos).getBlock();
+
+        if (this.world.isAirBlock(pos)) {
+            this.world.setBlockState(pos, Blocks.FLOWING_WATER.getDefaultState());
+        }
+    }
+
+    public void lava(BlockPos pos) {
+        if (this.world.isRemote) return;
+
+        Block b = this.world.getBlockState(pos).getBlock();
+
+        if (this.world.isAirBlock(pos)) {
+            this.world.setBlockState(pos, Blocks.FLOWING_LAVA.getDefaultState());
+        }
+    }
+
+    public void clear(BlockPos pos) {
+        if (this.world.isRemote) return;
+
+        Block b = this.world.getBlockState(pos).getBlock();
+
+        if (!this.world.isAirBlock(pos)) {
+            this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
         }
     }
 
