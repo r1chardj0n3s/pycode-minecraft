@@ -79,7 +79,6 @@ use the "hand" name here too:
     pos.up()
     pos.east()
     pos.add(1, 0, 4)   # East/X 1, Up/Y 0 and North/Z 4
-
 ``player``
   The player that loaded code into the block or hand.
 ``blocks``
@@ -90,31 +89,26 @@ use the "hand" name here too:
     blocks.BED
     blocks.LADDER
     blocks.TORCH
-
 ``items``
   Holds all of the items in the game, for example::
 
     items.TORCH
     items.IRON_SHOVEL
     items.WATER_BUCKET
-
 ``entities``
   This lists some of the entities in the game, allowing them to be spawned::
 
     entities.ZOMBIE
     entities.CREEPER
     entities.SKELETON
-
 ``chat("message")``
   Have the message appear in the in-game chat.
-
 ``water(pos)``
   Have a water source be created at the position, for example
-  ``water(pos.up())``.
-
+  ``water(pos.up())``. This will only work if the target position is clear.
 ``lava(pos)``
-  Have a water source be created at the position.
-
+  Have a water source be created at the position. This will only work if
+  the target position is clear.
 ``clear(pos)``
   Clear the block at the position nominated.
 
@@ -132,11 +126,10 @@ the Python Wand. For example, on a block::
     block.firework()
 
 
-
 Block
 -----
 
-:: 
+Doc TBD:: 
 
     block.powered (boolean)
 
@@ -147,7 +140,7 @@ Block
 Event Handlers
 ~~~~~~~~~~~~~~
 
-::
+Doc TBD::
 
   def powerOn():
     # invoked when a redstone signal powers block
@@ -167,12 +160,10 @@ or::
       block.spawn(entities.ZOMBIE)
 
 
-
-
 Hand
 ----
 
-::
+Doc TBD::
 
     hand.forward()
     hand.forward(10)
@@ -217,6 +208,18 @@ Wand
 ----
 
 Invokes run() in the hand or block, if that function is defined.
+
+
+CHANGELOG
+=========
+
+**1.2**
+ - Moved chat/lava/water/clear to be top-level functions
+ - Lots of documentation
+**1.1**
+ - Packaging fixes (removed the .exe files from the jython redist)
+**1.0**
+ -  Initial release! Had the Python Code Book, Hand, Block and Wand.
 
 
 Contributing
@@ -265,7 +268,6 @@ Then run::
 And upload the .jar file from ``build/libs/``.
 
 
-
 TODO
 ----
 
@@ -290,7 +292,7 @@ This is not an exhaustive list, and should probably be put into github issues.
 
 
 Reference
----------
+=========
 
 The ``build.gradle`` file I use::
 
@@ -362,16 +364,4 @@ The ``build.gradle`` file I use::
     }
 
     idea { module { inheritOutputDirs = true } }
-
-
-CHANGELOG
-=========
-
-**1.2**
- - Moved chat/lava/water/clear to be top-level functions
- - Lots of documentation
-**1.1**
- - Packaging fixes (removed the .exe files from the jython redist)
-**1.0**
- -  Initial release! Had the Python Code Book, Hand, Block and Wand.
 
