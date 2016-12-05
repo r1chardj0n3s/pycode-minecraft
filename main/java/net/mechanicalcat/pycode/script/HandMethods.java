@@ -130,15 +130,15 @@ public class HandMethods extends BaseMethods {
     }
 
     public void water() {
-        this.water(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
+        this.hand.code.water(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
     }
 
     public void lava() {
-        this.lava(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
+        this.hand.code.lava(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
     }
 
     public void clear() {
-        this.clear(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
+        this.hand.code.clear(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
     }
 
     public void circle(int radius, Block block, boolean fill) {

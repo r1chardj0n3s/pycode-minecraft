@@ -88,7 +88,7 @@ use the "hand" name here too:
   new pos by adding or moving the block's pos around, like::
 
     pos.up()
-    pos.left()
+    pos.east()
     pos.add(1, 0, 4)   # East/X 1, Up/Y 0 and North/Z 4
 
 ``player``
@@ -123,14 +123,13 @@ use the "hand" name here too:
   Have a water source be created at the position, for example
   ``water(pos.up())``.
 
-.. note:: Using water, lava or clear with the Python Block position will
-          replace the block!
-
 ``lava(pos)``
   Have a water source be created at the position.
 
 ``clear(pos)``
   Clear the block at the position nominated.
+
+  Note: using clear with the Python Block position will remove the block!
 
 
 Event Handlers

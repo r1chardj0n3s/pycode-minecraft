@@ -123,7 +123,7 @@ public class PythonCode {
         try {
             String s = "";
             for (String n : functions) {
-                s += String.format("%s = utils.%s\n", n, n);
+                s += String.format("%s = __utils__.%s\n", n, n);
             }
             this.engine.eval(s);
         } catch (ScriptException e) {

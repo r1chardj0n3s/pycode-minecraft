@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 
 public class HandEntity extends Entity implements IHasPythonCode {
     private static net.minecraftforge.common.IMinecartCollisionHandler collisionHandler = null;
-    private PythonCode code;
+    public PythonCode code;
 
     public HandEntity(World worldIn) {
         super(worldIn);
