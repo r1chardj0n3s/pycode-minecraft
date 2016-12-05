@@ -2,9 +2,11 @@
 Python in Minecraft
 ===================
 
-I wanted to code Python stuff in Minecraft, so I smooshed jython
-in and added some extra stuff.
-
+I wanted to code Python stuff in Minecraft, so added a Python Block and
+movable Python Hand which can be programmed with Python. The code may be
+edited in-game using standard writeable books, which suck, so I also
+created an extended book which provides more space, cursor and mouse
+control, syntax checking and some other features.
 
 .. image:: screenshot/editor.png
 
@@ -36,34 +38,21 @@ Also, Python Blocks may have other events that they handle:
 Recipes
 -------
 
-Wand
-~~~~
-
-Wands are used to create Python Code Books and interact
-with Python Blocks and Python Hands.
+**Python Wands** are used to create Python Code Books and interact
+with Python Blocks and Python Hands:
 
 .. image:: screenshot/wand-recipe.png
 
-Python Block
-~~~~~~~~~~~~
-
-Python blocks sit in the world and can do stuff.
+**Python Blocks** sit in the world and can do stuff:
 
 .. image:: screenshot/block-recipe.png
 
-Hand
-~~~~
-
-Python hands can move around in the world and can do stuff.
+**Python Hands** can move around in the world and can do stuff.
 
 .. image:: screenshot/hand-recipe.png
 
-Python Code Book
-~~~~~~~~~~~~~~~~
-
-Craft a Python Wand with a Writeable Book. It's a superior
-editable book that will also check your Python code for
-syntax errors.
+**Python Code Book** is a superior editable book that will also check
+your Python code for syntax errors:
 
 .. image:: screenshot/book-recipe.png
 
@@ -230,13 +219,23 @@ Wand
 Invokes run() in the hand or block, if that function is defined.
 
 
+Contributing
+============
+
+This mod is open source and contributors are welcomed! The project
+is hosted on `github`_. If you need help with git, please let me
+know!
+
+.. _`github`: https://github.com/r1chardj0n3s/pycode-minecraft
+
+
 Building This Mod
-=================
+-----------------
 
 Three steps are needed to build this mod:
 
 1. Get Forge (for minecraft 1.10) going, using the instructions for
-   `IntelliJ setup`_:
+   `IntelliJ setup`_.
 2. Copy the ``build.gradle`` from the `Reference`_ section below.
 3. Check this git repository out to replace the top-level "src" folder of the
    Forge setup you've created. Something like this in the folder created
@@ -266,20 +265,11 @@ Then run::
 And upload the .jar file from ``build/libs/``.
 
 
-CHANGELOG
-=========
-
-**1.2**
- - Moved chat/lava/water/clear to be top-level functions
- - Lots of documentation
-**1.1**
- - Packaging fixes (removed the .exe files from the jython redist)
-**1.0**
- -  Initial release! Had the Python Code Book, Hand, Block and Wand.
-
 
 TODO
-====
+----
+
+This is not an exhaustive list, and should probably be put into github issues.
 
 *editing*
  - selection-based copy/cut/paste
@@ -300,7 +290,7 @@ TODO
 
 
 Reference
-=========
+---------
 
 The ``build.gradle`` file I use::
 
@@ -372,4 +362,16 @@ The ``build.gradle`` file I use::
     }
 
     idea { module { inheritOutputDirs = true } }
+
+
+CHANGELOG
+=========
+
+**1.2**
+ - Moved chat/lava/water/clear to be top-level functions
+ - Lots of documentation
+**1.1**
+ - Packaging fixes (removed the .exe files from the jython redist)
+**1.0**
+ -  Initial release! Had the Python Code Book, Hand, Block and Wand.
 
