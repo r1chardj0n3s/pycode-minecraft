@@ -68,8 +68,6 @@ message appear in the in-game chat, you would use::
 From this point on, I will refer to the block name, but you can also
 use the "hand" name here too:
 
-``world``
-  The world that the block or hand belongs to.
 ``pos``
   The block-space position of the block or hand. Block space uses only
   integer (whole) numbers to locate things in the world using X
@@ -79,28 +77,6 @@ use the "hand" name here too:
     pos.up()
     pos.east()
     pos.add(1, 0, 4)   # East/X 1, Up/Y 0 and North/Z 4
-``player``
-  The player that loaded code into the block or hand.
-``blocks``
-  Holds all of the blocks in the game, for example::
-
-    blocks.STONE
-    blocks.COBBLESTONE
-    blocks.BED
-    blocks.LADDER
-    blocks.TORCH
-``items``
-  Holds all of the items in the game, for example::
-
-    items.TORCH
-    items.IRON_SHOVEL
-    items.WATER_BUCKET
-``entities``
-  This lists some of the entities in the game, allowing them to be spawned::
-
-    entities.ZOMBIE
-    entities.CREEPER
-    entities.SKELETON
 ``chat("message")``
   Have the message appear in the in-game chat.
 ``water(pos)``
@@ -131,11 +107,11 @@ Block
 
 Doc TBD:: 
 
-    block.powered (boolean)
+    block.powered        # (boolean)
 
     block.firework()
 
-    block.spawn(entities.CREEPER)   (ZOMBIE, SKELETON)
+    block.spawn('creeper')      # ('zombie', 'skeleton')
 
 Event Handlers
 ~~~~~~~~~~~~~~
@@ -157,7 +133,7 @@ For example::
 or::
 
     def powerOn():
-      block.spawn(entities.ZOMBIE)
+      block.spawn('zombie')
 
 
 Hand
@@ -171,37 +147,55 @@ Doc TBD::
     hand.reverse()
     hand.left()
     hand.right()
-    hand.face(‘north’) (south, east, west)
+    hand.face(‘north’)      #  ('south', 'east', 'west')
     hand.move(x, y, z)
+
+    hand.storePos()
+    hand.recallPos()   # moves hand back to the stored pos/facing
 
     hand.water()   # only if clear
     hand.lava()    # only if clear
     hand.clear()
 
-    hand.put(blocks.COBBLESTONE)
-    hand.line(5, blocks.STONE)
-    hand.circle(5, blocks.STONE, False) // filled
-    hand.ellipse(5, 10, blocks.STONE, True)
-    hand.door(blocks.OAK_DOOR)
-    hand.ladder(8, blocks.LADDER)
+    hand.put('cobblestone')
+    hand.line(5, 'stone')
+    hand.circle(5, 'stone')             # unfilled
+    hand.disk(5, 'stone')               # filled
+    hand.ellipse(5, 10, 'stone', True)  # True=filled
+
+    # if a block has orientation, it is taken from the hand's direction
+    hand.put(8, 'torch')
+
+    # place a bunch of the block in a vertical line
+    hand.put(8, 'ladder')
+
+    # beds and door special double blocks are handled
+    hand.put('oak_door')
+    hand.put('bed')
 
 A more complete example which creates a little two-storey
 tower with a door, bed and ladder from ground up to the roof::
 
     def run():
+      hand.down()
+      hand.disk(5, 'cobblestone')
       for i in range(8):
-        hand.ellipse(5, 5, blocks.STONE, i in (3, 7))
-        if i in (0, 4): hand.put(blocks.TORCH)
-        if i == 4:
-          hand.left()
-          hand.put(blocks.BED)
-          hand.right()
         hand.up()
-      hand.down(8)
-      hand.backward(6)
-      hand.put(blocks.OAK_DOOR)
-      hand.forward(9)
-      hand.ladder(8, blocks.LADDER)
+        if i in (3, 7):
+          hand.disk(5, 'planks')
+        hand.circle(5, 'stone')
+        if i in (0, 4):
+          hand.put('torch')
+          hand.reverse()
+          hand.put('bed')
+      hand.down(7); hand.backward(6)
+      for i in range(3): hand.clear(); hand.up()
+      hand.down(); hand.forward()
+      hand.put('cobblestone')
+      hand.down(2)
+      hand.put('wooden_door')
+      hand.forward(8)
+      hand.ladder(8, 'ladder')
 
 
 Wand
@@ -213,6 +207,8 @@ Invokes run() in the hand or block, if that function is defined.
 CHANGELOG
 =========
 
+**1.3**
+ - Replaced blocks, items and entities with string inputs.
 **1.2**
  - Moved chat/lava/water/clear to be top-level functions
  - Lots of documentation
@@ -260,6 +256,7 @@ Distribution
 Update the version string in::
 
   build.gradle
+  net.mechanicalcat.pycode.Reference.VERSION
 
 Then run::
 
@@ -289,6 +286,10 @@ This is not an exhaustive list, and should probably be put into github issues.
  - pull from inventory, push out
  - generate redstone power
  - wiring: for linking the above together? or is redstone enough?
+ - texture map replacement
+*blocks and hands*
+ - model replacement (OBJ, ?)
+ - inventory
 
 
 Reference

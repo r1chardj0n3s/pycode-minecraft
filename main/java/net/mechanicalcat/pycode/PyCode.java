@@ -24,6 +24,8 @@ public class PyCode {
 
     @EventHandler
     public void preinit(FMLPreInitializationEvent event) {
+        System.out.println(String.format("%s (%s) %s initialising",
+                Reference.MODNAME, Reference.MODID, Reference.VERSION));
         ModBlocks.init();
         ModBlocks.register();
 

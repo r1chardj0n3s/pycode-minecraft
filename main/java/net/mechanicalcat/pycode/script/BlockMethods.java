@@ -20,6 +20,7 @@ import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.registry.GameData;
 import org.python.core.PyObject;
 
 import java.util.List;
@@ -66,7 +67,11 @@ public class BlockMethods extends BaseMethods {
         this.world.spawnEntityInWorld(firework);
     }
 
-    public void spawn(EntityEnum entityType) {
+    public void spawn(String entityName) throws EntityNameError {
+        EntityEnum entityType = EntityEnum.getByName(entityName);
+        if (entityType == null) {
+            throw new EntityNameError(entityName);
+        }
         if (this.world.isRemote) return;
         entityType.spawn(this.world, this.block.getPos().add(0.5, 1.0, 0.5));
     }

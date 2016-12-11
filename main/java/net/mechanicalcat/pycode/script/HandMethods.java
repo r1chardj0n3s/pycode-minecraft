@@ -9,20 +9,34 @@ import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemBed;
 import net.minecraft.item.ItemDoor;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
+import net.minecraftforge.fml.common.FMLLog;
 import org.python.core.ArgParser;
 import org.python.core.PyObject;
 
+import javax.print.AttributeException;
+
 public class HandMethods extends BaseMethods {
     private HandEntity hand;
+    private BlockPos storedPos;
+    private EnumFacing storedFacing;
 
     public HandMethods(HandEntity hand, EntityPlayer player) {
         super(hand.getEntityWorld(), player);
         this.hand = hand;
+    }
+
+    public void storePos() {
+        this.storedPos = this.hand.getPosition();
+        this.storedFacing = this.hand.getHorizontalFacing();
+    }
+    public void recallPos() {
+        this.hand.moveToBlockPosAndAngles(this.storedPos,
+                this.storedFacing.getHorizontalAngle(), 0);
     }
 
     public void forward() {
@@ -70,7 +84,17 @@ public class HandMethods extends BaseMethods {
         this.hand.moveEntity(x, y, z);
     }
 
-    public void line(int distance, Block block) {
+    private Block getBlock(String blockName) throws BlockTypeError {
+        Block block = Block.REGISTRY.getObject(new ResourceLocation(blockName));
+        FMLLog.info("getBlock asked for '%s', got '%s'", blockName, block.getUnlocalizedName());
+        if (block.getUnlocalizedName().equals("tile.air") && !blockName.equals("air")) {
+            throw new BlockTypeError(blockName);
+        }
+        return block;
+    }
+
+    public void line(int distance, String blockName) throws BlockTypeError {
+        Block block = getBlock(blockName);
         IBlockState block_state = block.getDefaultState();
         BlockPos pos = this.hand.getPosition();
         Vec3i direction = this.hand.getHorizontalFacing().getDirectionVec();
@@ -80,11 +104,17 @@ public class HandMethods extends BaseMethods {
         }
     }
 
-    public void put(Block block) {
+    public void put(String blockName) throws BlockTypeError {
+        Block block = this.getBlock(blockName);
         IBlockState block_state = block.getDefaultState();
         BlockPos pos = this.hand.getPosition();
         EnumFacing facing = this.hand.getHorizontalFacing();
         BlockPos faced = pos.add(facing.getDirectionVec());
+
+        System.out.println("HAI");
+        System.out.println(block);
+        System.out.println(BlockDoor.class);
+        System.out.println(block instanceof BlockDoor);
 
         if (block instanceof BlockDoor) {
             ItemDoor.placeDoor(this.world, faced, facing, block, true);
@@ -117,7 +147,8 @@ public class HandMethods extends BaseMethods {
         }
     }
 
-    public void ladder(int height, Block block) {
+    public void ladder(int height, String blockName) throws BlockTypeError {
+        Block block = getBlock(blockName);
         IBlockState block_state = block.getDefaultState().withProperty(BlockLadder.FACING,
                 this.hand.getHorizontalFacing().getOpposite());
         BlockPos pos = this.hand.getPosition();
@@ -141,7 +172,15 @@ public class HandMethods extends BaseMethods {
         this.hand.code.clear(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
     }
 
-    public void circle(int radius, Block block, boolean fill) {
+    public void circle(int radius, String blockName) throws BlockTypeError {
+        circle(radius, blockName, false);
+    }
+    public void disk(int radius, String blockName) throws BlockTypeError {
+        circle(radius, blockName, true);
+    }
+
+    private void circle(int radius, String blockName, boolean fill) throws BlockTypeError {
+        Block block = getBlock(blockName);
         IBlockState block_state = block.getDefaultState();
         BlockPos pos = this.hand.getPosition();
 
@@ -171,7 +210,8 @@ public class HandMethods extends BaseMethods {
         }
     }
 
-    public void ellipse(int radius_x, int radius_z, Block block, boolean fill) {
+    public void ellipse(int radius_x, int radius_z, String blockName, boolean fill) throws BlockTypeError {
+        Block block = getBlock(blockName);
         IBlockState block_state = block.getDefaultState();
         BlockPos pos = this.hand.getPosition();
 

@@ -107,12 +107,9 @@ public class PythonCode {
     private boolean eval(WorldServer world, EntityPlayer player, BlockPos pos) {
         this.world = world;
         this.player = player;
-        this.engine.put("world", world);
-        this.engine.put("pos", pos);
-        this.engine.put("player", player);
-        this.engine.put("blocks", Blocks.class);
-        this.engine.put("items", Items.class);
-        this.engine.put("entities", EntityEnum.class);
+//        this.engine.put("world", world);
+//        this.engine.put("player", player);
+        this.engine.put("pos", new MyBlockPos(pos));
 
         // I am reasonably certain that I can't just shove the methods below directly
         // into the script engine namespace because I can't pass a Runnable as a
@@ -149,6 +146,10 @@ public class PythonCode {
         this.player.addChatComponentMessage(new TextComponentString(message));
     }
 
+    // MyBlockPos for python code, other one for "internal" use without shenanigans
+    public void water(MyBlockPos pos) {
+        this.water(pos.blockPos);
+    }
     public void water(BlockPos pos) {
         if (this.world.isRemote) return;
 
@@ -159,6 +160,9 @@ public class PythonCode {
         }
     }
 
+    public void lava(MyBlockPos pos) {
+        this.lava(pos.blockPos);
+    }
     public void lava(BlockPos pos) {
         if (this.world.isRemote) return;
 
@@ -169,6 +173,9 @@ public class PythonCode {
         }
     }
 
+    public void clear(MyBlockPos pos) {
+        this.clear(pos.blockPos);
+    }
     public void clear(BlockPos pos) {
         if (this.world.isRemote) return;
 

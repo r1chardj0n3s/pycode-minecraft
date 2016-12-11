@@ -25,6 +25,16 @@ public enum EntityEnum {
     }
 
     @Nullable
+    public static EntityEnum getByName(String name) {
+        for (EntityEnum e : EntityEnum.values()) {
+            if (e.name.equals(name)) {
+                return e;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
     public Entity spawn(World world, BlockPos pos) {
         Constructor<?> cons;
         Entity entity;
