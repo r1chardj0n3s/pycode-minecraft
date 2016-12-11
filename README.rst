@@ -170,7 +170,7 @@ Doc TBD::
     hand.put(8, 'ladder')
 
     # beds and door special double blocks are handled
-    hand.put('oak_door')
+    hand.put('wooden_door')
     hand.put('bed')
 
 A more complete example which creates a little two-storey
