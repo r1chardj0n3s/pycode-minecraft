@@ -144,6 +144,7 @@ Doc TBD::
     hand.forward()
     hand.forward(10)
     hand.backward(5)
+    hand.sidle(5)           # move sideways left
     hand.reverse()
     hand.left()
     hand.right()
@@ -159,7 +160,10 @@ Doc TBD::
 
     hand.put('cobblestone')
     hand.line(5, 'stone')
-    hand.circle(5, 'stone')             # unfilled
+    hand.wall(5, 3, 'planks')           # depth, height
+    hand.floor(5, 5, 'stonebrick')      # width, depth
+    hand.cube(5, 5, 4, 'stonebrick')    # width, height, depth; is hollow
+    hand.circle(5, 'stone')             # unfilled, centered on hand
     hand.disk(5, 'stone')               # filled
     hand.ellipse(5, 10, 'stone', True)  # True=filled
 
@@ -172,6 +176,25 @@ Doc TBD::
     # beds and door special double blocks are handled
     hand.put('wooden_door')
     hand.put('bed')
+
+An example making a little house::
+
+    hand.down(1)
+    hand.cube(7, 5, 7, 'planks')
+    hand.up(1)
+    hand.sidle(-3)
+    hand.put('wooden_door')
+    hand.forward(3)
+    hand.put('torch')
+    hand.forward()
+    hand.put('bed')
+    hand.left()
+    hand.forward(1)
+    hand.put('crafting_table')
+    hand.sidle(1)
+    hand.put('chest')
+    hand.sidle(1)
+    hand.put('furnace')
 
 A more complete example which creates a little two-storey
 tower with a door, bed and ladder from ground up to the roof::
@@ -207,6 +230,10 @@ Invokes run() in the hand or block, if that function is defined.
 CHANGELOG
 =========
 
+**1.4**
+ - Added floor(), wall() and cube()
+ - Added sidle() for moving sideways
+ - Correct some put() attachment oddities, is more consistent now
 **1.3**
  - Replaced blocks, items and entities with string inputs.
 **1.2**

@@ -13,6 +13,8 @@ import net.minecraft.item.ItemDoor;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraftforge.fml.common.FMLLog;
 import org.python.core.ArgParser;
@@ -51,6 +53,18 @@ public class HandMethods extends BaseMethods {
     }
     public void backward(float distance) {
         this.hand.moveForward(-distance);
+    }
+
+    public void sidle() {
+        this.sidle(1);
+    }
+    public void sidle(float distance) {
+        Vec3d pos = this.hand.getPositionVector();
+        float rotation = this.hand.rotationYaw - 90;
+        float f1 = -MathHelper.sin(rotation * 0.017453292F);
+        float f2 = MathHelper.cos(rotation * 0.017453292F);
+        pos = pos.addVector(distance * f1, 0, distance * f2);
+        this.hand.setPosition(pos.xCoord, pos.yCoord, pos.zCoord);
     }
 
     public void face(String direction) {
@@ -93,28 +107,16 @@ public class HandMethods extends BaseMethods {
         return block;
     }
 
-    public void line(int distance, String blockName) throws BlockTypeError {
-        Block block = getBlock(blockName);
-        IBlockState block_state = block.getDefaultState();
-        BlockPos pos = this.hand.getPosition();
-        Vec3i direction = this.hand.getHorizontalFacing().getDirectionVec();
-        for (int i=0; i<distance; i++) {
-            pos = pos.add(direction);
-            this.world.setBlockState(pos, block_state);
-        }
-    }
-
     public void put(String blockName) throws BlockTypeError {
         Block block = this.getBlock(blockName);
         IBlockState block_state = block.getDefaultState();
         BlockPos pos = this.hand.getPosition();
         EnumFacing facing = this.hand.getHorizontalFacing();
+        EnumFacing opposite = facing.getOpposite();
         BlockPos faced = pos.add(facing.getDirectionVec());
 
-        System.out.println("HAI");
-        System.out.println(block);
-        System.out.println(BlockDoor.class);
-        System.out.println(block instanceof BlockDoor);
+        // TODO make .fine()
+        FMLLog.info("Putting %s at %s", block, pos);
 
         if (block instanceof BlockDoor) {
             ItemDoor.placeDoor(this.world, faced, facing, block, true);
@@ -136,13 +138,44 @@ public class HandMethods extends BaseMethods {
                 PropertyDirection direction = (PropertyDirection) block.getClass().getField("FACING").get(block);
                 if (this.world.isAirBlock(faced)) {
                     pos = faced;
+                    // check whether the next pos along (pos -> faced -> farpos) is solid (attachable)
+                    BlockPos farpos = faced.add(facing.getDirectionVec());
+                    if (this.hand.worldObj.isSideSolid(farpos, opposite, true)) {
+                        // attach in faced pos on farpos
+                        block_state = block_state.withProperty(direction, opposite);
+                    }
                 } else {
-                    // attach
-                    block_state = block_state.withProperty(direction, facing.getOpposite());
+                    if (this.hand.worldObj.isSideSolid(faced, opposite, true)) {
+                        // attach in current pos on faced pos
+                        block_state = block_state.withProperty(direction, opposite);
+                    }
                 }
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 pos = faced;
             }
+            this.world.setBlockState(pos, block_state);
+        }
+    }
+
+    public void water() {
+        this.hand.code.water(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
+    }
+
+    public void lava() {
+        this.hand.code.lava(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
+    }
+
+    public void clear() {
+        this.hand.code.clear(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
+    }
+
+    public void line(int distance, String blockName) throws BlockTypeError {
+        Block block = getBlock(blockName);
+        IBlockState block_state = block.getDefaultState();
+        BlockPos pos = this.hand.getPosition();
+        Vec3i direction = this.hand.getHorizontalFacing().getDirectionVec();
+        for (int i=0; i<distance; i++) {
+            pos = pos.add(direction);
             this.world.setBlockState(pos, block_state);
         }
     }
@@ -160,16 +193,56 @@ public class HandMethods extends BaseMethods {
         }
     }
 
-    public void water() {
-        this.hand.code.water(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
+    public void floor(int width, int depth, String blockName) throws BlockTypeError {
+        BlockPos pos = this.hand.getPosition();
+        EnumFacing facing = this.hand.getHorizontalFacing();
+        this.floor(width, depth, blockName, pos.offset(facing), facing);
     }
 
-    public void lava() {
-        this.hand.code.lava(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
+    private void floor(int width, int depth, String blockName, BlockPos pos, EnumFacing facing) throws BlockTypeError {
+        Block block = getBlock(blockName);
+        IBlockState block_state = block.getDefaultState();
+        Vec3i front = facing.getDirectionVec();
+        Vec3i side = facing.rotateY().getDirectionVec();
+        for (int j=0; j < width; j++) {
+            BlockPos set = pos.add(side.getX() * j, 0, side.getZ() * j);
+            for (int i = 0; i < depth; i++) {
+                this.world.setBlockState(set, block_state);
+                set = set.add(front);
+            }
+        }
     }
 
-    public void clear() {
-        this.hand.code.clear(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
+    public void wall(int depth, int height, String blockName) throws BlockTypeError {
+        BlockPos pos = this.hand.getPosition();
+        EnumFacing facing = this.hand.getHorizontalFacing();
+        wall(depth, height, blockName, pos.offset(facing), facing);
+    }
+
+    private void wall(int depth, int height, String blockName, BlockPos pos, EnumFacing facing) throws BlockTypeError {
+        Block block = getBlock(blockName);
+        IBlockState block_state = block.getDefaultState();
+        Vec3i front = facing.getDirectionVec();
+        for (int j=0; j<height; j++) {
+            BlockPos set = pos.add(0, j, 0);
+            for (int i = 0; i < depth; i++) {
+                this.world.setBlockState(set, block_state);
+                set = set.add(front);
+            }
+        }
+    }
+
+    public void cube(int width, int height, int depth, String blockName) throws BlockTypeError {
+        BlockPos pos = this.hand.getPosition();
+        EnumFacing facing = this.hand.getHorizontalFacing();
+        pos = pos.offset(facing);
+        this.floor(width, depth, blockName, pos, facing);
+        this.floor(width, depth, blockName, pos.offset(EnumFacing.UP, height), facing);
+        for (int i=0; i<4; i++) {
+            this.wall(depth, height, blockName, pos, facing);
+            pos = pos.offset(facing, depth-1);
+            facing = facing.rotateY();
+        }
     }
 
     public void circle(int radius, String blockName) throws BlockTypeError {
