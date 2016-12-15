@@ -7,6 +7,8 @@ import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -38,7 +40,7 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
         }
         PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
         if (code_block != null) {
-            code_block.handleInteraction(world, playerIn, pos, heldItem);
+            code_block.handleItemInteraction(world, playerIn, pos, heldItem);
         }
         return true;
     }
@@ -55,6 +57,20 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
     @Override
     public TileEntity createNewTileEntity(World world, int meta) {
         return new PyCodeBlockTileEntity();
+    }
+
+    @Override
+    public void onEntityWalk(World world, BlockPos pos, Entity entity) {
+        if (world.isRemote) {
+            // don't run on the client
+            return;
+        }
+        PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
+        if (entity instanceof EntityPlayer) {
+            code_block.handleEntityInteraction(entity, "onPlayerWalk");
+        } else if (entity instanceof EntityLivingBase) {
+            code_block.handleEntityInteraction(entity, "onEntityWalk");
+        }
     }
 
 //    public int tickRate(World world) {

@@ -24,7 +24,7 @@ public class PyCodeEventHandler {
 //        System.out.println("CLICK ON: " + block.getUnlocalizedName());
 //        if (entity instanceof PyCodeBlockTileEntity) {
 //            PyCodeBlockTileEntity code_block = (PyCodeBlockTileEntity) entity;
-//            if (code_block.handleInteraction(world, player, pos, event.getItemStack())) {
+//            if (code_block.handleItemInteraction(world, player, pos, event.getItemStack())) {
 //                event.setCanceled(true);
 //            }
 //        }
@@ -43,7 +43,7 @@ public class PyCodeEventHandler {
 //
 //        Entity other = event.getTarget();
 //        if (other instanceof IHasPythonCode) {
-//            if (((IHasPythonCode) other).handleInteraction(world, event.getEntityPlayer(), other.getPosition(), event.getItemStack())) {
+//            if (((IHasPythonCode) other).handleItemInteraction(world, event.getEntityPlayer(), other.getPosition(), event.getItemStack())) {
 //                event.setCanceled(true);
 //                event.setResult(Event.Result.DENY);
 //            }

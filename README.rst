@@ -108,9 +108,7 @@ Block
 Doc TBD:: 
 
     block.powered        # (boolean)
-
     block.firework()
-
     block.spawn('creeper')      # ('zombie', 'skeleton')
 
 Event Handlers
@@ -124,6 +122,10 @@ Doc TBD::
     # invoked when redstone signal stops powering block
   def tick():
     # invoked every server tick (20 times a second?)
+  def onPlayerWalk(player):
+    # invoked when the player walks over the block
+  def onEntityWalk(entity):
+    # invoked when a non-player entity walks over the block
 
 For example::
 

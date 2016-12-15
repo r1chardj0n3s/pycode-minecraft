@@ -10,5 +10,5 @@ import net.minecraft.world.World;
 
 public interface IHasPythonCode {
     public void initCode();
-    public boolean handleInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem);
+    public boolean handleItemInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem);
 }

@@ -18,6 +18,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.FMLLog;
+import org.python.core.Py;
+import org.python.core.PyObject;
 import org.python.jsr223.PyScriptEngine;
 
 import javax.script.ScriptContext;
@@ -35,9 +38,9 @@ public class PythonCode {
         ScriptEngineManager manager = new ScriptEngineManager();
         engine = manager.getEngineByName("python");
         if (engine == null) {
-            System.out.println("FAILED to get Python");
+            FMLLog.severe("FAILED to get Python");
         } else {
-            System.out.println("Got Python");
+            FMLLog.fine("Got Python");
         }
     }
 
@@ -57,13 +60,35 @@ public class PythonCode {
         return this.engine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey(key);
     }
 
-    public void invoke(WorldServer world, BlockPos pos, String method) {
-        // TODO Make sure there's a method called "method" in there
+    private void failz0r(WorldServer world, BlockPos pos, String fmt, Object... args) {
+        world.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
+        FMLLog.severe(fmt, args);
+    }
+
+    public void invoke(WorldServer world, BlockPos pos, String method, Entity entity) {
+        // wrap entity in MyEntity!
+        PyObject func = (PyObject) this.engine.get(method);
+        if (func == null) {
+            FMLLog.fine("No method '%s'", method);
+            return;
+        }
         try {
-            this.engine.eval(method + "()");
-        } catch (ScriptException e) {
-            world.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
-            System.out.println("Error running code: " + e.getMessage());
+            func.__call__(Py.java2py(entity));
+        } catch (NullPointerException e) {
+            this.failz0r(world, pos, "Error running code: %s", e.getMessage());
+        }
+    }
+
+    public void invoke(WorldServer world, BlockPos pos, String method) {
+        PyObject func = (PyObject) this.engine.get(method);
+        if (func == null) {
+            this.failz0r(world, pos, "Unknown function '%s'", method);
+            return;
+        }
+        try {
+            func.__call__();
+        } catch (NullPointerException e) {
+            this.failz0r(world, pos, "Error running code: ", e.getMessage());
         }
     }
 
@@ -86,7 +111,7 @@ public class PythonCode {
                 pages = bookData.getTagList("pages", 8);
             } catch (NullPointerException e) {
                 // this should not happen!
-                System.out.println("Could not get pages from the book!?");
+                this.failz0r(world, pos, "Could not get pages from the book!?");
                 return true;
             }
             // collapse the pages into one string
@@ -97,7 +122,7 @@ public class PythonCode {
                 sbStr.append(s);
             }
             this.code = sbStr.toString();
-            System.out.println("Code set to:" + this.code);
+            FMLLog.fine("Code set to: %s", this.code);
             this.eval(world, player, pos);
             return true;
         }
@@ -124,7 +149,7 @@ public class PythonCode {
             }
             this.engine.eval(s);
         } catch (ScriptException e) {
-            System.out.println("Error setting up utils: "  + e.getMessage());
+            this.failz0r(world, pos, "Error setting up utils: ", e.getMessage());
             return false;
         }
 
@@ -134,8 +159,7 @@ public class PythonCode {
             world.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
             return true;
         } catch (ScriptException e) {
-            world.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
-            System.out.println("Error running code: " + e.getMessage());
+            this.failz0r(world, pos, "Error running code: ", e.getMessage());
             return false;
         }
     }

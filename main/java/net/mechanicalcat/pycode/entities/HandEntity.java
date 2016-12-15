@@ -40,7 +40,7 @@ public class HandEntity extends Entity implements IHasPythonCode {
         this.code = new PythonCode();
     }
 
-    public boolean handleInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
+    public boolean handleItemInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
         this.code.put("hand", new HandMethods(this, player));
         return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);
     }
@@ -82,7 +82,7 @@ public class HandEntity extends Entity implements IHasPythonCode {
 
     public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand) {
         World world = player.getEntityWorld();
-        return world.isRemote || this.handleInteraction(world, player, this.getPosition(), stack);
+        return world.isRemote || this.handleItemInteraction(world, player, this.getPosition(), stack);
     }
 
     /**
