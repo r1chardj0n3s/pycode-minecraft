@@ -87,4 +87,8 @@ public class MyBlockPos {
     {
         return this.blockPos.offset(EnumFacing.EAST, n);
     }
+
+    public String toString() {
+        return this.blockPos.toString();
+    }
 }

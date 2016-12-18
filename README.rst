@@ -105,9 +105,9 @@ the Python Wand. For example, on a block::
 Block
 -----
 
-Doc TBD:: 
+Doc TBD::
 
-    block.powered        # (boolean)
+    block.isPowered()           # returns boolean
     block.firework()
     block.spawn('creeper')      # ('zombie', 'skeleton')
 
@@ -138,6 +138,33 @@ or::
       block.spawn('zombie')
 
 
+Players and Entities
+~~~~~~~~~~~~~~~~~~~~
+
+Players and Entities passed into onPlayerWalk / onEntityWalk have
+the following methods::
+
+  player.move(x, y, z)      # move by that amount
+
+Living entities have the following methods::
+
+  player.potion("jump")     # affect with a potion effect name - only living entities
+                            # the REFERENCE.txt file lists potion names
+
+
+Example
+~~~~~~~
+
+Give the player walking over the block a speed buff or slowness nerf
+depending on whether the block has redstone power or not::
+
+   def onPlayerWalk(player):
+     if block.isPowered():
+       player.potion("speed")
+     else:
+       player.potion("slowness")
+
+
 Hand
 ----
 
@@ -160,7 +187,7 @@ Doc TBD::
     hand.lava()    # only if clear
     hand.clear()
 
-    hand.put('cobblestone')
+    hand.put('cobblestone')             # the REFERENCE.txt file lists block names
     hand.line(5, 'stone')
     hand.wall(5, 3, 'planks')           # depth, height
     hand.floor(5, 5, 'stonebrick')      # width, depth
@@ -232,6 +259,9 @@ Invokes run() in the hand or block, if that function is defined.
 CHANGELOG
 =========
 
+**1.5**
+ - Add player/entity walk event
+ - Initialise Python on startup, rather than on first object use in game
 **1.4**
  - Added floor(), wall() and cube()
  - Added sidle() for moving sideways

@@ -1,13 +1,12 @@
 package net.mechanicalcat.pycode.script;
 
-import net.mechanicalcat.pycode.entities.EntityEnum;
+import net.mechanicalcat.pycode.PythonEngine;
 import net.mechanicalcat.pycode.init.ModItems;
 import net.mechanicalcat.pycode.items.PythonBookItem;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemWritableBook;
@@ -21,31 +20,24 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLLog;
 import org.python.core.Py;
 import org.python.core.PyObject;
-import org.python.jsr223.PyScriptEngine;
 
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 
 public class PythonCode {
     private String code = "print 'hello world'";
-    private ScriptEngine engine;
+    private SimpleScriptContext context;
+    private Bindings bindings;
     private World world;
     private EntityPlayer player;
 
     public PythonCode() {
-        ScriptEngineManager manager = new ScriptEngineManager();
-        engine = manager.getEngineByName("python");
-        if (engine == null) {
-            FMLLog.severe("FAILED to get Python");
-        } else {
-            FMLLog.fine("Got Python");
-        }
+        this.context = new SimpleScriptContext();
+        this.bindings = new SimpleBindings();
+        this.context.setBindings(this.bindings, ScriptContext.ENGINE_SCOPE);
     }
 
     public void check(String code) throws ScriptException {
-        ((PyScriptEngine) this.engine).compile(code);
+        PythonEngine.compile(code);
     }
 
     public void setCodeString(String code) {
@@ -53,11 +45,11 @@ public class PythonCode {
     }
 
     public void put(String key,Object val) {
-        this.engine.put(key, val);
+        this.bindings.put(key, val);
     }
 
     public boolean hasKey(String key) {
-        return this.engine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey(key);
+        return this.bindings.containsKey(key);
     }
 
     private void failz0r(WorldServer world, BlockPos pos, String fmt, Object... args) {
@@ -65,9 +57,9 @@ public class PythonCode {
         FMLLog.severe(fmt, args);
     }
 
-    public void invoke(WorldServer world, BlockPos pos, String method, Entity entity) {
+    public void invoke(WorldServer world, BlockPos pos, String method, MyEntity entity) {
         // wrap entity in MyEntity!
-        PyObject func = (PyObject) this.engine.get(method);
+        PyObject func = (PyObject) this.bindings.get(method);
         if (func == null) {
             FMLLog.fine("No method '%s'", method);
             return;
@@ -80,7 +72,7 @@ public class PythonCode {
     }
 
     public void invoke(WorldServer world, BlockPos pos, String method) {
-        PyObject func = (PyObject) this.engine.get(method);
+        PyObject func = (PyObject) this.bindings.get(method);
         if (func == null) {
             this.failz0r(world, pos, "Unknown function '%s'", method);
             return;
@@ -132,14 +124,14 @@ public class PythonCode {
     private boolean eval(WorldServer world, EntityPlayer player, BlockPos pos) {
         this.world = world;
         this.player = player;
-//        this.engine.put("world", world);
-//        this.engine.put("player", player);
-        this.engine.put("pos", new MyBlockPos(pos));
+//        this.bindings.put("world", world);
+        this.bindings.put("player", new MyEntityPlayer(player));
+        this.bindings.put("pos", new MyBlockPos(pos));
 
         // I am reasonably certain that I can't just shove the methods below directly
         // into the script engine namespace because I can't pass a Runnable as a
         // value to be stored in the engine namespace.
-        this.engine.put("__utils__", this);
+        this.bindings.put("__utils__", this);
 
         // So.. now I copy all those methods to set up the "functions"
         try {
@@ -147,7 +139,7 @@ public class PythonCode {
             for (String n : functions) {
                 s += String.format("%s = __utils__.%s\n", n, n);
             }
-            this.engine.eval(s);
+            PythonEngine.eval(s, this.context);
         } catch (ScriptException e) {
             this.failz0r(world, pos, "Error setting up utils: ", e.getMessage());
             return false;
@@ -155,7 +147,7 @@ public class PythonCode {
 
         // now execute the code
         try {
-            this.engine.eval(this.code);
+            PythonEngine.eval(this.code, this.context);
             world.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
             return true;
         } catch (ScriptException e) {

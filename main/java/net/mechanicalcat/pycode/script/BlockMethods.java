@@ -34,6 +34,8 @@ public class BlockMethods extends BaseMethods {
     }
     protected World getWorld() {return null;}
 
+    public boolean isPowered() { return this.block.isPowered; }
+
     // PyObject[] args, String[] keywords -- http://www.jython.org/archive/22/userfaq.html#supporting-args-and-kw-in-java-methods
     public void firework() {
         if (this.world.isRemote) return;

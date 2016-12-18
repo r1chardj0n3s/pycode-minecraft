@@ -1,6 +1,9 @@
 package net.mechanicalcat.pycode.blocks;
 
 import net.mechanicalcat.pycode.Reference;
+import net.mechanicalcat.pycode.script.MyEntity;
+import net.mechanicalcat.pycode.script.MyEntityLiving;
+import net.mechanicalcat.pycode.script.MyEntityPlayer;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
@@ -67,9 +70,9 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
         }
         PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
         if (entity instanceof EntityPlayer) {
-            code_block.handleEntityInteraction(entity, "onPlayerWalk");
+            code_block.handleEntityInteraction(new MyEntityPlayer((EntityPlayer) entity), "onPlayerWalk");
         } else if (entity instanceof EntityLivingBase) {
-            code_block.handleEntityInteraction(entity, "onEntityWalk");
+            code_block.handleEntityInteraction(new MyEntityLiving((EntityLivingBase)entity), "onEntityWalk");
         }
     }
 

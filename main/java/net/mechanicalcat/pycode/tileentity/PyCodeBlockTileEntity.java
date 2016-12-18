@@ -3,6 +3,7 @@ package net.mechanicalcat.pycode.tileentity;
 import net.mechanicalcat.pycode.entities.EntityEnum;
 import net.mechanicalcat.pycode.script.BlockMethods;
 import net.mechanicalcat.pycode.script.IHasPythonCode;
+import net.mechanicalcat.pycode.script.MyEntity;
 import net.mechanicalcat.pycode.script.PythonCode;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -42,13 +43,12 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
     public Entity getEntity() { return null; }
 
     public boolean handleItemInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
-        this.code.put("block", new BlockMethods(this, player));
         this.isPowered = world.isBlockPowered(pos);
-        this.code.put("powered", this.isPowered);
+        this.code.put("block", new BlockMethods(this, player));
         return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);
     }
 
-    public void handleEntityInteraction(Entity entity, String method) {
+    public void handleEntityInteraction(MyEntity entity, String method) {
         if (!this.hasWorldObj()) return;
         if (this.worldObj.isRemote) return;
         this.code.invoke((WorldServer) this.worldObj, this.pos, method, entity);
@@ -71,7 +71,6 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
             }
         }
         this.isPowered = isPowered;
-        this.code.put("powered", this.isPowered);
         if (this.code.hasKey("tick")) {
             this.code.invoke((WorldServer) this.worldObj, pos, "tick");
         }

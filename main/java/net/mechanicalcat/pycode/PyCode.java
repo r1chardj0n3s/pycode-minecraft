@@ -44,6 +44,7 @@ public class PyCode {
     @EventHandler
     public void init(FMLInitializationEvent event) {
         proxy.init();
+        PythonEngine.getEngine();
     }
 
     @EventHandler
