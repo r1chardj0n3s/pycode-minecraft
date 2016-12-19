@@ -209,6 +209,10 @@ Doc TBD::
     hand.put('wooden_door')
     hand.put('bed')
 
+
+Examples
+~~~~~~~~
+
 An example making a little house::
 
     hand.down(1)
@@ -347,7 +351,6 @@ Distribution
 Update the version string in::
 
   build.gradle
-  net.mechanicalcat.pycode.Reference.VERSION
 
 Then run::
 
