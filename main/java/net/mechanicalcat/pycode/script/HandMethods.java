@@ -24,21 +24,14 @@ import javax.print.AttributeException;
 
 public class HandMethods extends BaseMethods {
     private HandEntity hand;
-    private BlockPos storedPos;
-    private EnumFacing storedFacing;
 
     public HandMethods(HandEntity hand, EntityPlayer player) {
         super(hand.getEntityWorld(), player);
         this.hand = hand;
     }
 
-    public void storePos() {
-        this.storedPos = this.hand.getPosition();
-        this.storedFacing = this.hand.getHorizontalFacing();
-    }
-    public void recallPos() {
-        this.hand.moveToBlockPosAndAngles(this.storedPos,
-                this.storedFacing.getHorizontalAngle(), 0);
+    public PyObject remember() {
+        return new HandStateContextManager(this.hand);
     }
 
     public void forward() {

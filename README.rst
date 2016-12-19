@@ -180,8 +180,11 @@ Doc TBD::
     hand.face(‘north’)      #  ('south', 'east', 'west')
     hand.move(x, y, z)
 
-    hand.storePos()
-    hand.recallPos()   # moves hand back to the stored pos/facing
+    # remember where the hand is and restore it after we do some things
+    with hand.remember() as pos:
+      hand.left()
+      hand.forward(10)
+    # hand is now back at pos, and has the same facing
 
     hand.water()   # only if clear
     hand.lava()    # only if clear
@@ -226,28 +229,55 @@ An example making a little house::
     hand.put('furnace')
 
 A more complete example which creates a little two-storey
-tower with a door, bed and ladder from ground up to the roof::
+tower with a door, bed and ladder from ground up to the roof.
+Put each of these functions on a different page of the book::
 
-    def run():
-      hand.down()
-      hand.disk(5, 'cobblestone')
-      for i in range(8):
-        hand.up()
-        if i in (3, 7):
-          hand.disk(5, 'planks')
-        hand.circle(5, 'stone')
-        if i in (0, 4):
-          hand.put('torch')
-          hand.reverse()
-          hand.put('bed')
-      hand.down(7); hand.backward(6)
-      for i in range(3): hand.clear(); hand.up()
-      hand.down(); hand.forward()
-      hand.put('cobblestone')
-      hand.down(2)
-      hand.put('wooden_door')
-      hand.forward(8)
-      hand.ladder(8, 'ladder')
+   # page 1: the basic tower structure
+   def tower():
+     hand.down()
+     hand.disk(5, 'cobblestone')
+     for i in range(8):
+       hand.up()
+       if i in (3, 7):
+         hand.disk(5, 'planks')
+       hand.circle(5, 'stone')
+       if i in (0, 4):
+         hand.put('torch')
+
+   # page 2: door and ladder access
+   def access():
+     hand.backward(6)
+     for i in range(3):
+       hand.clear()
+       hand.up()
+     hand.down()
+     hand.forward()
+     hand.put('cobblestone')
+     hand.put('torch')
+     hand.down(2)
+     hand.put('wooden_door')
+     hand.forward(8)
+     hand.ladder(8, 'ladder')
+
+   # page 3: ground floor furnishings
+   def furnish():
+     hand.left()
+     hand.forward(2)
+     hand.put('bed')
+     hand.sidle(1)
+     hand.put('crafting_table')
+     hand.sidle(1)
+     hand.put('chest')
+     hand.sidle(1)
+     hand.put('furnace')
+
+   # page 4: the complete tower
+   def run():
+     with hand.remember():
+       tower()
+     with hand.remember():
+       access()
+     furnish()
 
 
 Wand
@@ -259,6 +289,8 @@ Invokes run() in the hand or block, if that function is defined.
 CHANGELOG
 =========
 
+**1.6**
+ - Altered the hand store/restore position methods to be a context manager
 **1.5**
  - Add player/entity walk event
  - Initialise Python on startup, rather than on first object use in game
