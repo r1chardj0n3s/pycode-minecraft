@@ -212,7 +212,6 @@ Doc TBD::
 
     # beds and door special double blocks are handled
     hand.put('wooden_door')
-    hand.put('wooden_door', replace=True)  # don't try to surface mount, just replace
     hand.put('bed')
 
     # colored blocks
@@ -233,22 +232,22 @@ Examples
 
 An example making a little house::
 
-    hand.down(1)
-    hand.cube(7, 5, 7, 'planks')
-    hand.up(1)
-    hand.sidle(-3)
-    hand.put('wooden_door', replace=True)
-    hand.forward(3)
-    hand.put('torch')
-    hand.forward()
-    hand.put('bed')
-    hand.left()
-    hand.forward(1)
-    hand.put('crafting_table')
-    hand.sidle(1)
-    hand.put('chest')
-    hand.sidle(1)
-    hand.put('furnace')
+   hand.down(1)
+   hand.cube(7, 5, 7, 'planks')
+   hand.up(1)
+   hand.sidle(-3)
+   hand.put('wooden_door')
+   hand.forward(3)
+   hand.put('torch')
+   hand.forward()
+   hand.put('bed')
+   hand.left()
+   hand.forward(1)
+   hand.put('crafting_table')
+   hand.sidle(1)
+   hand.put('chest')
+   hand.sidle(1)
+   hand.put('furnace')
 
 A more complete example which creates a little two-storey
 tower with a door, bed and ladder from ground up to the roof.
@@ -274,8 +273,10 @@ Put each of these functions on a different page of the book::
        hand.up()
      hand.down()
      hand.forward()
-     hand.put('cobblestone')
+     hand.put('planks')
+     hand.backward()
      hand.put('torch')
+     hand.forward()
      hand.down(2)
      hand.put('wooden_door')
      hand.forward(8)
@@ -317,6 +318,8 @@ CHANGELOG
    which allows placing colored blocks (wool, glass, ...) and stairs. Also
    allows facing to be different to that of the hand when placed.
  - Added top-level "colors" list of the standard Minecraft color names
+ - Hand no longer put()s things in its current position, always puts in faced
+   position
 **1.5**
  - Add player/entity walk event
  - Initialise Python on startup, rather than on first object use in game

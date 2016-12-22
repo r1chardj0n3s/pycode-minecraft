@@ -117,12 +117,9 @@ public class HandMethods extends BaseMethods {
         EnumFacing opposite = handFacing.getOpposite();
         BlockPos faced = pos.add(handFacing.getDirectionVec());
         PropertyDirection direction;
-        boolean replace = false;        // do not try to surface attach, always replace
 
         for (int i=0; i<kws.length; i++) {
-            if (kws[i].equals("replace")) {
-                replace = args[i + 1].asInt() != 0;
-            } else if (kws[i].equals("color")) {
+            if (kws[i].equals("color")) {
                 String color = args[i + 1].toString();
                 EnumDyeColor dye = PythonCode.COLORMAP.get(color);
                 if (dye == null) {
@@ -157,7 +154,6 @@ public class HandMethods extends BaseMethods {
                 }
                 block_state = block_state.withProperty(direction, facing);
                 facingSet = true;
-                pos = faced;
             } else if (kws[i].equals("half") && block instanceof BlockStairs) {
                 String s = args[i + 1].toString();
                 BlockStairs.EnumHalf half;
@@ -202,11 +198,9 @@ public class HandMethods extends BaseMethods {
 
         // if we haven't had an explicit facing set then try to determine a good one
         if (!facingSet) {
-            // try to automatically determine facing from the hand facing
             try {
                 direction = (PropertyDirection) block.getClass().getField("FACING").get(block);
-                if (replace || this.world.isAirBlock(faced)) {
-                    pos = faced;
+                if (this.world.isAirBlock(faced)) {
                     // check whether the next pos along (pos -> faced -> farpos) is solid (attachable)
                     BlockPos farpos = faced.add(handFacing.getDirectionVec());
                     if (this.hand.worldObj.isSideSolid(farpos, opposite, true)) {
@@ -214,21 +208,14 @@ public class HandMethods extends BaseMethods {
                         block_state = block_state.withProperty(direction, opposite);
                         FMLLog.fine("attach in faced pos=%s on farpos=%s", pos, opposite);
                     }
-                } else {
-                    if (this.hand.worldObj.isSideSolid(faced, opposite, true)) {
-                        // attach in current pos on faced pos
-                        FMLLog.fine("attach in current pos=%s on faced pos=%s", pos, opposite);
-                        block_state = block_state.withProperty(direction, opposite);
-                    }
                 }
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 FMLLog.fine("attach in current pos=%s no facing", pos);
-                pos = faced;
             }
         }
 
         FMLLog.fine("Adding %s with state %s", block, block_state);
-        this.put(pos, block, block_state);
+        this.put(faced, block, block_state);
         return Py.java2py(null);
     }
 
