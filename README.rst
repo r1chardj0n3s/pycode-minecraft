@@ -87,6 +87,9 @@ use the "hand" name here too:
   the target position is clear.
 ``clear(pos)``
   Clear the block at the position nominated.
+``colors``
+  A list of all the standard Minecraft dye color names. Combine with
+  random.choice() for fun!
 
   Note: using clear with the Python Block position will remove the block!
 
