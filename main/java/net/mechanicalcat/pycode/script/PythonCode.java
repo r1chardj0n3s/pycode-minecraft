@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemWritableBook;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
@@ -215,6 +216,7 @@ public class PythonCode {
     }
 
     public static HashMap<String, EnumDyeColor> COLORMAP = new HashMap<String, EnumDyeColor>();
+    public static HashMap<String, EnumFacing> FACINGMAP = new HashMap<String, EnumFacing>();
     public static List<String> colors = new LinkedList<>();
     public static void init() {
         COLORMAP.put("white", EnumDyeColor.WHITE);
@@ -233,6 +235,13 @@ public class PythonCode {
         COLORMAP.put("green", EnumDyeColor.GREEN);
         COLORMAP.put("red", EnumDyeColor.RED );
         COLORMAP.put("black", EnumDyeColor.BLACK);
+
+        FACINGMAP.put("down", EnumFacing.DOWN);
+        FACINGMAP.put("up", EnumFacing.UP);
+        FACINGMAP.put("north", EnumFacing.NORTH);
+        FACINGMAP.put("south", EnumFacing.SOUTH);
+        FACINGMAP.put("west", EnumFacing.WEST);
+        FACINGMAP.put("east", EnumFacing.EAST);
 
         for (String name : COLORMAP.keySet()) {
             colors.add(name);

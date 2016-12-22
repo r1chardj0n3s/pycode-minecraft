@@ -111,13 +111,22 @@ public class HandMethods extends BaseMethods {
             throw Py.TypeError("Unknown block " + blockName);
         }
         IBlockState block_state = block.getDefaultState();
+        boolean facingSet = false;
+        BlockPos pos = this.hand.getPosition();
+        EnumFacing handFacing = this.hand.getHorizontalFacing();
+        EnumFacing opposite = handFacing.getOpposite();
+        BlockPos faced = pos.add(handFacing.getDirectionVec());
+        PropertyDirection direction;
+        boolean replace = false;        // do not try to surface attach, always replace
 
         for (int i=0; i<kws.length; i++) {
-            if (kws[i].equals("color")) {
-                String color = args[i+1].toString();
+            if (kws[i].equals("replace")) {
+                replace = args[i + 1].asInt() != 0;
+            } else if (kws[i].equals("color")) {
+                String color = args[i + 1].toString();
                 EnumDyeColor dye = PythonCode.COLORMAP.get(color);
                 if (dye == null) {
-                    throw Py.TypeError(blockName + " color %s" + color);
+                    throw Py.TypeError(blockName + " color " + color);
                 }
                 PropertyEnum<EnumDyeColor> prop;
                 try {
@@ -126,62 +135,124 @@ public class HandMethods extends BaseMethods {
                     throw Py.TypeError(blockName + " cannot be colored");
                 }
                 block_state = block_state.withProperty(prop, dye);
+            } else if (kws[i].equals("facing")) {
+                String s = args[i + 1].toString();
+                EnumFacing facing;
+                if (s.equals("left")) {
+                    facing = handFacing.rotateYCCW();
+                } else if (s.equals("right")) {
+                    facing = handFacing.rotateY();
+                } else if (s.equals("back")) {
+                    facing = handFacing.getOpposite();
+                } else {
+                    facing = PythonCode.FACINGMAP.get(s);
+                }
+                if (facing == null) {
+                    throw Py.TypeError("Invalid facing " + s);
+                }
+                try {
+                    direction = (PropertyDirection) block.getClass().getField("FACING").get(block);
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    throw Py.TypeError(blockName + " does not have facing");
+                }
+                block_state = block_state.withProperty(direction, facing);
+                facingSet = true;
+                pos = faced;
+            } else if (kws[i].equals("half") && block instanceof BlockStairs) {
+                String s = args[i + 1].toString();
+                BlockStairs.EnumHalf half;
+                switch (s) {
+                    case "top":
+                        half = BlockStairs.EnumHalf.TOP;
+                        break;
+                    case "bottom":
+                        half = BlockStairs.EnumHalf.BOTTOM;
+                        break;
+                    default:
+                        throw Py.TypeError(blockName + " unknown half " + s);
+                }
+                block_state = block_state.withProperty(BlockStairs.HALF, half);
+            } else if (kws[i].equals("shape") && block instanceof BlockStairs) {
+                String s = args[i + 1].toString();
+                BlockStairs.EnumShape shape;
+                switch (s) {
+                    case "straight":
+                        shape = BlockStairs.EnumShape.STRAIGHT;
+                        break;
+                    case "inner_left":
+                        shape = BlockStairs.EnumShape.INNER_LEFT;
+                        break;
+                    case "inner_right":
+                        shape = BlockStairs.EnumShape.INNER_RIGHT;
+                        break;
+                    case "outer_left":
+                        shape = BlockStairs.EnumShape.OUTER_LEFT;
+                        break;
+                    case "outer_right":
+                        shape = BlockStairs.EnumShape.OUTER_RIGHT;
+                        break;
+                    default:
+                        throw Py.TypeError(blockName + " unknown shape " + s);
+                }
+                block_state = block_state.withProperty(BlockStairs.SHAPE, shape);
             } else {
                 throw Py.TypeError("Unexpected keyword argument " + kws[i]);
             }
         }
-        this.put(block, block_state);
+
+        // if we haven't had an explicit facing set then try to determine a good one
+        if (!facingSet) {
+            // try to automatically determine facing from the hand facing
+            try {
+                direction = (PropertyDirection) block.getClass().getField("FACING").get(block);
+                if (replace || this.world.isAirBlock(faced)) {
+                    pos = faced;
+                    // check whether the next pos along (pos -> faced -> farpos) is solid (attachable)
+                    BlockPos farpos = faced.add(handFacing.getDirectionVec());
+                    if (this.hand.worldObj.isSideSolid(farpos, opposite, true)) {
+                        // attach in faced pos on farpos
+                        block_state = block_state.withProperty(direction, opposite);
+                        FMLLog.fine("attach in faced pos=%s on farpos=%s", pos, opposite);
+                    }
+                } else {
+                    if (this.hand.worldObj.isSideSolid(faced, opposite, true)) {
+                        // attach in current pos on faced pos
+                        FMLLog.fine("attach in current pos=%s on faced pos=%s", pos, opposite);
+                        block_state = block_state.withProperty(direction, opposite);
+                    }
+                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                FMLLog.fine("attach in current pos=%s no facing", pos);
+                pos = faced;
+            }
+        }
+
+        FMLLog.fine("Adding %s with state %s", block, block_state);
+        this.put(pos, block, block_state);
         return Py.java2py(null);
     }
 
-    public void put(String blockName) throws BlockTypeError {
-        Block block = this.getBlock(blockName);
-        this.put(block, block.getDefaultState());
-    }
-
-    public void put(Block block, IBlockState block_state) {
-        BlockPos pos = this.hand.getPosition();
+    private void put(BlockPos pos, Block block, IBlockState block_state) {
         EnumFacing facing = this.hand.getHorizontalFacing();
-        EnumFacing opposite = facing.getOpposite();
-        BlockPos faced = pos.add(facing.getDirectionVec());
 
         FMLLog.fine("Putting %s at %s", block, pos);
 
+        // handle special cases
         if (block instanceof BlockDoor) {
-            ItemDoor.placeDoor(this.world, faced, facing, block, true);
+            ItemDoor.placeDoor(this.world, pos, facing, block, true);
         } else if (block instanceof BlockBed) {
-            BlockPos headpos = faced.offset(facing);
-            if (this.world.getBlockState(faced.down()).isSideSolid(this.world, faced.down(), EnumFacing.UP) &&
+            BlockPos headpos = pos.offset(facing);
+            if (this.world.getBlockState(pos.down()).isSideSolid(this.world, pos.down(), EnumFacing.UP) &&
                     this.world.getBlockState(headpos.down()).isSideSolid(this.world, headpos.down(), EnumFacing.UP)) {
                 block_state = block_state
                         .withProperty(BlockBed.OCCUPIED, false).withProperty(BlockBed.FACING, facing)
                         .withProperty(BlockBed.PART, BlockBed.EnumPartType.FOOT);
-                if (this.world.setBlockState(faced, block_state, 11)) {
+                if (this.world.setBlockState(pos, block_state, 11)) {
                     block_state = block_state.withProperty(BlockBed.PART, BlockBed.EnumPartType.HEAD);
                     this.world.setBlockState(headpos, block_state, 11);
                 }
             }
         } else {
-            try {
-                // TODO this only honors compass facings and not up/down
-                PropertyDirection direction = (PropertyDirection) block.getClass().getField("FACING").get(block);
-                if (this.world.isAirBlock(faced)) {
-                    pos = faced;
-                    // check whether the next pos along (pos -> faced -> farpos) is solid (attachable)
-                    BlockPos farpos = faced.add(facing.getDirectionVec());
-                    if (this.hand.worldObj.isSideSolid(farpos, opposite, true)) {
-                        // attach in faced pos on farpos
-                        block_state = block_state.withProperty(direction, opposite);
-                    }
-                } else {
-                    if (this.hand.worldObj.isSideSolid(faced, opposite, true)) {
-                        // attach in current pos on faced pos
-                        block_state = block_state.withProperty(direction, opposite);
-                    }
-                }
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                pos = faced;
-            }
             this.world.setBlockState(pos, block_state);
         }
     }

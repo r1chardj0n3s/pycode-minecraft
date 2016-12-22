@@ -203,6 +203,8 @@ Doc TBD::
     hand.ellipse(5, 10, 'stone', True)  # True=filled
 
     # if a block has orientation, it is taken from the hand's direction
+    # but if there's a surface in the way we'll try to mount the thing
+    # on that surface
     hand.put(8, 'torch')
 
     # place a bunch of the block in a vertical line
@@ -210,6 +212,7 @@ Doc TBD::
 
     # beds and door special double blocks are handled
     hand.put('wooden_door')
+    hand.put('wooden_door', replace=True)  # don't try to surface mount, just replace
     hand.put('bed')
 
     # colored blocks
@@ -217,6 +220,12 @@ Doc TBD::
 
     import random
     hand.put('wool', color=random.choice(colors))
+
+    # stairs - non 'straight' shapes are tricky to get right - they must
+    # join up with another stair piece to retain their non-straight shape
+    # or they will revert to straight!
+    hand.put('oak_stairs', facing='left',   # or right, back, and cardinals
+        half='top', shape='outer_right')
 
 
 Examples
@@ -228,7 +237,7 @@ An example making a little house::
     hand.cube(7, 5, 7, 'planks')
     hand.up(1)
     hand.sidle(-3)
-    hand.put('wooden_door')
+    hand.put('wooden_door', replace=True)
     hand.forward(3)
     hand.put('torch')
     hand.forward()
@@ -304,7 +313,10 @@ CHANGELOG
 
 **1.6**
  - Altered the hand store/restore position methods to be a context manager
- - Added color keyword argument handling for put()
+ - Added facing, half and shape and color keyword argument handling for put()
+   which allows placing colored blocks (wool, glass, ...) and stairs. Also
+   allows facing to be different to that of the hand when placed.
+ - Added top-level "colors" list of the standard Minecraft color names
 **1.5**
  - Add player/entity walk event
  - Initialise Python on startup, rather than on first object use in game
