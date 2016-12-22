@@ -1,14 +1,13 @@
 package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.entities.HandEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockBed;
-import net.minecraft.block.BlockDoor;
-import net.minecraft.block.BlockLadder;
+import net.minecraft.block.*;
+import net.minecraft.block.material.MapColor;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemDoor;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
@@ -17,10 +16,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraftforge.fml.common.FMLLog;
-import org.python.core.ArgParser;
 import org.python.core.PyObject;
 
-import javax.print.AttributeException;
 
 public class HandMethods extends BaseMethods {
     private HandEntity hand;
@@ -100,16 +97,29 @@ public class HandMethods extends BaseMethods {
         return block;
     }
 
-    public void put(String blockName) throws BlockTypeError {
+    public void putColored(String blockName, String color) throws BlockTypeError {
         Block block = this.getBlock(blockName);
         IBlockState block_state = block.getDefaultState();
+        EnumDyeColor dye = PythonCode.COLORMAP.get(color);
+        if (dye == null) {
+            throw new BlockTypeError(blockName + " color %s" + color);
+        }
+        block_state = block_state.withProperty(BlockColored.COLOR, dye);
+        this.put(block, block_state);
+    }
+
+    public void put(String blockName) throws BlockTypeError {
+        Block block = this.getBlock(blockName);
+        this.put(block, block.getDefaultState());
+    }
+
+    public void put(Block block, IBlockState block_state) {
         BlockPos pos = this.hand.getPosition();
         EnumFacing facing = this.hand.getHorizontalFacing();
         EnumFacing opposite = facing.getOpposite();
         BlockPos faced = pos.add(facing.getDirectionVec());
 
-        // TODO make .fine()
-        FMLLog.info("Putting %s at %s", block, pos);
+        FMLLog.fine("Putting %s at %s", block, pos);
 
         if (block instanceof BlockDoor) {
             ItemDoor.placeDoor(this.world, faced, facing, block, true);

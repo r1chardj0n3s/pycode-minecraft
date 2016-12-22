@@ -1,9 +1,6 @@
 package net.mechanicalcat.pycode;
 
-import net.mechanicalcat.pycode.init.ModBlocks;
-import net.mechanicalcat.pycode.init.ModCrafting;
-import net.mechanicalcat.pycode.init.ModEntities;
-import net.mechanicalcat.pycode.init.ModItems;
+import net.mechanicalcat.pycode.init.*;
 import net.mechanicalcat.pycode.proxy.CommonProxy;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
 import net.minecraftforge.fml.common.Mod;
@@ -28,6 +25,8 @@ public class PyCode {
                 Reference.MODNAME, Reference.MODID, Reference.VERSION));
         ModBlocks.init();
         ModBlocks.register();
+
+        ModCode.init();
 
         ModItems.init();
         ModItems.register();

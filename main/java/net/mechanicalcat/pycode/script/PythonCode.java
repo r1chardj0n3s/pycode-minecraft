@@ -7,6 +7,7 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemWritableBook;
@@ -22,6 +23,9 @@ import org.python.core.Py;
 import org.python.core.PyObject;
 
 import javax.script.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 public class PythonCode {
     private String code = "print 'hello world'";
@@ -133,10 +137,10 @@ public class PythonCode {
         // value to be stored in the engine namespace.
         this.bindings.put("__utils__", this);
 
-        // So.. now I copy all those methods to set up the "functions"
+        // So.. now I copy all those methods to set up the "utils"
         try {
             String s = "";
-            for (String n : functions) {
+            for (String n : utils) {
                 s += String.format("%s = __utils__.%s\n", n, n);
             }
             PythonEngine.eval(s, this.context);
@@ -151,12 +155,12 @@ public class PythonCode {
             world.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
             return true;
         } catch (ScriptException e) {
-            this.failz0r(world, pos, "Error running code: ", e.getMessage());
+            this.failz0r(world, pos, "Error running code: %s", e.getMessage());
             return false;
         }
     }
 
-    private String[] functions = {"chat", "water", "lava", "clear"};
+    private String[] utils = {"chat", "water", "lava", "clear", "colors"};
 
     public void chat(String message) {
         this.player.addChatComponentMessage(new TextComponentString(message));
@@ -210,6 +214,30 @@ public class PythonCode {
         this.code = compound.getString("code");
     }
 
+    public static HashMap<String, EnumDyeColor> COLORMAP = new HashMap<String, EnumDyeColor>();
+    public static List<String> colors = new LinkedList<>();
+    public static void init() {
+        COLORMAP.put("white", EnumDyeColor.WHITE);
+        COLORMAP.put("orange", EnumDyeColor.ORANGE);
+        COLORMAP.put("magenta", EnumDyeColor.MAGENTA);
+        COLORMAP.put("lightBlue", EnumDyeColor.LIGHT_BLUE);
+        COLORMAP.put("yellow", EnumDyeColor.YELLOW);
+        COLORMAP.put("lime", EnumDyeColor.LIME);
+        COLORMAP.put("pink", EnumDyeColor.PINK);
+        COLORMAP.put("gray", EnumDyeColor.GRAY);
+        COLORMAP.put("silver", EnumDyeColor.SILVER);
+        COLORMAP.put("cyan", EnumDyeColor.CYAN);
+        COLORMAP.put("purple", EnumDyeColor.PURPLE);
+        COLORMAP.put("blue", EnumDyeColor.BLUE);
+        COLORMAP.put("brown", EnumDyeColor.BROWN);
+        COLORMAP.put("green", EnumDyeColor.GREEN);
+        COLORMAP.put("red", EnumDyeColor.RED );
+        COLORMAP.put("black", EnumDyeColor.BLACK);
+
+        for (String name : COLORMAP.keySet()) {
+            colors.add(name);
+        }
+    }
 }
 
 

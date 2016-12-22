@@ -209,6 +209,12 @@ Doc TBD::
     hand.put('wooden_door')
     hand.put('bed')
 
+    # colored blocks
+    hand.put('wool', 'red')
+
+    import random
+    hand.put('wool', random.choice(colors))
+
 
 Examples
 ~~~~~~~~
@@ -384,6 +390,8 @@ This is not an exhaustive list, and should probably be put into github issues.
 *blocks and hands*
  - model replacement (OBJ, ?)
  - inventory
+*hand*
+ - roof generation
 
 
 Reference
