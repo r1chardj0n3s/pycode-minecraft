@@ -4,6 +4,7 @@ import net.mechanicalcat.pycode.entities.HandEntity;
 import net.minecraft.block.*;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -16,6 +17,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraftforge.fml.common.FMLLog;
+import org.python.core.Py;
 import org.python.core.PyObject;
 
 
@@ -97,15 +99,39 @@ public class HandMethods extends BaseMethods {
         return block;
     }
 
-    public void putColored(String blockName, String color) throws BlockTypeError {
-        Block block = this.getBlock(blockName);
-        IBlockState block_state = block.getDefaultState();
-        EnumDyeColor dye = PythonCode.COLORMAP.get(color);
-        if (dye == null) {
-            throw new BlockTypeError(blockName + " color %s" + color);
+    public PyObject put(PyObject[] args, String[] kws) {
+        if (args.length < kws.length + 1) {
+            throw Py.TypeError("Missing first argument blockName");
         }
-        block_state = block_state.withProperty(BlockColored.COLOR, dye);
+        String blockName = args[0].asString();
+        Block block;
+        try {
+            block = this.getBlock(blockName);
+        } catch (BlockTypeError e) {
+            throw Py.TypeError("Unknown block " + blockName);
+        }
+        IBlockState block_state = block.getDefaultState();
+
+        for (int i=0; i<kws.length; i++) {
+            if (kws[i].equals("color")) {
+                String color = args[i+1].toString();
+                EnumDyeColor dye = PythonCode.COLORMAP.get(color);
+                if (dye == null) {
+                    throw Py.TypeError(blockName + " color %s" + color);
+                }
+                PropertyEnum<EnumDyeColor> prop;
+                try {
+                    prop = (PropertyEnum<EnumDyeColor>) block.getClass().getField("COLOR").get(block);
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    throw Py.TypeError(blockName + " cannot be colored");
+                }
+                block_state = block_state.withProperty(prop, dye);
+            } else {
+                throw Py.TypeError("Unexpected keyword argument " + kws[i]);
+            }
+        }
         this.put(block, block_state);
+        return Py.java2py(null);
     }
 
     public void put(String blockName) throws BlockTypeError {

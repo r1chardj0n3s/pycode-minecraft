@@ -210,10 +210,10 @@ Doc TBD::
     hand.put('bed')
 
     # colored blocks
-    hand.put('wool', 'red')
+    hand.put('wool', color='red')
 
     import random
-    hand.put('wool', random.choice(colors))
+    hand.put('wool', color=random.choice(colors))
 
 
 Examples
