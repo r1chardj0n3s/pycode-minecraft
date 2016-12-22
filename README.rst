@@ -213,7 +213,7 @@ Doc TBD::
     hand.put('bed')
 
     # colored blocks
-    hand.put('wool', color='red')
+    hand.put('wool', color='red')       # or 'stained_glass', 'stained_hardened_clay'
 
     import random
     hand.put('wool', color=random.choice(colors))
@@ -304,6 +304,7 @@ CHANGELOG
 
 **1.6**
  - Altered the hand store/restore position methods to be a context manager
+ - Added color keyword argument handling for put()
 **1.5**
  - Add player/entity walk event
  - Initialise Python on startup, rather than on first object use in game
