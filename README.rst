@@ -408,8 +408,6 @@ This is not an exhaustive list, and should probably be put into github issues.
  - blocks / items / entities listing somehow
 *blocks and hands*
  - spawn error report with traceback on error
- - save code with item when removed from world
- - visual indication when code is present
  - model replacement (OBJ)
  - inventory?
 *wand*
