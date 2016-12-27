@@ -1,0 +1,46 @@
+# Runtime output
+*.class
+*.log
+*.pid
+*.log.gz
+
+# Package Files
+*.jar
+*.war
+*.ear
+
+# Gradle
+.gradle/
+gradlew*
+gradle/
+build/
+run/
+bin/
+
+# Eclipse
+.classpath
+.project
+.settings/
+eclipse/
+
+# IntelliJ IDEA
+*.iml
+*.iws
+*.ipr
+.idea/
+
+# OS Garbage
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Misc
+download/
+config/
+saves/
+crash-reports/
+usernamecache.json
+options.txt
+
+# Forge info
+forge-*
