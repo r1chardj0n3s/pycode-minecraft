@@ -1,7 +1,6 @@
 package net.mechanicalcat.pycode.blocks;
 
 import net.mechanicalcat.pycode.Reference;
-import net.mechanicalcat.pycode.script.MyEntity;
 import net.mechanicalcat.pycode.script.MyEntityLiving;
 import net.mechanicalcat.pycode.script.MyEntityPlayer;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
@@ -13,19 +12,25 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.FMLLog;
 
 import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Random;
 
 
 public final class PythonBlock extends Block implements ITileEntityProvider {
-    private boolean isOn = false;
-
     public PythonBlock() {
         super(Material.CLAY);
         setUnlocalizedName(Reference.PyCodeRegistrations.BLOCK.getUnlocalizedName());
@@ -43,9 +48,21 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
         }
         PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
         if (code_block != null) {
-            code_block.handleItemInteraction(world, playerIn, pos, heldItem);
+            code_block.handleItemInteraction((WorldServer)world, playerIn, pos, heldItem);
         }
         return true;
+    }
+
+    @Override
+    public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
+        super.onBlockPlacedBy(world, pos, state, placer, stack);
+        if (!world.isRemote) {
+            PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
+            if (code_block != null && stack.hasTagCompound()) {
+                code_block.readFromNBT(stack.getTagCompound());
+                code_block.getCode().eval((WorldServer)world, pos);
+            }
+        }
     }
 
     @Nullable
@@ -76,7 +93,29 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
         }
     }
 
-//    public int tickRate(World world) {
+    public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
+        PyCodeBlockTileEntity entity = this.getEntity(worldIn, pos);
+
+        if (entity != null && !entity.getCode().getCode().isEmpty()) {
+            ItemStack itemstack = this.createStackedBlock(state);
+            if (!itemstack.hasTagCompound()) {
+                itemstack.setTagCompound(new NBTTagCompound());
+            }
+            entity.writeToNBT(itemstack.getTagCompound());
+            spawnAsEntity(worldIn, pos, itemstack);
+        }
+
+        super.breakBlock(worldIn, pos, state);
+    }
+
+    @Nullable
+    @Override
+    public Item getItemDropped(IBlockState state, Random rand, int fortune) {
+        // we're already dropping the item in breakBlock()
+        return null;
+    }
+
+    //    public int tickRate(World world) {
 //        return 10;
 //    }
 
@@ -88,7 +127,4 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
 //    public void onNeighborChange(IBlockAccess world, BlockPos pos, BlockPos neighbor) {
 //        super.onNeighborChange(world, pos, neighbor);
 //    }
-
-
-    // TODO onBlockPlaced and harvestBlock to activate/deactivate the engine? or maybe the tile entity is managed??
 }

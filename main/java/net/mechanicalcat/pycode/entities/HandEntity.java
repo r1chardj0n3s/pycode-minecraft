@@ -2,24 +2,37 @@ package net.mechanicalcat.pycode.entities;
 
 
 import net.mechanicalcat.pycode.init.ModItems;
+import net.mechanicalcat.pycode.items.PythonBookItem;
 import net.mechanicalcat.pycode.script.IHasPythonCode;
+import net.mechanicalcat.pycode.script.MyEntityPlayer;
 import net.mechanicalcat.pycode.script.PythonCode;
 import net.mechanicalcat.pycode.script.HandMethods;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemWritableBook;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.FMLLog;
 
 import javax.annotation.Nullable;
 
 public class HandEntity extends Entity implements IHasPythonCode {
+    private static final DataParameter<String> CODE = EntityDataManager.<String>createKey(HandEntity.class, DataSerializers.STRING);
+
     private static net.minecraftforge.common.IMinecartCollisionHandler collisionHandler = null;
     public PythonCode code;
 
@@ -28,21 +41,36 @@ public class HandEntity extends Entity implements IHasPythonCode {
         this.noClip = true;
     }
 
-    public HandEntity(World worldIn, double x, double y, double z, float yaw) {
+    public HandEntity(World worldIn, @Nullable NBTTagCompound compound, double x, double y, double z, float yaw) {
         this(worldIn);
+        if (compound != null) {
+            this.readEntityFromNBT(compound);
+        }
         this.setPositionAndRotation(x, y, z, yaw, 0);
         this.motionX = 0.0D;
         this.motionY = 0.0D;
         this.motionZ = 0.0D;
     }
 
-    public void initCode() {
-        this.code = new PythonCode();
+    protected void entityInit() {
+        this.preventEntitySpawning = true;
+        this.isImmuneToFire = true;
+        this.setSize(0.98F, 0.7F);
+        this.dataManager.register(CODE, "");
+        this.initCode();
     }
 
-    public boolean handleItemInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
-        this.code.put("hand", new HandMethods(this, player));
-        return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);
+    public void notifyDataManagerChange(DataParameter<?> key) {
+        super.notifyDataManagerChange(key);
+        if (CODE.equals(key) && this.worldObj.isRemote) {
+            FMLLog.info("notifyDataManagerChange for CODE, setting to %s", this.dataManager.get(CODE));
+            this.code.setCodeString(this.dataManager.get(CODE));
+        }
+    }
+
+    public void initCode() {
+        this.code = new PythonCode();
+        this.code.setCodeString(this.dataManager.get(CODE));
     }
 
     protected void writeEntityToNBT(NBTTagCompound compound) {
@@ -51,6 +79,46 @@ public class HandEntity extends Entity implements IHasPythonCode {
 
     protected void readEntityFromNBT(NBTTagCompound compound) {
         this.code.readFromNBT(compound);
+        this.dataManager.set(CODE, this.code.getCode());
+    }
+
+    @Override
+    public boolean getAlwaysRenderNameTag() {
+        return true;
+    }
+
+    @Override
+    public boolean hasCustomName() {
+        return this.code.hasCode();
+    }
+
+    @Override
+    public ITextComponent getDisplayName() {
+        return new TextComponentString("[has code]");
+    }
+
+    public boolean handleItemInteraction(WorldServer world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
+        FMLLog.info("interact with %s", this.code.getCode());
+        this.code.put("hand", new HandMethods(this, player));
+
+        // this is only ever invoked on the server
+        if (heldItem == null) {
+            return false;
+        }
+        Item item = heldItem.getItem();
+        if (item == ModItems.python_wand) {
+            // TODO this is a bit yuck, but hasKey doesn't know about world/pos
+            this.code.ensureCompiled(world, pos);
+            if (this.code.hasKey("run")) {
+                this.code.invoke(world, pos, "run", new MyEntityPlayer(player));
+            }
+            return true;
+        } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
+            this.code.setCodeFromBook(world, pos, heldItem);
+            this.dataManager.set(CODE, this.code.getCode());
+            return true;
+        }
+        return false;
     }
 
     public void moveForward(float distance) {
@@ -69,20 +137,13 @@ public class HandEntity extends Entity implements IHasPythonCode {
         this.rotationYaw = (this.rotationYaw + angle) % 360;
     }
 
-    protected void entityInit() {
-        this.preventEntitySpawning = true;
-        this.isImmuneToFire = true;
-        this.setSize(0.98F, 0.7F);
-        this.initCode();
-    }
-
     public boolean canBeCollidedWith() {
         return true;
     }
 
     public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand) {
         World world = player.getEntityWorld();
-        return world.isRemote || this.handleItemInteraction(world, player, this.getPosition(), stack);
+        return world.isRemote || this.handleItemInteraction((WorldServer)world, player, this.getPosition(), stack);
     }
 
     /**
@@ -98,11 +159,16 @@ public class HandEntity extends Entity implements IHasPythonCode {
                 this.setDead();
                 if (this.worldObj.getGameRules().getBoolean("doEntityDrops")) {
                     ItemStack itemstack = new ItemStack(ModItems.python_hand, 1);
-
-                    if (this.getName() != null) {
-                        itemstack.setStackDisplayName(this.getName());
+                    itemstack.setStackDisplayName(this.getName());
+                    if (!itemstack.hasTagCompound()) {
+                        itemstack.setTagCompound(new NBTTagCompound());
                     }
-
+                    NBTTagCompound compound = itemstack.getTagCompound();
+                    if (compound == null) {
+                        FMLLog.severe("Python Hand itemstack NBT missing??");
+                    } else {
+                        this.writeToNBT(compound);
+                    }
                     this.entityDropItem(itemstack, 0.0F);
                 }
 

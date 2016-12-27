@@ -104,6 +104,11 @@ the Python Wand. For example, on a block::
   def run():
     block.firework()
 
+The player argument is optional to accept - include it if you want it::
+
+  def run(player):
+     player.chat("hello, world!")
+
 
 Block
 -----
@@ -154,6 +159,10 @@ Living entities have the following methods::
   player.potion("jump")     # affect with a potion effect name - only living entities
                             # the REFERENCE.txt file lists potion names
 
+Say hello::
+
+   player.chat("hello, world!")
+
 
 Example
 ~~~~~~~
@@ -166,7 +175,6 @@ depending on whether the block has redstone power or not::
        player.potion("speed")
      else:
        player.potion("slowness")
-
 
 Hand
 ----
@@ -320,6 +328,9 @@ CHANGELOG
  - Added top-level "colors" list of the standard Minecraft color names
  - Hand no longer put()s things in its current position, always puts in faced
    position
+ - Code is now saved with block/hand and kept with harvested items for
+   restoration when placed in world again
+ - The run() function may now optionally accept a player argument
 **1.5**
  - Add player/entity walk event
  - Initialise Python on startup, rather than on first object use in game
@@ -390,100 +401,23 @@ TODO
 This is not an exhaustive list, and should probably be put into github issues.
 
 *editing*
- - selection-based copy/cut/paste
- - scrolling rather than paging
- - filename to tooltip / save as
+ - book name to tooltip / save as (with page markers?)
+ - selection-based copy / cut / paste
+ - scrolling rather than paging?
  - add help button (describe key controls, mouse control)
  - blocks / items / entities listing somehow
-*common code*
- - handle keyword arguments to provide colour, explicit facing or other
-   blockstate customisation to put()
+*blocks and hands*
+ - spawn error report with traceback on error
+ - save code with item when removed from world
+ - visual indication when code is present
+ - model replacement (OBJ)
+ - inventory?
 *wand*
  - bring up a REPL when activated against air?
  - REPL would want to have auto-complete
 *blocks*
  - pull from inventory, push out
  - generate redstone power
- - wiring: for linking the above together? or is redstone enough?
  - texture map replacement
-*blocks and hands*
- - model replacement (OBJ, ?)
- - inventory
 *hand*
  - roof generation
-
-
-Reference
-=========
-
-The ``build.gradle`` file I use::
-
-    buildscript {
-        repositories {
-            jcenter()
-            maven {
-                name = "forge"
-                url = "http://files.minecraftforge.net/maven"
-            }
-        }
-        dependencies {
-            classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
-        }
-    }
-    apply plugin: 'net.minecraftforge.gradle.forge'
-
-    version = "1.1"
-    group= "net.mechanicalcat.pycode" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-    archivesBaseName = "pycode"
-    sourceCompatibility = 8
-    targetCompatibility = 8
-
-    minecraft {
-        version = "1.10.2-12.18.1.2011"
-        runDir = "run"
-        
-        // the mappings can be changed at any time, and must be in the following format.
-        // snapshot_YYYYMMDD   snapshot are built nightly.
-        // stable_#            stables are built at the discretion of the MCP team.
-        // Use non-default mappings at your own risk. they may not allways work.
-        // simply re-run your setup task after changing the mappings to update your workspace.
-        mappings = "snapshot_20160518"
-        makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
-    }
-
-    configurations {
-        embed
-        compile.extendsFrom(embed)
-    }
-
-    dependencies {
-        // from https://mvnrepository.com/artifact/org.python/jython-standalone
-        embed group: 'org.python', name: 'jython-standalone', version: '2.7.0'
-    }
-
-    jar {
-        // exclude the exe installer stubs in jython - the curseforge folks don't like them!
-        from configurations.embed.collect { it.isDirectory() ? it : zipTree(it).matching {exclude '**/*.exe'}  }
-    }
-
-    processResources {
-        // this will ensure that this task is redone when the versions change.
-        inputs.property "version", project.version
-        inputs.property "mcversion", project.minecraft.version
-
-        // replace stuff in mcmod.info, nothing else
-        from(sourceSets.main.resources.srcDirs) {
-            include 'mcmod.info'
-                    
-            // replace version and mcversion
-            expand 'version':project.version, 'mcversion':project.minecraft.version
-        }
-            
-        // copy everything else, thats not the mcmod.info
-        from(sourceSets.main.resources.srcDirs) {
-            exclude 'mcmod.info'
-        }
-    }
-
-    idea { module { inheritOutputDirs = true } }
-

@@ -21,6 +21,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLLog;
 import org.python.core.Py;
+import org.python.core.PyFunction;
 import org.python.core.PyObject;
 
 import javax.script.*;
@@ -29,11 +30,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class PythonCode {
-    private String code = "print 'hello world'";
+    private String code = "";
+    private boolean codeChanged = false;
     private SimpleScriptContext context;
     private Bindings bindings;
-    private World world;
-    private EntityPlayer player;
+    private World world = null;
+    public static String CODE_NBT_TAG = "code";
 
     public PythonCode() {
         this.context = new SimpleScriptContext();
@@ -41,14 +43,28 @@ public class PythonCode {
         this.context.setBindings(this.bindings, ScriptContext.ENGINE_SCOPE);
     }
 
+    public String getCode() {return code;}
+
+    public boolean hasCode() {return !code.isEmpty();}
+
     public void check(String code) throws ScriptException {
         PythonEngine.compile(code);
     }
 
     public void setCodeString(String code) {
         this.code = code;
+        this.codeChanged = true;
     }
 
+    public void writeToNBT(NBTTagCompound compound) {
+        compound.setString(CODE_NBT_TAG, this.code);
+    }
+
+    public void readFromNBT(NBTTagCompound compound) {
+        this.setCodeString(compound.getString(CODE_NBT_TAG));
+    }
+
+    // CODE BINDINGS
     public void put(String key,Object val) {
         this.bindings.put(key, val);
     }
@@ -63,12 +79,28 @@ public class PythonCode {
     }
 
     public void invoke(WorldServer world, BlockPos pos, String method, MyEntity entity) {
+        this.ensureCompiled(world, pos);
         // wrap entity in MyEntity!
-        PyObject func = (PyObject) this.bindings.get(method);
-        if (func == null) {
-            FMLLog.fine("No method '%s'", method);
+        PyObject obj = (PyObject) this.bindings.get(method);
+        if (obj == null) {
+            this.failz0r(world, pos, "Unknown function '%s'", method);
             return;
         }
+        PyFunction func = (PyFunction)obj;
+
+        // handle instances of optional player argument
+        PyObject co_varnames = func.__code__.__getattr__("co_varnames");
+        if (entity instanceof MyEntityPlayer && !co_varnames.__contains__(Py.java2py("player"))) {
+            // don't pass the player in if it's not expected
+            try {
+                func.__call__();
+            } catch (NullPointerException e) {
+                this.failz0r(world, pos, "Error running code: ", e.getMessage());
+            }
+            return;
+        }
+
+        // carry on!
         try {
             func.__call__(Py.java2py(entity));
         } catch (NullPointerException e) {
@@ -77,11 +109,13 @@ public class PythonCode {
     }
 
     public void invoke(WorldServer world, BlockPos pos, String method) {
-        PyObject func = (PyObject) this.bindings.get(method);
-        if (func == null) {
+        this.ensureCompiled(world, pos);
+        PyObject obj = (PyObject) this.bindings.get(method);
+        if (obj == null) {
             this.failz0r(world, pos, "Unknown function '%s'", method);
             return;
         }
+        PyFunction func = (PyFunction)obj;
         try {
             func.__call__();
         } catch (NullPointerException e) {
@@ -89,48 +123,43 @@ public class PythonCode {
         }
     }
 
-    public boolean handleInteraction(WorldServer world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
-        // this is only ever invoked on the server
-        if (heldItem == null) {
-            return false;
-        }
-        Item item = heldItem.getItem();
-        if (item == ModItems.python_wand) {
-            if (this.hasKey("run")) {
-                this.invoke(world, pos, "run");
-            }
-            return true;
-        } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
-            NBTTagCompound bookData = heldItem.getTagCompound();
-            NBTTagList pages;
-            try {
-                // pages are all of type TAG_String == 8
-                pages = bookData.getTagList("pages", 8);
-            } catch (NullPointerException e) {
-                // this should not happen!
-                this.failz0r(world, pos, "Could not get pages from the book!?");
-                return true;
-            }
-            // collapse the pages into one string
-            StringBuilder sbStr = new StringBuilder();
-            for(int i = 0;i<pages.tagCount();i++) {
-                String s = pages.getStringTagAt(i);
-                if (i > 0) sbStr.append("\n");
-                sbStr.append(s);
-            }
-            this.code = sbStr.toString();
-            FMLLog.fine("Code set to: %s", this.code);
-            this.eval(world, player, pos);
+    public boolean setCodeFromBook(WorldServer world, BlockPos pos, ItemStack heldItem) {
+        NBTTagCompound bookData = heldItem.getTagCompound();
+        NBTTagList pages;
+        try {
+            // pages are all of type TAG_String == 8
+            pages = bookData.getTagList("pages", 8);
+        } catch (NullPointerException e) {
+            // this should not happen!
+            this.failz0r(world, pos, "Could not get pages from the book!?");
             return true;
         }
-        return false;
+        // collapse the pages into one string
+        StringBuilder sbStr = new StringBuilder();
+        for(int i = 0;i<pages.tagCount();i++) {
+            String s = pages.getStringTagAt(i);
+            if (i > 0) sbStr.append("\n");
+            sbStr.append(s);
+        }
+        this.setCodeString(sbStr.toString());
+        this.ensureCompiled(world, pos);
+        return true;
     }
 
-    private boolean eval(WorldServer world, EntityPlayer player, BlockPos pos) {
+    public void ensureCompiled(WorldServer world, BlockPos pos) {
+        if (this.codeChanged) {
+            this.eval(world, pos);
+            this.codeChanged = false;
+        }
+
+        // ensure this is up to date
+        this.bindings.put("pos", new MyBlockPos(pos));
+    }
+
+    public boolean eval(WorldServer world, BlockPos pos) {
+        FMLLog.info("Eval my code: %s", this.code);
         this.world = world;
-        this.player = player;
 //        this.bindings.put("world", world);
-        this.bindings.put("player", new MyEntityPlayer(player));
         this.bindings.put("pos", new MyBlockPos(pos));
 
         // I am reasonably certain that I can't just shove the methods below directly
@@ -146,7 +175,7 @@ public class PythonCode {
             }
             PythonEngine.eval(s, this.context);
         } catch (ScriptException e) {
-            this.failz0r(world, pos, "Error setting up utils: ", e.getMessage());
+            this.failz0r(world, pos, "Error setting up utils: %s", e.getMessage());
             return false;
         }
 
@@ -161,18 +190,14 @@ public class PythonCode {
         }
     }
 
-    private String[] utils = {"chat", "water", "lava", "clear", "colors"};
-
-    public void chat(String message) {
-        this.player.addChatComponentMessage(new TextComponentString(message));
-    }
+    private String[] utils = {"water", "lava", "clear", "colors"};
 
     // MyBlockPos for python code, other one for "internal" use without shenanigans
     public void water(MyBlockPos pos) {
         this.water(pos.blockPos);
     }
     public void water(BlockPos pos) {
-        if (this.world.isRemote) return;
+        if (this.world == null || this.world.isRemote) return;
 
         Block b = this.world.getBlockState(pos).getBlock();
 
@@ -185,7 +210,7 @@ public class PythonCode {
         this.lava(pos.blockPos);
     }
     public void lava(BlockPos pos) {
-        if (this.world.isRemote) return;
+        if (this.world == null || this.world.isRemote) return;
 
         Block b = this.world.getBlockState(pos).getBlock();
 
@@ -198,21 +223,13 @@ public class PythonCode {
         this.clear(pos.blockPos);
     }
     public void clear(BlockPos pos) {
-        if (this.world.isRemote) return;
+        if (this.world == null || this.world.isRemote) return;
 
         Block b = this.world.getBlockState(pos).getBlock();
 
         if (!this.world.isAirBlock(pos)) {
             this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
         }
-    }
-
-    public void writeToNBT(NBTTagCompound compound) {
-        compound.setString("code", this.code);
-    }
-
-    public void readFromNBT(NBTTagCompound compound) {
-        this.code = compound.getString("code");
     }
 
     public static HashMap<String, EnumDyeColor> COLORMAP = new HashMap<String, EnumDyeColor>();

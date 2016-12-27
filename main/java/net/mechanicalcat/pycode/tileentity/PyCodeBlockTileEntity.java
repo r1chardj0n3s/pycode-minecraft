@@ -1,10 +1,9 @@
 package net.mechanicalcat.pycode.tileentity;
 
 import net.mechanicalcat.pycode.entities.EntityEnum;
-import net.mechanicalcat.pycode.script.BlockMethods;
-import net.mechanicalcat.pycode.script.IHasPythonCode;
-import net.mechanicalcat.pycode.script.MyEntity;
-import net.mechanicalcat.pycode.script.PythonCode;
+import net.mechanicalcat.pycode.init.ModItems;
+import net.mechanicalcat.pycode.items.PythonBookItem;
+import net.mechanicalcat.pycode.script.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -13,6 +12,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemWritableBook;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityHopper;
@@ -21,6 +21,7 @@ import net.minecraft.util.ITickable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.FMLLog;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -40,12 +41,49 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         this.code = new PythonCode();
     }
 
+    public PythonCode getCode() {
+        return code;
+    }
+
+    @Override
+    @Nonnull
+    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
+        super.writeToNBT(compound);
+        this.code.writeToNBT(compound);
+        compound.setBoolean("isPowered", this.isPowered);
+        return compound;
+    }
+
+    @Override
+    public void readFromNBT(NBTTagCompound compound) {
+        super.readFromNBT(compound);
+        this.code.readFromNBT(compound);
+        this.isPowered = compound.getBoolean("isPowered");
+    }
+
     public Entity getEntity() { return null; }
 
-    public boolean handleItemInteraction(World world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
+    public boolean handleItemInteraction(WorldServer world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
         this.isPowered = world.isBlockPowered(pos);
         this.code.put("block", new BlockMethods(this, player));
-        return this.code.handleInteraction((WorldServer) world, player, pos, heldItem);
+
+        // this is only ever invoked on the server
+        if (heldItem == null) {
+            return false;
+        }
+        Item item = heldItem.getItem();
+        if (item == ModItems.python_wand) {
+            // TODO this is a bit yuck, but hasKey doesn't know about world/pos
+            this.code.ensureCompiled(world, pos);
+            if (this.code.hasKey("run")) {
+                this.code.invoke(world, pos, "run", new MyEntityPlayer(player));
+            }
+            return true;
+        } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
+            this.code.setCodeFromBook(world, pos, heldItem);
+            return true;
+        }
+        return false;
     }
 
     public void handleEntityInteraction(MyEntity entity, String method) {
@@ -159,23 +197,5 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         }
 
         return true;
-    }
-
-
-
-    @Override
-    @Nonnull
-    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-        super.writeToNBT(compound);
-        this.code.writeToNBT(compound);
-        compound.setBoolean("isPowered", this.isPowered);
-        return compound;
-    }
-
-    @Override
-    public void readFromNBT(NBTTagCompound compound) {
-        super.readFromNBT(compound);
-        this.code.readFromNBT(compound);
-        this.isPowered = compound.getBoolean("isPowered");
     }
 }
