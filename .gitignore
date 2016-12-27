@@ -11,8 +11,6 @@
 
 # Gradle
 .gradle/
-gradlew*
-gradle/
 build/
 run/
 bin/
