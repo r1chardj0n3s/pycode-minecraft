@@ -20,6 +20,9 @@ import net.minecraftforge.fml.common.FMLLog;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
+import javax.annotation.Nullable;
+import java.util.HashMap;
+
 
 public class HandMethods extends BaseMethods {
     private HandEntity hand;
@@ -99,11 +102,20 @@ public class HandMethods extends BaseMethods {
         return block;
     }
 
+    // this is just a little crazypants
+    private String[] s(String ... strings) {
+        return strings;
+    }
+
     public PyObject put(PyObject[] args, String[] kws) {
-        if (args.length < kws.length + 1) {
-            throw Py.TypeError("Missing first argument blockName");
-        }
-        String blockName = args[0].asString();
+        ArgParser r = new ArgParser("put", s("blockname"), s("color", "facing", "type", "half", "shape"));
+        r.parse(args, kws);
+        this.put(this.hand.getFacedPos(), getBlockVariant(r));
+        return Py.java2py(null);
+    }
+
+    private IBlockState getBlockVariant(ArgParser spec) {
+        String blockName = spec.getString("blockname");
         Block block;
         try {
             block = this.getBlock(blockName);
@@ -115,91 +127,100 @@ public class HandMethods extends BaseMethods {
         BlockPos pos = this.hand.getPosition();
         EnumFacing handFacing = this.hand.getHorizontalFacing();
         EnumFacing opposite = handFacing.getOpposite();
-        BlockPos faced = pos.add(handFacing.getDirectionVec());
+        BlockPos faced = this.hand.getFacedPos();
         PropertyDirection direction;
 
-        for (int i=0; i<kws.length; i++) {
-            if (kws[i].equals("color")) {
-                String color = args[i + 1].toString();
-                EnumDyeColor dye = PythonCode.COLORMAP.get(color);
-                if (dye == null) {
-                    throw Py.TypeError(blockName + " color " + color);
-                }
-                PropertyEnum<EnumDyeColor> prop;
-                try {
-                    prop = (PropertyEnum<EnumDyeColor>) block.getClass().getField("COLOR").get(block);
-                } catch (NoSuchFieldException | IllegalAccessException e) {
-                    throw Py.TypeError(blockName + " cannot be colored");
-                }
-                block_state = block_state.withProperty(prop, dye);
-            } else if (kws[i].equals("facing")) {
-                String s = args[i + 1].toString();
-                EnumFacing facing;
-                if (s.equals("left")) {
-                    facing = handFacing.rotateYCCW();
-                } else if (s.equals("right")) {
-                    facing = handFacing.rotateY();
-                } else if (s.equals("back")) {
-                    facing = handFacing.getOpposite();
-                } else {
-                    facing = PythonCode.FACINGMAP.get(s);
-                }
-                if (facing == null) {
-                    throw Py.TypeError("Invalid facing " + s);
-                }
-                try {
-                    direction = (PropertyDirection) block.getClass().getField("FACING").get(block);
-                } catch (NoSuchFieldException | IllegalAccessException e) {
-                    throw Py.TypeError(blockName + " does not have facing");
-                }
-                block_state = block_state.withProperty(direction, facing);
-                facingSet = true;
-            } else if (kws[i].equals("half") && block instanceof BlockStairs) {
-                String s = args[i + 1].toString();
-                BlockStairs.EnumHalf half;
-                switch (s) {
-                    case "top":
-                        half = BlockStairs.EnumHalf.TOP;
-                        break;
-                    case "bottom":
-                        half = BlockStairs.EnumHalf.BOTTOM;
-                        break;
-                    default:
-                        throw Py.TypeError(blockName + " unknown half " + s);
-                }
-                block_state = block_state.withProperty(BlockStairs.HALF, half);
-            } else if (kws[i].equals("shape") && block instanceof BlockStairs) {
-                String s = args[i + 1].toString();
-                BlockStairs.EnumShape shape;
-                switch (s) {
-                    case "straight":
-                        shape = BlockStairs.EnumShape.STRAIGHT;
-                        break;
-                    case "inner_left":
-                        shape = BlockStairs.EnumShape.INNER_LEFT;
-                        break;
-                    case "inner_right":
-                        shape = BlockStairs.EnumShape.INNER_RIGHT;
-                        break;
-                    case "outer_left":
-                        shape = BlockStairs.EnumShape.OUTER_LEFT;
-                        break;
-                    case "outer_right":
-                        shape = BlockStairs.EnumShape.OUTER_RIGHT;
-                        break;
-                    default:
-                        throw Py.TypeError(blockName + " unknown shape " + s);
-                }
-                block_state = block_state.withProperty(BlockStairs.SHAPE, shape);
-            } else {
-                throw Py.TypeError("Unexpected keyword argument " + kws[i]);
+        if (spec.has("color")) {
+            String color = spec.getString("color");
+            EnumDyeColor dye = PythonCode.COLORMAP.get(color);
+            if (dye == null) {
+                throw Py.TypeError(blockName + " color " + color);
             }
+            PropertyEnum<EnumDyeColor> prop;
+            try {
+                prop = (PropertyEnum<EnumDyeColor>) block.getClass().getField("COLOR").get(block);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                throw Py.TypeError(blockName + " cannot be colored");
+            }
+            block_state = block_state.withProperty(prop, dye);
+        }
+
+        if (spec.has("facing")) {
+            String s = spec.getString("facing");
+            EnumFacing facing;
+            if (s.equals("left")) {
+                facing = handFacing.rotateYCCW();
+            } else if (s.equals("right")) {
+                facing = handFacing.rotateY();
+            } else if (s.equals("back")) {
+                facing = handFacing.getOpposite();
+            } else {
+                facing = PythonCode.FACINGMAP.get(s);
+            }
+            if (facing == null) {
+                throw Py.TypeError("Invalid facing " + s);
+            }
+            try {
+                direction = (PropertyDirection) block_state.getBlock().getClass().getField("FACING").get(block_state.getBlock());
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                throw Py.TypeError(blockName + " does not have facing");
+            }
+            block_state = block_state.withProperty(direction, facing);
+            facingSet = true;
+        }
+
+        if (spec.has("type") && block_state.getBlock() instanceof BlockPlanks) {
+            String s = spec.getString("type");;
+            BlockPlanks.EnumType type = PLANKTYPES.get(s);
+            if (s == null) throw Py.TypeError(blockName + " unknown type " + s);
+            block_state = block_state.withProperty(BlockPlanks.VARIANT, type);
+        }
+
+        if (spec.has("half") && block_state.getBlock() instanceof BlockStairs) {
+            String s = spec.getString("half");
+            BlockStairs.EnumHalf half;
+            switch (s) {
+                case "top":
+                    half = BlockStairs.EnumHalf.TOP;
+                    break;
+                case "bottom":
+                    half = BlockStairs.EnumHalf.BOTTOM;
+                    break;
+                default:
+                    throw Py.TypeError(blockName + " unknown half " + s);
+            }
+            block_state = block_state.withProperty(BlockStairs.HALF, half);
+        }
+
+        if (spec.has("shape") && block_state.getBlock() instanceof BlockStairs) {
+            String s = spec.getString("shape");
+            BlockStairs.EnumShape shape;
+            switch (s) {
+                case "straight":
+                    shape = BlockStairs.EnumShape.STRAIGHT;
+                    break;
+                case "inner_left":
+                    shape = BlockStairs.EnumShape.INNER_LEFT;
+                    break;
+                case "inner_right":
+                    shape = BlockStairs.EnumShape.INNER_RIGHT;
+                    break;
+                case "outer_left":
+                    shape = BlockStairs.EnumShape.OUTER_LEFT;
+                    break;
+                case "outer_right":
+                    shape = BlockStairs.EnumShape.OUTER_RIGHT;
+                    break;
+                default:
+                    throw Py.TypeError(blockName + " unknown shape " + s);
+            }
+            block_state = block_state.withProperty(BlockStairs.SHAPE, shape);
         }
 
         // if we haven't had an explicit facing set then try to determine a good one
         if (!facingSet) {
             try {
-                direction = (PropertyDirection) block.getClass().getField("FACING").get(block);
+                direction = (PropertyDirection) block_state.getBlock().getClass().getField("FACING").get(block_state.getBlock());
                 if (this.world.isAirBlock(faced)) {
                     // check whether the next pos along (pos -> faced -> farpos) is solid (attachable)
                     BlockPos farpos = faced.add(handFacing.getDirectionVec());
@@ -214,15 +235,14 @@ public class HandMethods extends BaseMethods {
             }
         }
 
-        FMLLog.fine("Adding %s with state %s", block, block_state);
-        this.put(faced, block, block_state);
-        return Py.java2py(null);
+        return block_state;
     }
 
-    private void put(BlockPos pos, Block block, IBlockState block_state) {
+    private void put(BlockPos pos, IBlockState block_state) {
+        Block block = block_state.getBlock();
         EnumFacing facing = this.hand.getHorizontalFacing();
 
-        FMLLog.fine("Putting %s at %s", block, pos);
+        FMLLog.info("Putting %s at %s", block_state, pos);
 
         // handle special cases
         if (block instanceof BlockDoor) {
@@ -256,39 +276,45 @@ public class HandMethods extends BaseMethods {
         this.hand.code.clear(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
     }
 
-    public void line(int distance, String blockName) throws BlockTypeError {
-        Block block = getBlock(blockName);
-        IBlockState block_state = block.getDefaultState();
+    public PyObject line(PyObject[] args, String[] kws) {
+        ArgParser r = new ArgParser("line", s("distance", "blockname"),
+                s("color", "facing", "type", "half", "shape"));
+        r.parse(args, kws);
+        int distance = r.getInteger("distance");
+        IBlockState block_state = getBlockVariant(r);
         BlockPos pos = this.hand.getPosition();
         Vec3i direction = this.hand.getHorizontalFacing().getDirectionVec();
         for (int i=0; i<distance; i++) {
             pos = pos.add(direction);
             this.world.setBlockState(pos, block_state);
         }
+        return Py.java2py(null);
     }
 
-    public void ladder(int height, String blockName) throws BlockTypeError {
-        Block block = getBlock(blockName);
-        IBlockState block_state = block.getDefaultState().withProperty(BlockLadder.FACING,
-                this.hand.getHorizontalFacing().getOpposite());
-        BlockPos pos = this.hand.getPosition();
-        Vec3i direction = this.hand.getHorizontalFacing().getDirectionVec();
-        pos = pos.add(direction);
+    public void ladder(PyObject[] args, String[] kws) {
+        ArgParser r = new ArgParser("line", s("height", "blockname"),
+                s("color", "facing", "type", "half", "shape"));
+        r.parse(args, kws);
+        int height = r.getInteger("height");
+        IBlockState block_state = getBlockVariant(r);
+        BlockPos pos = this.hand.getFacedPos();
         for (int i=0; i<height; i++) {
             this.world.setBlockState(pos, block_state);
             pos = pos.add(0, 1, 0);
         }
     }
 
-    public void floor(int width, int depth, String blockName) throws BlockTypeError {
-        BlockPos pos = this.hand.getPosition();
+    public void floor(PyObject[] args, String[] kws) {
+        ArgParser r = new ArgParser("line", s("width", "depth", "blockname"),
+                s("color", "facing", "type", "half", "shape"));
+        r.parse(args, kws);
+        IBlockState block_state = getBlockVariant(r);
+        BlockPos pos = this.hand.getFacedPos();
         EnumFacing facing = this.hand.getHorizontalFacing();
-        this.floor(width, depth, blockName, pos.offset(facing), facing);
+        this.floor(r.getInteger("width"), r.getInteger("depth"), block_state, pos, facing);
     }
 
-    private void floor(int width, int depth, String blockName, BlockPos pos, EnumFacing facing) throws BlockTypeError {
-        Block block = getBlock(blockName);
-        IBlockState block_state = block.getDefaultState();
+    private void floor(int width, int depth, IBlockState block_state, BlockPos pos, EnumFacing facing) {
         Vec3i front = facing.getDirectionVec();
         Vec3i side = facing.rotateY().getDirectionVec();
         for (int j=0; j < width; j++) {
@@ -300,15 +326,17 @@ public class HandMethods extends BaseMethods {
         }
     }
 
-    public void wall(int depth, int height, String blockName) throws BlockTypeError {
-        BlockPos pos = this.hand.getPosition();
+    public void wall(PyObject[] args, String[] kws) {
+        ArgParser r = new ArgParser("line", s("depth", "height", "blockname"),
+                s("color", "facing", "type", "half", "shape"));
+        r.parse(args, kws);
+        IBlockState block_state = getBlockVariant(r);
+        BlockPos pos = this.hand.getFacedPos();
         EnumFacing facing = this.hand.getHorizontalFacing();
-        wall(depth, height, blockName, pos.offset(facing), facing);
+        this.wall(r.getInteger("depth"), r.getInteger("height"), block_state, pos, facing);
     }
 
-    private void wall(int depth, int height, String blockName, BlockPos pos, EnumFacing facing) throws BlockTypeError {
-        Block block = getBlock(blockName);
-        IBlockState block_state = block.getDefaultState();
+    private void wall(int depth, int height, IBlockState block_state, BlockPos pos, EnumFacing facing) {
         Vec3i front = facing.getDirectionVec();
         for (int j=0; j<height; j++) {
             BlockPos set = pos.add(0, j, 0);
@@ -319,32 +347,34 @@ public class HandMethods extends BaseMethods {
         }
     }
 
-    public void cube(int width, int height, int depth, String blockName) throws BlockTypeError {
-        BlockPos pos = this.hand.getPosition();
+    public void cube(PyObject[] args, String[] kws) {
+        ArgParser r = new ArgParser("line", s("width", "depth", "height", "blockname"),
+                s("color", "facing", "type", "half", "shape"));
+        r.parse(args, kws);
+        int width = r.getInteger("width");
+        int depth = r.getInteger("depth");
+        int height = r.getInteger("height");
+        IBlockState block_state = getBlockVariant(r);
+        BlockPos pos = this.hand.getFacedPos();
         EnumFacing facing = this.hand.getHorizontalFacing();
-        pos = pos.offset(facing);
-        this.floor(width, depth, blockName, pos, facing);
-        this.floor(width, depth, blockName, pos.offset(EnumFacing.UP, height), facing);
+        this.floor(width, depth, block_state, pos, facing);
+        this.floor(width, depth, block_state, pos.offset(EnumFacing.UP, height), facing);
         for (int i=0; i<4; i++) {
-            this.wall(depth, height, blockName, pos, facing);
+            this.wall(depth, height, block_state, pos, facing);
             pos = pos.offset(facing, depth-1);
             facing = facing.rotateY();
         }
     }
 
-    public void circle(int radius, String blockName) throws BlockTypeError {
-        circle(radius, blockName, false);
-    }
-    public void disk(int radius, String blockName) throws BlockTypeError {
-        circle(radius, blockName, true);
-    }
-
-    private void circle(int radius, String blockName, boolean fill) throws BlockTypeError {
-        Block block = getBlock(blockName);
-        IBlockState block_state = block.getDefaultState();
+    public void circle(PyObject[] args, String[] kws) {
+        ArgParser r = new ArgParser("line", s("radius", "blockname"),
+                s("color", "facing", "type", "half", "shape", "fill"));
+        r.parse(args, kws);
+        int radius = r.getInteger("radius");
+        IBlockState block_state = getBlockVariant(r);
         BlockPos pos = this.hand.getPosition();
 
-        if (fill) {
+        if (r.getBoolean("fill", false)) {
             int r_squared = radius * radius;
             for (int y = -radius; y <= radius; y++) {
                 int y_squared = y * y;
@@ -370,12 +400,16 @@ public class HandMethods extends BaseMethods {
         }
     }
 
-    public void ellipse(int radius_x, int radius_z, String blockName, boolean fill) throws BlockTypeError {
-        Block block = getBlock(blockName);
-        IBlockState block_state = block.getDefaultState();
+    public void ellipse(PyObject[] args, String[] kws) {
+        ArgParser r = new ArgParser("line", s("radius_x", "radius_z", "blockname"),
+                s("color", "facing", "type", "half", "shape", "fill"));
+        r.parse(args, kws);
+        int radius_x = r.getInteger("radius_x");
+        int radius_z = r.getInteger("radius_z");
+        IBlockState block_state = getBlockVariant(r);
         BlockPos pos = this.hand.getPosition();
 
-        if (fill) {
+        if (r.getBoolean("fill", false)) {
             for (int x=-radius_x; x <= radius_x; x++) {
                 int dy = (int) (Math.sqrt((radius_z * radius_z) * (1.0 - (double)(x * x) / (double)(radius_x * radius_x))));
                 for (int y=-dy; y <= dy; y++) {
@@ -429,6 +463,106 @@ public class HandMethods extends BaseMethods {
                 this.world.setBlockState(pos.add(+x, 0, -y), block_state);
                 this.world.setBlockState(pos.add(-x, 0, -y), block_state);
             }
+        }
+    }
+
+    public void roof(PyObject[] args, String[] kws) throws BlockTypeError {
+        ArgParser r = new ArgParser("line", s("width", "depth", "material"), s("style"));
+        r.parse(args, kws);
+        int width = r.getInteger("width");
+        int depth = r.getInteger("depth");
+        BlockPos pos = this.hand.getFacedPos();
+
+        // TODO alter pos, width and depth based on orientation
+//        EnumFacing facing = this.hand.getHorizontalFacing();
+
+        if (r.getString("style", "hip").equals("hip")) {
+            hipRoof(r.getString("material"), width, depth, pos);
+        }
+    }
+
+    private static final HashMap<String, String> FILLER = new HashMap<>();
+    private static final HashMap<String, BlockPlanks.EnumType> PLANKTYPES = new HashMap<>();
+    static {
+        FILLER.put("oak", "planks");
+        FILLER.put("stone", "stone");
+        FILLER.put("brick", "brick_block");
+        FILLER.put("stone_brick", "stonebrick");
+        FILLER.put("nether_brick", "nether_brick");
+        FILLER.put("sandstone", "sandstone");
+        FILLER.put("spruce", "planks");
+        FILLER.put("birch", "planks");
+        FILLER.put("jungle", "planks");
+        FILLER.put("acacia", "planks");
+        FILLER.put("dark_oak", "planks");
+        FILLER.put("quartz", "quartz_block");
+        FILLER.put("red_sandstone", "red_sandstone");
+        FILLER.put("purpur", "purpur_block");
+        PLANKTYPES.put("oak", BlockPlanks.EnumType.OAK);
+        PLANKTYPES.put("spruce", BlockPlanks.EnumType.SPRUCE);
+        PLANKTYPES.put("birch", BlockPlanks.EnumType.BIRCH);
+        PLANKTYPES.put("jungle", BlockPlanks.EnumType.JUNGLE);
+        PLANKTYPES.put("acacia", BlockPlanks.EnumType.ACACIA);
+        PLANKTYPES.put("dark_oak", BlockPlanks.EnumType.DARK_OAK);
+    }
+
+    private void hipRoof(String material, int width, int depth, BlockPos pos) throws BlockTypeError {
+        Block stairs = getBlock(material.concat("_stairs"));
+        IBlockState stair_state = stairs.getDefaultState();
+        stair_state = stair_state.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
+
+        String fillMaterial = FILLER.get(material);
+        Block filler = getBlock(fillMaterial);
+        IBlockState fill_state = filler.getDefaultState();
+        if (fillMaterial.equals("planks") && !material.equals("oak")) {
+            fill_state = fill_state.withProperty(BlockPlanks.VARIANT, PLANKTYPES.get(fillMaterial));
+        }
+
+        // always construct facing east
+        EnumFacing facing = EnumFacing.EAST;
+
+        BlockPos current;
+        while (true) {
+            for (int x=0; x < width; x++) {
+                for (int z=0; z < depth; z++) {
+                    IBlockState block_state = stair_state;
+                    current = pos.add(x, 0, z);
+                    if (x == 0) {
+                        // bottom side
+                        block_state = block_state.withProperty(BlockStairs.FACING, facing);
+                        if (z == 0) {
+                            block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_LEFT);
+                        } else if (z == depth-1) {
+                            block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_RIGHT);
+                        }
+                    } else if (x == width-1) {
+                        // top side
+                        block_state = block_state.withProperty(BlockStairs.FACING, facing.getOpposite());
+                        if (z == 0) {
+                            block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_LEFT);
+                        } else if (z == depth-1) {
+                            block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_RIGHT);
+                        }
+                    } else if (z == 0) {
+                        // left side
+                        block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateY());
+                    } else if (z == depth - 1) {
+                        // right side
+                        block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateYCCW());
+                    } else if (z < depth-1) {
+                        block_state = fill_state;
+                    }
+                    this.world.setBlockState(current, block_state);
+                }
+            }
+
+            // move up a layer
+            width -=2;
+            depth -= 2;
+            if (width <= 1 || depth <= 1) {
+                break;
+            }
+            pos = pos.add(1, 1, 1);
         }
     }
 }

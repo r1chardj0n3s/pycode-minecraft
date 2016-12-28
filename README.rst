@@ -203,24 +203,36 @@ Doc TBD::
 
     hand.put('cobblestone')             # the REFERENCE.txt file lists block names
     hand.line(5, 'stone')
+    hand.ladder(8, 'ladder')            # place a bunch of the block in a vertical line
     hand.wall(5, 3, 'planks')           # depth, height
     hand.floor(5, 5, 'stonebrick')      # width, depth
-    hand.cube(5, 5, 4, 'stonebrick')    # width, height, depth; is hollow
     hand.circle(5, 'stone')             # unfilled, centered on hand
-    hand.disk(5, 'stone')               # filled
-    hand.ellipse(5, 10, 'stone', True)  # True=filled
+    hand.circle(5, 'stone', fill=True)  # filled
+    hand.ellipse(5, 10, 'stone')        # also accepts fill=True
+
+    # beds and door special double blocks are handled
+    hand.put('wooden_door')
+    hand.put('bed')
+
+    # more complex constructions
+    hand.cube(5, 5, 4, 'stonebrick')    # width, height, depth; is hollow
+    hand.roof(9, 9, 'oak')              # oak "hip" roof
+
+Roof materials are oak, stone, brick, stone_brick, nether_brick, sandstone, spruce,
+birch, jungle, acacia, dark_oak, quartz, red_sandstone and purpur. Technically
+anything else registered with a block named "blockname" and stairs name
+"blockname_stairs" will suffice.
+
+Block variations are handled through keyword arguments. All of the above block-
+placing functions accept the following keywords::
+
+    # different plank types
+    hand.put('plank', type='acacia')
 
     # if a block has orientation, it is taken from the hand's direction
     # but if there's a surface in the way we'll try to mount the thing
     # on that surface
     hand.put(8, 'torch')
-
-    # place a bunch of the block in a vertical line
-    hand.put(8, 'ladder')
-
-    # beds and door special double blocks are handled
-    hand.put('wooden_door')
-    hand.put('bed')
 
     # colored blocks
     hand.put('wool', color='red')       # or 'stained_glass', 'stained_hardened_clay'
@@ -240,75 +252,75 @@ Examples
 
 An example making a little house::
 
-   hand.down(1)
-   hand.cube(7, 5, 7, 'planks')
-   hand.up(1)
-   hand.sidle(-3)
-   hand.put('wooden_door')
-   hand.forward(3)
-   hand.put('torch')
-   hand.forward()
-   hand.put('bed')
-   hand.left()
-   hand.forward(1)
-   hand.put('crafting_table')
-   hand.sidle(1)
-   hand.put('chest')
-   hand.sidle(1)
-   hand.put('furnace')
+    hand.down(1)
+    hand.cube(7, 7, 5, 'planks', type='dark_oak')
+    hand.up(1)
+    hand.sidle(-3)
+    hand.put('wooden_door')
+    hand.forward(3)
+    hand.put('torch')
+    hand.forward()
+    hand.put('bed')
+    hand.left()
+    hand.forward(1)
+    hand.put('crafting_table')
+    hand.sidle(1)
+    hand.put('chest')
+    hand.sidle(1)
+    hand.put('furnace')
 
 A more complete example which creates a little two-storey
 tower with a door, bed and ladder from ground up to the roof.
 Put each of these functions on a different page of the book::
 
-   # page 1: the basic tower structure
-   def tower():
-     hand.down()
-     hand.disk(5, 'cobblestone')
-     for i in range(8):
-       hand.up()
-       if i in (3, 7):
-         hand.disk(5, 'planks')
-       hand.circle(5, 'stone')
-       if i in (0, 4):
-         hand.put('torch')
+    # page 1: the basic tower structure
+    def tower():
+      hand.down()
+      hand.circle(5, 'cobblestone', fill=True)
+      for i in range(8):
+        hand.up()
+        if i in (3, 7):
+          hand.circle(5, 'planks', fill=True)
+        hand.circle(5, 'stone')
+        if i in (0, 4):
+          hand.put('torch')
 
-   # page 2: door and ladder access
-   def access():
-     hand.backward(6)
-     for i in range(3):
-       hand.clear()
-       hand.up()
-     hand.down()
-     hand.forward()
-     hand.put('planks')
-     hand.backward()
-     hand.put('torch')
-     hand.forward()
-     hand.down(2)
-     hand.put('wooden_door')
-     hand.forward(8)
-     hand.ladder(8, 'ladder')
+    # page 2: door and ladder access
+    def access():
+      hand.backward(6)
+      for i in range(3):
+        hand.clear()
+        hand.up()
+      hand.down()
+      hand.forward()
+      hand.put('planks')
+      hand.backward()
+      hand.put('torch')
+      hand.forward()
+      hand.down(2)
+      hand.put('wooden_door')
+      hand.forward(8)
+      hand.ladder(8, 'ladder')
 
-   # page 3: ground floor furnishings
-   def furnish():
-     hand.left()
-     hand.forward(2)
-     hand.put('bed')
-     hand.sidle(1)
-     hand.put('crafting_table')
-     hand.sidle(1)
-     hand.put('chest')
-     hand.sidle(1)
-     hand.put('furnace')
+    # page 3: ground floor furnishings
+    def furnish():
+      hand.left()
+      hand.forward(2)
+      hand.put('bed')
+      hand.sidle(1)
+      hand.put('crafting_table')
+      hand.sidle(1)
+      hand.put('chest')
+      hand.sidle(1)
+      hand.put('furnace')
 
-   # page 4: the complete tower
-   def run():
-     with hand.remember():
-       tower()
-     with hand.remember():
-       access()
-     furnish()
+    # page 4: the complete tower
+    def run():
+      with hand.remember():
+        tower()
+      with hand.remember():
+        access()
+      furnish()
 
 
 Wand
@@ -320,6 +332,10 @@ Invokes run() in the hand or block, if that function is defined.
 CHANGELOG
 =========
 
+**1.7**
+ - Added handling of plank types in put()
+ - All block placement methods can now specify block variation keywords
+ - Added roof()
 **1.6**
  - Altered the hand store/restore position methods to be a context manager
  - Added facing, half and shape and color keyword argument handling for put()
@@ -444,4 +460,3 @@ This is not an exhaustive list, and should probably be put into github issues.
  - texture map replacement
 *hand*
  - roof generation
-

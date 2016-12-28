@@ -7,6 +7,7 @@ import net.mechanicalcat.pycode.script.IHasPythonCode;
 import net.mechanicalcat.pycode.script.MyEntityPlayer;
 import net.mechanicalcat.pycode.script.PythonCode;
 import net.mechanicalcat.pycode.script.HandMethods;
+import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
@@ -18,6 +19,7 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -95,6 +97,10 @@ public class HandEntity extends Entity implements IHasPythonCode {
     @Override
     public ITextComponent getDisplayName() {
         return new TextComponentString("[has code]");
+    }
+
+    public BlockPos getFacedPos() {
+        return getPosition().offset(getHorizontalFacing());
     }
 
     public boolean handleItemInteraction(WorldServer world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {

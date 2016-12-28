@@ -250,3 +250,13 @@ red_nether_brick
 bone_block
 structure_void
 structure_block
+
+
+Plank types:
+
+oak
+spruce
+birch
+jungle
+acacia
+dark_oak

@@ -12,7 +12,7 @@ buildscript {
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 
-version = "1.6"
+version = "1.7"
 group= "net.mechanicalcat.pycode" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "pycode"
 sourceCompatibility = 8
