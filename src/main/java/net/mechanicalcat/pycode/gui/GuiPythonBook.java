@@ -143,11 +143,11 @@ public class GuiPythonBook extends GuiScreen {
         // TODO not sure why but these buttons seem to need to be offest by their width
         this.buttonNextPage = this.func_189646_b(
             new GuiPythonBook.NextPageButton(BUTTON_NEXT,
-                    xPosition + LOC_PX_LEFT + 20, yPosition + LOC_PX_TOP + 25, true)
+                    xPosition + LOC_PX_LEFT + 22, yPosition + LOC_PX_TOP + 25, true)
         );
         this.buttonPreviousPage = this.func_189646_b(
             new GuiPythonBook.NextPageButton(BUTTON_PREV,
-                    xPosition + LOC_PX_LEFT, yPosition + LOC_PX_TOP + 25, false)
+                    xPosition + LOC_PX_LEFT + 2, yPosition + LOC_PX_TOP + 25, false)
         );
         this.updateButtons();
 
@@ -334,7 +334,7 @@ public class GuiPythonBook extends GuiScreen {
             }
 
             // now draw a marker - TODO USE A TOOLTIP??!
-            int row = this.codeException.getLineNumber() - this.currPage * this.pageEdit.maxRows - 1;
+            int row = this.codeException.getLineNumber();
             int col = this.codeException.getColumnNumber();
             String[] lines = this.pageEdit.getLines();
             if (col > lines[row].length()) {
