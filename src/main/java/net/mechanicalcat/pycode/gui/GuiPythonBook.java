@@ -45,7 +45,7 @@ public class GuiPythonBook extends GuiScreen {
     private static final int EDITOR_PX_WIDTH = 224;
     private static final int EDITOR_PX_HEIGHT = 190;
     private static final int EDITOR_PX_TOP = 11;
-    private static final int EDITOR_PX_LEFT = 42;
+    private static final int EDITOR_PX_LEFT = 44;
 
     // BUTTONS LOCATION
     private static final int BUTTONS_PX_LEFT = 296;
@@ -55,6 +55,9 @@ public class GuiPythonBook extends GuiScreen {
     private static final int LOC_PX_LEFT = 282;
     private static final int LOC_PX_TOP = 15;
     private static final int LOC_PX_WIDTH = 44;
+
+    private static final int TITLE_PX_LEFT = 10;
+    private static final int TITLE_PX_BOTTOM = 192; // bottom because we render upwards
 
     private int xPosition;
     private int yPosition;
@@ -76,7 +79,7 @@ public class GuiPythonBook extends GuiScreen {
     private GuiButton buttonNextPage;
     private GuiButton buttonPreviousPage;
     private GuiTextArea pageEdit;
-//    private GuiTextField titleEdit;
+    private GuiVertTextField titleEdit;
 
     private static String TITLE_PLACEHOLDER = "Edit Book Title";
 
@@ -155,9 +158,11 @@ public class GuiPythonBook extends GuiScreen {
         this.pageEdit.setFocused(true);
         this.pageEdit.setGuiResponder(new EditResponder(this));
 
-//        this.titleEdit = new GuiTextField(2, this.fontRendererObj, this.width / 2 - 100, 60, 200, 20);
-//        this.titleEdit.setFocused(false);
-//        this.titleEdit.setText(this.bookTitle);
+        this.titleEdit = new GuiVertTextField(2, this.fontRendererObj, xPosition + TITLE_PX_LEFT, yPosition + TITLE_PX_BOTTOM, 100, 20);
+        this.titleEdit.setFocused(false);
+        this.titleEdit.setText(this.bookTitle);
+        this.titleEdit.setEnableBackgroundDrawing(false);
+        this.titleEdit.setTextColor(0);
     }
 
     @SideOnly(Side.CLIENT)
@@ -178,6 +183,7 @@ public class GuiPythonBook extends GuiScreen {
     public void updateScreen() {
         super.updateScreen();
         this.pageEdit.updateCursorCounter();
+        this.titleEdit.updateCursorCounter();
 
         // test compilation?
         String content = pageEdit.getString();
@@ -297,9 +303,10 @@ public class GuiPythonBook extends GuiScreen {
         // rebind the book texture for the cursor ... TODO MOVE IT!
         this.mc.getTextureManager().bindTexture(texture);
         this.pageEdit.drawEditor();
-//        this.titleEdit.drawTextBox();
+        this.titleEdit.drawTextBox();
 
         // render the page location
+        // TODO consider using GuiLabel
         this.drawCenteredString(this.fontRendererObj, "Page",
                 xPosition + LOC_PX_LEFT + LOC_PX_WIDTH / 2,
                 yPosition + LOC_PX_TOP, 0);
@@ -358,7 +365,7 @@ public class GuiPythonBook extends GuiScreen {
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         this.pageEdit.keyTyped(typedChar, keyCode);
-//        this.titleEdit.textboxKeyTyped(typedChar, keyCode);
+        this.titleEdit.textboxKeyTyped(typedChar, keyCode);
     }
 
     private void addNewPage() {
@@ -392,7 +399,7 @@ public class GuiPythonBook extends GuiScreen {
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         this.pageEdit.mouseClicked(mouseX, mouseY, mouseButton);
-//        this.titleEdit.mouseClicked(mouseX, mouseY, mouseButton);
+        this.titleEdit.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     /**
