@@ -1,6 +1,9 @@
 package net.mechanicalcat.pycode.obj;
 
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -69,4 +72,14 @@ public class Model {
 //      if use_texture: glDisable(GL11.GL_TEXTURE_2D);
         GL11.glEndList();
     }
+//
+//    Tessellator tessellator = Tessellator.getInstance();
+//    VertexBuffer vertexbuffer = tessellator.getBuffer();
+//    vertexbuffer.begin(7, DefaultVertexFormats.POSITION_TEX);
+//    vertexbuffer.pos((double)(x), (double)(y + height), 0).tex((double)((float)(u) * f), (double)((float)(v + height) * f1)).endVertex();
+//    vertexbuffer.pos((double)(x + width), (double)(y + height), 0).tex((double)((float)(u + width) * f), (double)((float)(v + height) * f1)).endVertex();
+//    vertexbuffer.pos((double)(x + width), (double)(y), 0).tex((double)((float)(u + width) * f), (double)((float)(v) * f1)).endVertex();
+//    vertexbuffer.pos((double)(x), (double)(y), 0).tex((double)((float)(u) * f), (double)((float)(v) * f1)).endVertex();
+//    tessellator.draw();
+//
 }
