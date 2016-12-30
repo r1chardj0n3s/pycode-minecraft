@@ -297,20 +297,6 @@ public class GuiPythonBook extends GuiScreen {
         this.mc.getConnection().sendPacket(new CPacketCustomPayload("MC|BEdit", packetbuffer));
     }
 
-    // Notch hard-coded texture size to 256x256 in the built-in Gui code
-    public static void drawTexturedRect(int x, int y, int u, int v, int width, int height, int textureWidth, int textureHeight) {
-        float f = 1F / (float)textureWidth;
-        float f1 = 1F / (float)textureHeight;
-        Tessellator tessellator = Tessellator.getInstance();
-        VertexBuffer vertexbuffer = tessellator.getBuffer();
-        vertexbuffer.begin(7, DefaultVertexFormats.POSITION_TEX);
-        vertexbuffer.pos((double)(x), (double)(y + height), 0).tex((double)((float)(u) * f), (double)((float)(v + height) * f1)).endVertex();
-        vertexbuffer.pos((double)(x + width), (double)(y + height), 0).tex((double)((float)(u + width) * f), (double)((float)(v + height) * f1)).endVertex();
-        vertexbuffer.pos((double)(x + width), (double)(y), 0).tex((double)((float)(u + width) * f), (double)((float)(v) * f1)).endVertex();
-        vertexbuffer.pos((double)(x), (double)(y), 0).tex((double)((float)(u) * f), (double)((float)(v) * f1)).endVertex();
-        tessellator.draw();
-    }
-
     @Override
     public void drawCenteredString(FontRenderer fontRendererIn, String text, int x, int y, int color) {
         fontRendererIn.drawString(text, (x - fontRendererIn.getStringWidth(text) / 2), y, color);
@@ -323,11 +309,9 @@ public class GuiPythonBook extends GuiScreen {
 
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         this.mc.getTextureManager().bindTexture(texture);
-        drawTexturedRect(xPosition, yPosition, 0, 0, BOOK_PX_WIDTH, BOOK_PX_HEIGHT, TEX_WIDTH, TEX_HEIGHT);
+        drawModalRectWithCustomSizedTexture(xPosition, yPosition, 0, 0, BOOK_PX_WIDTH, BOOK_PX_HEIGHT, TEX_WIDTH, TEX_HEIGHT);
 
         // draw the widgets
-        // rebind the book texture for the cursor ... TODO MOVE IT!
-        this.mc.getTextureManager().bindTexture(texture);
         this.pageEdit.drawEditor();
         this.titleEdit.drawTextBox();
 
@@ -490,7 +474,7 @@ public class GuiPythonBook extends GuiScreen {
                     y += 13;
                 }
 
-                drawTexturedRect(this.xPosition, this.yPosition, x, y, 18, 10, TEX_WIDTH, TEX_HEIGHT);
+                drawModalRectWithCustomSizedTexture(this.xPosition, this.yPosition, x, y, 18, 10, TEX_WIDTH, TEX_HEIGHT);
             }
         }
     }

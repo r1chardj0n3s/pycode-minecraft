@@ -17,7 +17,9 @@ import java.util.List;
 
 
 public class GuiTextArea extends Gui {
-    static final ResourceLocation texture = new ResourceLocation("pycode:textures/gui/text_cursor.png");
+    static final ResourceLocation texture = new ResourceLocation("pycode:textures/gui/code_book.png");
+    private static final int TEX_WIDTH = 334;
+    private static final int TEX_HEIGHT = 238;
 
     private final int id;
     private FontRenderer fontRenderer;
@@ -116,12 +118,12 @@ public class GuiTextArea extends Gui {
         int cursor_x = this.xPosition + line_width - 2;
         int cursor_y = this.yPosition + this.cursorRow * this.fontRenderer.FONT_HEIGHT - 2;
         Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         if (this.cursorCounter / 6 % 2 == 0) {
-            drawTexturedModalRect(cursor_x, cursor_y, 0, 0, 3, 11);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 0.5F);
         } else {
-            drawTexturedModalRect(cursor_x, cursor_y, 5, 0, 3, 11);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         }
+        drawModalRectWithCustomSizedTexture(cursor_x, cursor_y, 52, 215, 3, 11, TEX_WIDTH, TEX_HEIGHT);
 
         // draw content
         this.fontRenderer.drawSplitString(content, this.xPosition, this.yPosition, this.width, 0);
