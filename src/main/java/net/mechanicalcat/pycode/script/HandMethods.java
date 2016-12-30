@@ -2,12 +2,10 @@ package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.entities.HandEntity;
 import net.minecraft.block.*;
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemDoor;
 import net.minecraft.util.EnumFacing;
@@ -43,10 +41,10 @@ public class HandMethods extends BaseMethods {
         this.hand.moveForward(distance);
     }
 
-    public void backward() {
-        this.backward(1);
+    public void back() {
+        this.back(1);
     }
-    public void backward(float distance) {
+    public void back(float distance) {
         this.hand.moveForward(-distance);
     }
 
@@ -469,11 +467,45 @@ public class HandMethods extends BaseMethods {
     public void roof(PyObject[] args, String[] kws) throws BlockTypeError {
         ArgParser r = new ArgParser("line", s("width", "depth", "material"), s("style"));
         r.parse(args, kws);
-        int width = r.getInteger("width");
-        int depth = r.getInteger("depth");
-        BlockPos pos = this.hand.getFacedPos();
+        int aWidth = r.getInteger("width");
+        int aDepth = r.getInteger("depth");
+        BlockPos pos = this.hand.getPosition();
 
-        // TODO alter pos, width and depth based on orientation
+        if (aWidth < 2) {
+            throw Py.TypeError("width must be > 1");
+        }
+        if (aDepth < 2) {
+            throw Py.TypeError("depth must be > 1");
+        }
+
+        // alter pos, width and depth based on orientation so that the
+        // code which always generates in the EAST facing will work
+        int width, depth;
+        switch (this.hand.getHorizontalFacing()) {
+            case EAST:
+                width = aWidth;
+                depth = aDepth;
+                pos = pos.add(1, 0, 0);
+                break;
+            case WEST:
+                width = aWidth;
+                depth = aDepth;
+                pos = pos.add(-aDepth, 0, -(aWidth-1));
+                break;
+            case NORTH:
+                width = aDepth;
+                depth = aWidth;
+                pos = pos.add(0, 0, -aDepth);
+                break;
+            case SOUTH:
+                width = aDepth;
+                depth = aWidth;
+                pos = pos.add(-(aWidth-1), 0, 1);
+                break;
+            default:
+                // should never happen - hand should always be horizontal
+                return;
+        }
 //        EnumFacing facing = this.hand.getHorizontalFacing();
 
         if (r.getString("style", "hip").equals("hip")) {
@@ -518,13 +550,13 @@ public class HandMethods extends BaseMethods {
             fill_state = fill_state.withProperty(BlockPlanks.VARIANT, PLANKTYPES.get(fillMaterial));
         }
 
-        // always construct facing east
+        // always construct facing east; width is the Z axis and depth is the X axis
         EnumFacing facing = EnumFacing.EAST;
 
         BlockPos current;
         while (true) {
-            for (int x=0; x < width; x++) {
-                for (int z=0; z < depth; z++) {
+            for (int x=0; x < depth; x++) {
+                for (int z=0; z < width; z++) {
                     IBlockState block_state = stair_state;
                     current = pos.add(x, 0, z);
                     if (x == 0) {
@@ -532,24 +564,24 @@ public class HandMethods extends BaseMethods {
                         block_state = block_state.withProperty(BlockStairs.FACING, facing);
                         if (z == 0) {
                             block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_LEFT);
-                        } else if (z == depth-1) {
+                        } else if (z == width-1) {
                             block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_RIGHT);
                         }
-                    } else if (x == width-1) {
+                    } else if (x == depth-1) {
                         // top side
                         block_state = block_state.withProperty(BlockStairs.FACING, facing.getOpposite());
                         if (z == 0) {
                             block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_LEFT);
-                        } else if (z == depth-1) {
+                        } else if (z == width-1) {
                             block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_RIGHT);
                         }
                     } else if (z == 0) {
                         // left side
                         block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateY());
-                    } else if (z == depth - 1) {
+                    } else if (z == width - 1) {
                         // right side
                         block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateYCCW());
-                    } else if (z < depth-1) {
+                    } else if (z < width-1) {
                         block_state = fill_state;
                     }
                     this.world.setBlockState(current, block_state);

@@ -183,7 +183,7 @@ Doc TBD::
 
     hand.forward()
     hand.forward(10)
-    hand.backward(5)
+    hand.back(5)
     hand.sidle(5)           # move sideways left
     hand.reverse()
     hand.left()
@@ -255,6 +255,9 @@ An example making a little house::
     hand.down(1)
     hand.cube(7, 7, 5, 'planks', type='dark_oak')
     hand.up(1)
+    with hand.remember():
+      hand.up(4); hand.back(1); hand.sidle(1)
+      hand.roof(9, 9, 'oak')
     hand.sidle(-3)
     hand.put('wooden_door')
     hand.forward(3)
@@ -287,14 +290,14 @@ Put each of these functions on a different page of the book::
 
     # page 2: door and ladder access
     def access():
-      hand.backward(6)
+      hand.back(6)
       for i in range(3):
         hand.clear()
         hand.up()
       hand.down()
       hand.forward()
       hand.put('planks')
-      hand.backward()
+      hand.back()
       hand.put('torch')
       hand.forward()
       hand.down(2)
@@ -447,16 +450,16 @@ TODO
 This is not an exhaustive list, and should probably be put into github issues.
 
 *editing*
- - book name to tooltip / save as (with page markers?)
+ - replace vertical field cursor with area field one for consistency
  - selection-based copy / cut / paste
  - scrolling rather than paging?
  - add help button (describe key controls, mouse control)
  - blocks / items / entities listing somehow
- - replace vertical field cursor with area field one
 *blocks and hands*
  - spawn error report with traceback on error
  - model replacement (OBJ)
  - inventory?
+ - copy book name to hand/block
 *wand*
  - bring up a REPL when activated against air?
  - REPL would want to have auto-complete

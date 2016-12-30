@@ -196,6 +196,9 @@ public class GuiPythonBook extends GuiScreen {
 
     public void updateScreen() {
         super.updateScreen();
+        // I have no idea why, but sometimes pageEdit is null when this is invoked!!
+        if (this.pageEdit == null) { return; }
+
         this.pageEdit.updateCursorCounter();
         this.titleEdit.updateCursorCounter();
 
