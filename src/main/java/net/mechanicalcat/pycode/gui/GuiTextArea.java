@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.FMLLog;
 import org.lwjgl.input.Keyboard;
 
 import java.io.IOException;
@@ -110,9 +111,9 @@ public class GuiTextArea extends Gui {
         Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         if (this.cursorCounter / 6 % 2 == 0) {
-            drawTexturedModalRect(cursor_x, cursor_y, 51, 215, 3, 11);
+            drawTexturedModalRect(cursor_x, cursor_y, 0, 0, 3, 11);
         } else {
-            drawTexturedModalRect(cursor_x, cursor_y, 56, 215, 3, 11);
+            drawTexturedModalRect(cursor_x, cursor_y, 5, 0, 3, 11);
         }
 
         // draw content
@@ -120,6 +121,8 @@ public class GuiTextArea extends Gui {
     }
 
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        if (!this.isFocused) return;
+
         if (GuiScreen.isKeyComboCtrlC(keyCode)) {
             GuiScreen.setClipboardString(this.getString());
             return;
@@ -262,11 +265,12 @@ public class GuiTextArea extends Gui {
     /**
      * Called when mouse is clicked, regardless as to whether it is over this button or not.
      */
-    public void mouseClicked(int mouseX, int mouseY, int mouseButton)
-    {
-        int modX = mouseX - this.xPosition;
-        int modY = mouseY - this.yPosition;
-        boolean inside = modX > 0 && modY > 0 && modX < this.width && modY < this.height;
+    public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        int modX = mouseX - xPosition;
+        int modY = mouseY - yPosition;
+        boolean inside = modX > 0 && modY > 0 && modX < width && modY < height;
+
+        FMLLog.info("mouse=%d,%d; pos=%d,%d; size=%d,%d; flag=%s", mouseX, mouseY, xPosition, yPosition, width, height, inside);
 
         this.setFocused(inside);
 

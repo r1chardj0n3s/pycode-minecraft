@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.math.MathHelper;
+import net.minecraftforge.fml.common.FMLLog;
 
 
 // Basically a GuiTextField but vertical (rotated 270 degrees) and no text shadow
@@ -492,9 +493,10 @@ public class GuiVertTextField extends Gui {
     /**
      * Called when mouse is clicked, regardless as to whether it is over this button or not.
      */
-    public void mouseClicked(int mouseX, int mouseY, int mouseButton)
-    {
-        boolean flag = mouseX >= this.xPosition && mouseX < this.xPosition + this.height && mouseY >= this.yPosition && mouseY < this.yPosition + this.width;
+    public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        // width and height are transposed, yes!
+        boolean flag = mouseX >= xPosition && mouseX < xPosition + height
+                && mouseY >= yPosition - width && mouseY < yPosition;
 
         if (this.canLoseFocus) {
             this.setFocused(flag);

@@ -56,7 +56,7 @@ public class GuiPythonBook extends GuiScreen {
     private static final int LOC_PX_TOP = 15;
     private static final int LOC_PX_WIDTH = 44;
 
-    private static final int TITLE_PX_LEFT = 10;
+    private static final int TITLE_PX_LEFT = 13;
     private static final int TITLE_PX_BOTTOM = 192; // bottom because we render upwards
 
     private int xPosition;
@@ -81,7 +81,7 @@ public class GuiPythonBook extends GuiScreen {
     private GuiTextArea pageEdit;
     private GuiVertTextField titleEdit;
 
-    private static String TITLE_PLACEHOLDER = "Edit Book Title";
+    private static String TITLE_PLACEHOLDER = "Click to edit book title";
 
     private PythonCode code;
     private ScriptException codeException;
@@ -158,11 +158,13 @@ public class GuiPythonBook extends GuiScreen {
         this.pageEdit.setFocused(true);
         this.pageEdit.setGuiResponder(new EditResponder(this));
 
-        this.titleEdit = new GuiVertTextField(2, this.fontRendererObj, xPosition + TITLE_PX_LEFT, yPosition + TITLE_PX_BOTTOM, 100, 20);
+        this.titleEdit = new GuiVertTextField(2, this.fontRendererObj,
+                xPosition + TITLE_PX_LEFT, yPosition + TITLE_PX_BOTTOM, 176, 15);
         this.titleEdit.setFocused(false);
         this.titleEdit.setText(this.bookTitle);
         this.titleEdit.setEnableBackgroundDrawing(false);
         this.titleEdit.setTextColor(0);
+        this.titleEdit.setMaxStringLength(26);
     }
 
     @SideOnly(Side.CLIENT)
@@ -184,6 +186,12 @@ public class GuiPythonBook extends GuiScreen {
         super.updateScreen();
         this.pageEdit.updateCursorCounter();
         this.titleEdit.updateCursorCounter();
+
+        if (this.titleEdit.getText().equals(TITLE_PLACEHOLDER)) {
+            this.titleEdit.setTextColor(0xff555555);
+        } else {
+            this.titleEdit.setTextColor(0xff000000);
+        }
 
         // test compilation?
         String content = pageEdit.getString();
