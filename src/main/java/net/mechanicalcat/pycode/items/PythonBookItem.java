@@ -2,6 +2,7 @@ package net.mechanicalcat.pycode.items;
 
 import net.mechanicalcat.pycode.PyCode;
 import net.mechanicalcat.pycode.Reference;
+import net.mechanicalcat.pycode.script.PythonCode;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -31,6 +32,18 @@ public class PythonBookItem extends Item {
     public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand) {
         PyCode.proxy.openBook(playerIn, itemStackIn);
         return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
+    }
+
+    @Override
+    public void addInformation(ItemStack stack, EntityPlayer playerIn, List<String> tooltip, boolean advanced) {
+        NBTTagCompound compound = stack.getTagCompound();
+        if (compound == null) return;
+        if (compound.hasKey("title")) {
+            String title = compound.getString("title");
+            if (!title.isEmpty()) {
+                tooltip.add(title);
+            }
+        }
     }
 
     public static boolean isNBTValid(NBTTagCompound nbt) {

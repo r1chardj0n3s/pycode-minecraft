@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.fml.common.FMLLog;
 
 
 // Basically a GuiTextField but vertical (rotated 270 degrees) and no text shadow

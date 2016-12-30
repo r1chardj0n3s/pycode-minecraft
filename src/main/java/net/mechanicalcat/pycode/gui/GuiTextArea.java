@@ -74,6 +74,13 @@ public class GuiTextArea extends Gui {
         this.setCursorPosition(0, 0);
     }
 
+    private void _editString(String text) {
+        this._setString(text);
+        if (this.guiResponder != null) {
+            this.guiResponder.setEntryValue(this.id, this.getString());
+        }
+    }
+
     private void _setString(String text) {
         String s = text;
         // fudge the last line so it has content so a line is actually created
@@ -128,7 +135,7 @@ public class GuiTextArea extends Gui {
             return;
         }
         if (GuiScreen.isKeyComboCtrlV(keyCode)) {
-            this.setString(GuiScreen.getClipboardString());
+            this._editString(GuiScreen.getClipboardString());
             return;
         }
 
@@ -154,12 +161,12 @@ public class GuiTextArea extends Gui {
                             temp.add(this.lines[i]);
                         }
                     }
-                    this._setString(String.join("\n", temp));
+                    this._editString(String.join("\n", temp));
                     this.cursorRow--;
                 } else {
                     String newline = line.substring(0, this.cursorColumn - 1) + line.substring(this.cursorColumn, line.length());
                     this.lines[this.cursorRow] = newline;
-                    this._setString(String.join("\n", this.lines));
+                    this._editString(String.join("\n", this.lines));
                     this.cursorColumn -= 1;
                 }
                 return;
@@ -255,11 +262,7 @@ public class GuiTextArea extends Gui {
         String line = this.lines[this.cursorRow];
         String newline = line.substring(0, this.cursorColumn) + text + line.substring(this.cursorColumn, line.length());
         this.lines[this.cursorRow] = newline;
-        this._setString(String.join("\n", this.lines));
-
-        if (this.guiResponder != null) {
-            this.guiResponder.setEntryValue(this.id, this.getString());
-        }
+        this._editString(String.join("\n", this.lines));
     }
 
     /**
@@ -269,8 +272,6 @@ public class GuiTextArea extends Gui {
         int modX = mouseX - xPosition;
         int modY = mouseY - yPosition;
         boolean inside = modX > 0 && modY > 0 && modX < width && modY < height;
-
-        FMLLog.info("mouse=%d,%d; pos=%d,%d; size=%d,%d; flag=%s", mouseX, mouseY, xPosition, yPosition, width, height, inside);
 
         this.setFocused(inside);
 

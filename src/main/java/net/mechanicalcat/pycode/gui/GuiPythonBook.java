@@ -70,10 +70,12 @@ public class GuiPythonBook extends GuiScreen {
     private boolean bookIsModified;
     private int currPage = 0;
 
-    private static final int BUTTON_DONE = 0;
-    private static final int BUTTON_CANCEL = 1;
-    private static final int BUTTON_NEXT = 2;
-    private static final int BUTTON_PREV = 3;
+    private static final int BUTTON_DONE_ID = 0;
+    private static final int BUTTON_CANCEL_ID = 1;
+    private static final int BUTTON_NEXT_ID = 2;
+    private static final int BUTTON_PREV_ID = 3;
+    private static final int PAGE_EDIT_ID = 4;
+    private static final int TITLE_EDIT_ID = 5;
     private GuiButton buttonDone;
     private GuiButton buttonCancel;
     private GuiButton buttonNextPage;
@@ -133,52 +135,62 @@ public class GuiPythonBook extends GuiScreen {
         FMLLog.info("Rendering GuiPythonBook at %s,%s", xPosition, yPosition);
 
         // func_189646_b adds a button to the buttonList
-        this.buttonDone = this.func_189646_b(new GuiButton(BUTTON_DONE,
+        this.buttonDone = this.func_189646_b(new GuiButton(BUTTON_DONE_ID,
                 xPosition + BUTTONS_PX_LEFT, yPosition + BUTTONS_PX_TOP, 70, 20,
                 I18n.format("gui.done", new Object[0])));
-        this.buttonCancel = this.func_189646_b(new GuiButton(BUTTON_CANCEL,
+        this.buttonCancel = this.func_189646_b(new GuiButton(BUTTON_CANCEL_ID,
                 xPosition + BUTTONS_PX_LEFT, yPosition + BUTTONS_PX_TOP + 22, 70, 20,
                 I18n.format("gui.cancel", new Object[0])));
 
         // TODO not sure why but these buttons seem to need to be offest by their width
         this.buttonNextPage = this.func_189646_b(
-            new GuiPythonBook.NextPageButton(BUTTON_NEXT,
+            new GuiPythonBook.NextPageButton(BUTTON_NEXT_ID,
                     xPosition + LOC_PX_LEFT + 22, yPosition + LOC_PX_TOP + 25, true)
         );
         this.buttonPreviousPage = this.func_189646_b(
-            new GuiPythonBook.NextPageButton(BUTTON_PREV,
+            new GuiPythonBook.NextPageButton(BUTTON_PREV_ID,
                     xPosition + LOC_PX_LEFT + 2, yPosition + LOC_PX_TOP + 25, false)
         );
         this.updateButtons();
 
-        this.pageEdit = new GuiTextArea(1, this.fontRendererObj,
+        EditResponder r = new EditResponder(this);
+
+        this.pageEdit = new GuiTextArea(PAGE_EDIT_ID, this.fontRendererObj,
                 xPosition + EDITOR_PX_LEFT, yPosition + EDITOR_PX_TOP, EDITOR_PX_WIDTH, EDITOR_PX_HEIGHT);
         String s = this.pageGetCurrent();
         this.pageEdit.setString(s);
         this.pageEdit.setFocused(true);
-        this.pageEdit.setGuiResponder(new EditResponder(this));
+        this.pageEdit.setGuiResponder(r);
 
-        this.titleEdit = new GuiVertTextField(2, this.fontRendererObj,
+        this.titleEdit = new GuiVertTextField(TITLE_EDIT_ID, this.fontRendererObj,
                 xPosition + TITLE_PX_LEFT, yPosition + TITLE_PX_BOTTOM, 176, 15);
         this.titleEdit.setFocused(false);
         this.titleEdit.setText(this.bookTitle);
         this.titleEdit.setEnableBackgroundDrawing(false);
         this.titleEdit.setTextColor(0);
         this.titleEdit.setMaxStringLength(26);
+        this.titleEdit.setGuiResponder(r);
     }
 
     @SideOnly(Side.CLIENT)
     class EditResponder implements GuiPageButtonList.GuiResponder {
-        GuiPythonBook book;
-        EditResponder(GuiPythonBook book) {
-            this.book = book;
+        GuiPythonBook parent;
+        EditResponder(GuiPythonBook parent) {
+            this.parent = parent;
         }
         public void setEntryValue(int id, boolean value) { }
 
         public void setEntryValue(int id, float value) { }
 
         public void setEntryValue(int id, String value) {
-            this.book.pageSetCurrent(value);
+            if (id == PAGE_EDIT_ID) {
+                FMLLog.info("setEntryValue %d (%d) SET PAEG", id, value.length());
+                this.parent.pageSetCurrent(value);
+            } else if (id == TITLE_EDIT_ID) {
+                FMLLog.info("setEntryValue %d (%d) SET TIT", id, value.length());
+                this.parent.bookTitle = value;
+            }
+            this.parent.bookIsModified = true;
         }
     }
 
@@ -227,10 +239,10 @@ public class GuiPythonBook extends GuiScreen {
     protected void actionPerformed(GuiButton button) throws IOException {
         boolean updateLines = false;
         if (button.enabled) {
-            if (button.id == BUTTON_DONE) {
+            if (button.id == BUTTON_DONE_ID) {
                 this.sendBookToServer();
                 this.mc.displayGuiScreen(null);
-            } else if (button.id == BUTTON_NEXT) {
+            } else if (button.id == BUTTON_NEXT_ID) {
                 if (this.currPage < this.bookTotalPages - 1) {
                     ++this.currPage;
                     updateLines = true;
@@ -242,12 +254,12 @@ public class GuiPythonBook extends GuiScreen {
                         updateLines = true;
                     }
                 }
-            } else if (button.id == BUTTON_PREV) {
+            } else if (button.id == BUTTON_PREV_ID) {
                 if (this.currPage > 0) {
                     --this.currPage;
                     updateLines = true;
                 }
-            } else if (button.id == BUTTON_CANCEL) {
+            } else if (button.id == BUTTON_CANCEL_ID) {
                 this.mc.displayGuiScreen(null);
             }
 
@@ -303,6 +315,9 @@ public class GuiPythonBook extends GuiScreen {
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        // I have no idea why, but sometimes pageEdit is null when this is invoked!!
+        if (this.pageEdit == null) { return; }
+
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         this.mc.getTextureManager().bindTexture(texture);
         drawTexturedRect(xPosition, yPosition, 0, 0, BOOK_PX_WIDTH, BOOK_PX_HEIGHT, TEX_WIDTH, TEX_HEIGHT);

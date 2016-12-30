@@ -436,6 +436,11 @@ Then run::
 And upload the .jar file from ``build/libs/``.
 
 
+BUGS
+----
+- cursor in text area not rendering correctly
+
+
 TODO
 ----
 
@@ -447,6 +452,7 @@ This is not an exhaustive list, and should probably be put into github issues.
  - scrolling rather than paging?
  - add help button (describe key controls, mouse control)
  - blocks / items / entities listing somehow
+ - replace vertical field cursor with area field one
 *blocks and hands*
  - spawn error report with traceback on error
  - model replacement (OBJ)
