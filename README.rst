@@ -336,6 +336,20 @@ Put each of these functions on a different page of the book::
         access()
       furnish()
 
+Roof demo::
+
+STYLES = ["hip", "gable", "shed",
+ "box-gable", "box-shed"]
+hand.face('east')
+for style in STYLES:
+  for i in range(4):
+    hand.forward(2)
+    hand.roof(7, 5, 'oak', style=style)
+    hand.left()
+    hand.forward(2)
+  hand.forward(20)
+
+
 
 Wand
 ----

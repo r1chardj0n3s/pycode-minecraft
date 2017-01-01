@@ -557,15 +557,22 @@ public class HandMethods extends BaseMethods {
                 return;
         }
 
-        switch (r.getString("style", "hip")) {
+        String style = r.getString("style", "hip");
+        boolean box = false;
+        if (style.startsWith("box-")) {
+            box = true;
+            style = style.substring(4);
+        }
+
+        switch (style) {
             case "hip":
                 hipRoof(r.getString("material"), width, depth, pos);
                 break;
             case "gable":
-                gableRoof(r.getString("material"), width, depth, pos, false);
+                gableRoof(r.getString("material"), width, depth, pos, box);
                 break;
-            case "box-gable":
-                gableRoof(r.getString("material"), width, depth, pos, true);
+            case "shed":
+                shedRoof(r.getString("material"), width, depth, pos, box);
                 break;
             default:
                 throw Py.TypeError(String.format("unknown style '%s'", r.getString("style")));
@@ -720,7 +727,7 @@ public class HandMethods extends BaseMethods {
                 }
             }
 
-            // move up a layer, only decreasing depth
+            // move up a layer, only decreasing one dimension
             if (north_south) {
                 width -= 2;
                 if (width == 1) {
@@ -736,6 +743,64 @@ public class HandMethods extends BaseMethods {
                     roofCap(material, width, depth, pos.add(1, 1, 0));
                 }
                 if (depth <= 1) {
+                    break;
+                }
+                pos = pos.add(1, 1, 0);
+            }
+        }
+    }
+
+    private void shedRoof(String material, int width, int depth, BlockPos pos, boolean box) throws BlockTypeError {
+        IBlockState stair = getStairBlock(material);
+        stair = stair.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
+
+        IBlockState fill_state = this.getRoofFiller(material);
+
+        // always construct facing east; width is the Z axis and depth is the X axis
+        EnumFacing facing = EnumFacing.EAST;
+        EnumFacing actualFacing = this.hand.getHorizontalFacing();
+
+        boolean north_south = actualFacing == EnumFacing.NORTH || actualFacing == EnumFacing.SOUTH;
+
+        BlockPos current;
+        while (true) {
+            for (int x=0; x < depth; x++) {
+                for (int z=0; z < width; z++) {
+                    IBlockState block_state = stair;
+                    current = pos.add(x, 0, z);
+                    if (north_south) {
+                        if (z == 0) {
+                            block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateY());
+                        } else if (box) {
+                            // only fill if box gable
+                            block_state = fill_state;
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        if (x == 0) {
+                            block_state = block_state.withProperty(BlockStairs.FACING, facing);
+                        } else if (box) {
+                            // only fill if box gable
+                            block_state = fill_state;
+                        } else {
+                            continue;
+                        }
+                    }
+                    this.world.setBlockState(current, block_state);
+                }
+            }
+
+            // move up a layer, only decreasing one dimension
+            if (north_south) {
+                width -= 1;
+                if (width < 1) {
+                    break;
+                }
+                pos = pos.add(0, 1, 1);
+            } else {
+                depth -= 1;
+                if (depth < 1) {
                     break;
                 }
                 pos = pos.add(1, 1, 0);
