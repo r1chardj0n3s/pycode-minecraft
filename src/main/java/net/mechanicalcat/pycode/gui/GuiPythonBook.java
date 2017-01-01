@@ -321,7 +321,7 @@ public class GuiPythonBook extends GuiScreen {
             if (err == null) {
                 err = this.codeException.getClass().getName();
             } else {
-                // fracking Java encapsulation obsession I can't get to the gottamn detailMessage form the
+                // fracking Java encapsulation obsession I can't getBlock to the gottamn detailMessage form the
                 // ScriptException subclass
                 Pattern p = Pattern.compile("^(\\p{Alpha}+: )(.+) in <script> at");
                 Matcher m = p.matcher(err);

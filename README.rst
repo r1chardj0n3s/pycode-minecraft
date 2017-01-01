@@ -257,6 +257,8 @@ with overhang you could::
     hand.sidle(1)
     hand.roof(9, 5, 'dark_oak', style='gable')
 
+    hand.roof(5, 5, 'wool', color='yellow')
+
 
 Examples
 ~~~~~~~~
@@ -338,18 +340,16 @@ Put each of these functions on a different page of the book::
 
 Roof demo::
 
-STYLES = ["hip", "gable", "shed",
- "box-gable", "box-shed"]
-hand.face('east')
-for style in STYLES:
-  for i in range(4):
-    hand.forward(2)
-    hand.roof(7, 5, 'oak', style=style)
-    hand.left()
-    hand.forward(2)
-  hand.forward(20)
-
-
+    STYLES = ["hip", "gable", "shed",
+     "box-gable", "box-shed"]
+    hand.face('east')
+    for style in STYLES:
+      for i in range(4):
+        hand.forward(2)
+        hand.roof(7, 5, 'oak', style=style)
+        hand.left()
+        hand.forward(2)
+      hand.forward(20)
 
 Wand
 ----
@@ -363,7 +363,7 @@ CHANGELOG
 **1.7**
  - Added handling of plank types in put()
  - All block placement methods can now specify block variation keywords
- - Added roof()
+ - Added roof() with various styles
  - Added half and type keyword argument handling for put()ing
    of slabs and stone slabs in particular
 **1.6**

@@ -41,7 +41,7 @@ public enum EntityEnum {
         try {
             cons = this.c.getConstructor(World.class);
         } catch (NoSuchMethodException e) {
-            System.out.println("Failed to get constructor for " + this.c + " got " + e);
+            System.out.println("Failed to getBlock constructor for " + this.c + " got " + e);
             return null;
         }
         try {

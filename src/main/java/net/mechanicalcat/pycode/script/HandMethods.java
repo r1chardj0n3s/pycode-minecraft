@@ -2,7 +2,6 @@ package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.entities.HandEntity;
 import net.minecraft.block.*;
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.IBlockState;
@@ -10,17 +9,14 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemDoor;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLLog;
 import org.python.core.Py;
 import org.python.core.PyObject;
-
-import javax.annotation.Nullable;
-import java.util.HashMap;
 
 
 public class HandMethods extends BaseMethods {
@@ -92,53 +88,16 @@ public class HandMethods extends BaseMethods {
         this.hand.moveEntity(x, y, z);
     }
 
-    private Block getBlock(String blockName) throws BlockTypeError {
-        Block block = Block.REGISTRY.getObject(new ResourceLocation(blockName));
-        FMLLog.info("getBlock asked for '%s', got '%s'", blockName, block.getUnlocalizedName());
-        if (block.getUnlocalizedName().equals("tile.air") && !blockName.equals("air")) {
-            throw new BlockTypeError(blockName);
-        }
-        return block;
-    }
-
-    private IBlockState getSlabBlock(String material) throws BlockTypeError {
-        Block slab;
-        if (PLANKTYPES.containsKey(material)) {
-            slab = getBlock("wooden_slab");
-            return slab.getDefaultState().withProperty(BlockPlanks.VARIANT, PLANKTYPES.get(material));
-        } else if (STONETYPES.containsKey(material)) {
-            slab = getBlock("stone_slab");
-            return slab.getDefaultState().withProperty(BlockStoneSlab.VARIANT, STONETYPES.get(material));
-        } else {
-            return getBlock(material.concat("_slab")).getDefaultState();
-        }
-    }
-
-    private IBlockState getStairBlock(String material) throws BlockTypeError {
-        if (material.equals("cobblestone")) {
-            return getBlock("stone_stairs").getDefaultState();
-        } else {
-            return getBlock(material.concat("_stairs")).getDefaultState();
-        }
-    }
-
     // this is just a little crazypants
     private String[] s(String ... strings) {
         return strings;
-    }
-
-    public PyObject put(PyObject[] args, String[] kws) {
-        ArgParser r = new ArgParser("put", s("blockname"), s("color", "facing", "type", "half", "shape", "seamless"));
-        r.parse(args, kws);
-        this.put(this.hand.getFacedPos(), getBlockVariant(r));
-        return Py.java2py(null);
     }
 
     private IBlockState getBlockVariant(ArgParser spec) {
         String blockName = spec.getString("blockname");
         Block block;
         try {
-            block = this.getBlock(blockName);
+            block = PyRegistry.getBlock(blockName);
         } catch (BlockTypeError e) {
             throw Py.TypeError("Unknown block " + blockName);
         }
@@ -192,15 +151,15 @@ public class HandMethods extends BaseMethods {
         if (spec.has("type"))
             if (block_state.getBlock() instanceof BlockPlanks) {
                 String s = spec.getString("type");
-                BlockPlanks.EnumType type = PLANKTYPES.get(s);
+                BlockPlanks.EnumType type = PyRegistry.PLANKTYPES.get(s);
                 if (s == null) throw Py.TypeError(blockName + " unknown type " + s);
                 block_state = block_state.withProperty(BlockPlanks.VARIANT, type);
             } else if (block_state.getBlock() instanceof BlockStoneSlab) {
                 String s = spec.getString("type");
-                BlockStoneSlab.EnumType type = STONETYPES.get(s);
+                BlockStoneSlab.EnumType type = PyRegistry.STONETYPES.get(s);
                 if (s == null) throw Py.TypeError(blockName + " unknown type " + s);
                 block_state = block_state.withProperty(BlockStoneSlab.VARIANT, type);
-        }
+            }
 
         if (spec.has("half")) {
             if (block_state.getBlock() instanceof BlockStairs) {
@@ -282,6 +241,13 @@ public class HandMethods extends BaseMethods {
         }
 
         return block_state;
+    }
+
+    public PyObject put(PyObject[] args, String[] kws) {
+        ArgParser r = new ArgParser("put", s("blockname"), s("color", "facing", "type", "half", "shape", "seamless"));
+        r.parse(args, kws);
+        this.put(this.hand.getFacedPos(), getBlockVariant(r));
+        return Py.java2py(null);
     }
 
     private void put(BlockPos pos, IBlockState block_state) {
@@ -519,44 +485,12 @@ public class HandMethods extends BaseMethods {
         r.parse(args, kws);
         int aWidth = r.getInteger("width");
         int aDepth = r.getInteger("depth");
-        BlockPos pos = this.hand.getPosition();
-
         if (aWidth < 2) {
             throw Py.TypeError("width must be > 1");
         }
         if (aDepth < 2) {
             throw Py.TypeError("depth must be > 1");
         }
-
-        // alter pos, width and depth based on orientation so that the
-        // code which always generates in the EAST facing will work
-        int width, depth;
-        switch (this.hand.getHorizontalFacing()) {
-            case EAST:
-                width = aWidth;
-                depth = aDepth;
-                pos = pos.add(1, 0, 0);
-                break;
-            case WEST:
-                width = aWidth;
-                depth = aDepth;
-                pos = pos.add(-aDepth, 0, -(aWidth-1));
-                break;
-            case NORTH:
-                width = aDepth;
-                depth = aWidth;
-                pos = pos.add(0, 0, -aDepth);
-                break;
-            case SOUTH:
-                width = aDepth;
-                depth = aWidth;
-                pos = pos.add(-(aWidth-1), 0, 1);
-                break;
-            default:
-                // should never happen - hand should always be horizontal
-                return;
-        }
-
         String style = r.getString("style", "hip");
         boolean box = false;
         if (style.startsWith("box-")) {
@@ -564,264 +498,22 @@ public class HandMethods extends BaseMethods {
             style = style.substring(4);
         }
 
+        RoofGen gen = new RoofGen((WorldServer)this.world, r.getString("material"),
+                this.hand.getHorizontalFacing(), aWidth, aDepth, this.hand.getPosition());
+
         switch (style) {
             case "hip":
-                hipRoof(r.getString("material"), width, depth, pos);
+                gen.hip();
                 break;
             case "gable":
-                gableRoof(r.getString("material"), width, depth, pos, box);
+                gen.gable(box);
                 break;
             case "shed":
-                shedRoof(r.getString("material"), width, depth, pos, box);
+                gen.shed(box);
                 break;
             default:
                 throw Py.TypeError(String.format("unknown style '%s'", r.getString("style")));
         }
     }
 
-    private static final HashMap<String, String> FILLER = new HashMap<>();
-    private static final HashMap<String, BlockPlanks.EnumType> PLANKTYPES = new HashMap<>();
-    private static final HashMap<String, BlockStoneSlab.EnumType> STONETYPES = new HashMap<>();
-    static {
-        FILLER.put("oak", "planks");
-        FILLER.put("stone", "stone");
-        FILLER.put("brick", "brick_block");
-        FILLER.put("stone_brick", "stonebrick");
-        FILLER.put("nether_brick", "nether_brick");
-        FILLER.put("sandstone", "sandstone");
-        FILLER.put("spruce", "planks");
-        FILLER.put("birch", "planks");
-        FILLER.put("jungle", "planks");
-        FILLER.put("acacia", "planks");
-        FILLER.put("dark_oak", "planks");
-        FILLER.put("quartz", "quartz_block");
-        FILLER.put("red_sandstone", "red_sandstone");
-        FILLER.put("purpur", "purpur_block");
-        PLANKTYPES.put("oak", BlockPlanks.EnumType.OAK);
-        PLANKTYPES.put("spruce", BlockPlanks.EnumType.SPRUCE);
-        PLANKTYPES.put("birch", BlockPlanks.EnumType.BIRCH);
-        PLANKTYPES.put("jungle", BlockPlanks.EnumType.JUNGLE);
-        PLANKTYPES.put("acacia", BlockPlanks.EnumType.ACACIA);
-        PLANKTYPES.put("dark_oak", BlockPlanks.EnumType.DARK_OAK);
-        STONETYPES.put("stone", BlockStoneSlab.EnumType.STONE);
-        STONETYPES.put("sandstone", BlockStoneSlab.EnumType.SAND);
-        STONETYPES.put("wood_old", BlockStoneSlab.EnumType.WOOD);
-        STONETYPES.put("cobblestone", BlockStoneSlab.EnumType.COBBLESTONE);
-        STONETYPES.put("brick", BlockStoneSlab.EnumType.BRICK);
-        STONETYPES.put("stone_brick", BlockStoneSlab.EnumType.SMOOTHBRICK);
-        STONETYPES.put("nether_brick", BlockStoneSlab.EnumType.NETHERBRICK);
-        STONETYPES.put("quartz", BlockStoneSlab.EnumType.QUARTZ);
-    }
-
-    private IBlockState getRoofFiller(String material) throws BlockTypeError {
-        String fillMaterial = FILLER.get(material);
-        Block filler = getBlock(fillMaterial);
-        filler.getDefaultState();
-        if (fillMaterial.equals("planks") && !material.equals("oak")) {
-            return filler.getDefaultState().withProperty(BlockPlanks.VARIANT, PLANKTYPES.get(material));
-        }
-        return filler.getDefaultState();
-    }
-
-    private void hipRoof(String material, int width, int depth, BlockPos pos) throws BlockTypeError {
-        IBlockState stair = getStairBlock(material);
-        stair = stair.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
-
-        IBlockState fill_state = this.getRoofFiller(material);
-
-        // always construct facing east; width is the Z axis and depth is the X axis
-        EnumFacing facing = EnumFacing.EAST;
-
-        BlockPos current;
-        while (true) {
-            for (int x=0; x < depth; x++) {
-                for (int z=0; z < width; z++) {
-                    IBlockState block_state = stair;
-                    current = pos.add(x, 0, z);
-                    if (x == 0) {
-                        // bottom side
-                        block_state = block_state.withProperty(BlockStairs.FACING, facing);
-                        if (z == 0) {
-                            block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_LEFT);
-                        } else if (z == width-1) {
-                            block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_RIGHT);
-                        }
-                    } else if (x == depth-1) {
-                        // top side
-                        block_state = block_state.withProperty(BlockStairs.FACING, facing.getOpposite());
-                        if (z == 0) {
-                            block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_LEFT);
-                        } else if (z == width-1) {
-                            block_state = block_state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_RIGHT);
-                        }
-                    } else if (z == 0) {
-                        // left side
-                        block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateY());
-                    } else if (z == width - 1) {
-                        // right side
-                        block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateYCCW());
-                    } else if (z < width-1) {
-                        block_state = fill_state;
-                    }
-                    this.world.setBlockState(current, block_state);
-                }
-            }
-
-            // move up a layer
-            width -=2;
-            depth -= 2;
-            if (width == 1) {
-                roofCap(material, width, depth, pos.add(1, 1, 1));
-            } else if (depth == 1) {
-                roofCap(material, width, depth, pos.add(1, 1, 1));
-            }
-            if (width <= 1 || depth <= 1) {
-                break;
-            }
-            pos = pos.add(1, 1, 1);
-        }
-    }
-
-    private void gableRoof(String material, int width, int depth, BlockPos pos, boolean box) throws BlockTypeError {
-        IBlockState stair = getStairBlock(material);
-        stair = stair.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
-
-        IBlockState fill_state = this.getRoofFiller(material);
-
-        // always construct facing east; width is the Z axis and depth is the X axis
-        EnumFacing facing = EnumFacing.EAST;
-        EnumFacing actualFacing = this.hand.getHorizontalFacing();
-
-        boolean north_south = actualFacing == EnumFacing.NORTH || actualFacing == EnumFacing.SOUTH;
-
-        BlockPos current;
-        while (true) {
-            for (int x=0; x < depth; x++) {
-                for (int z=0; z < width; z++) {
-                    IBlockState block_state = stair;
-                    current = pos.add(x, 0, z);
-                    if (north_south) {
-                        if (z == 0) {
-                            block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateY());
-                        } else if (z == width - 1) {
-                            block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateYCCW());
-                        } else if (box) {
-                            // only fill if box gable
-                            block_state = fill_state;
-                        } else {
-                            continue;
-                        }
-                    } else {
-                        if (x == 0) {
-                            block_state = block_state.withProperty(BlockStairs.FACING, facing);
-                        } else if (x == depth - 1) {
-                            block_state = block_state.withProperty(BlockStairs.FACING, facing.getOpposite());
-                        } else if (box) {
-                            // only fill if box gable
-                            block_state = fill_state;
-                        } else {
-                            continue;
-                        }
-                    }
-                    this.world.setBlockState(current, block_state);
-                }
-            }
-
-            // move up a layer, only decreasing one dimension
-            if (north_south) {
-                width -= 2;
-                if (width == 1) {
-                    roofCap(material, width, depth, pos.add(0, 1, 1));
-                }
-                if (width <= 1) {
-                    break;
-                }
-                pos = pos.add(0, 1, 1);
-            } else {
-                depth -= 2;
-                if (depth == 1) {
-                    roofCap(material, width, depth, pos.add(1, 1, 0));
-                }
-                if (depth <= 1) {
-                    break;
-                }
-                pos = pos.add(1, 1, 0);
-            }
-        }
-    }
-
-    private void shedRoof(String material, int width, int depth, BlockPos pos, boolean box) throws BlockTypeError {
-        IBlockState stair = getStairBlock(material);
-        stair = stair.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
-
-        IBlockState fill_state = this.getRoofFiller(material);
-
-        // always construct facing east; width is the Z axis and depth is the X axis
-        EnumFacing facing = EnumFacing.EAST;
-        EnumFacing actualFacing = this.hand.getHorizontalFacing();
-
-        boolean north_south = actualFacing == EnumFacing.NORTH || actualFacing == EnumFacing.SOUTH;
-
-        BlockPos current;
-        while (true) {
-            for (int x=0; x < depth; x++) {
-                for (int z=0; z < width; z++) {
-                    IBlockState block_state = stair;
-                    current = pos.add(x, 0, z);
-                    if (north_south) {
-                        if (z == 0) {
-                            block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateY());
-                        } else if (box) {
-                            // only fill if box gable
-                            block_state = fill_state;
-                        } else {
-                            continue;
-                        }
-                    } else {
-                        if (x == 0) {
-                            block_state = block_state.withProperty(BlockStairs.FACING, facing);
-                        } else if (box) {
-                            // only fill if box gable
-                            block_state = fill_state;
-                        } else {
-                            continue;
-                        }
-                    }
-                    this.world.setBlockState(current, block_state);
-                }
-            }
-
-            // move up a layer, only decreasing one dimension
-            if (north_south) {
-                width -= 1;
-                if (width < 1) {
-                    break;
-                }
-                pos = pos.add(0, 1, 1);
-            } else {
-                depth -= 1;
-                if (depth < 1) {
-                    break;
-                }
-                pos = pos.add(1, 1, 0);
-            }
-        }
-    }
-
-    private void roofCap(String material, int width, int depth, BlockPos pos) throws BlockTypeError {
-        IBlockState slab_state = getSlabBlock(material);
-
-        // TODO add slab half to general put options
-        // stone slabs also have a "seamless" property
-        slab_state = slab_state.withProperty(BlockSlab.HALF, BlockSlab.EnumBlockHalf.BOTTOM);
-        if (width == 1) {
-            for (int x = 0; x < depth; x++) {
-                this.world.setBlockState(pos.add(x, 0, 0), slab_state);
-            }
-        } else if (depth == 1) {
-            for (int z = 0; z < width; z++) {
-                this.world.setBlockState(pos.add(0, 0, z), slab_state);
-            }
-        }
-    }
 }

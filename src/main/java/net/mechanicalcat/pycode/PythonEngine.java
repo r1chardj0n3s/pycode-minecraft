@@ -17,7 +17,7 @@ public class PythonEngine {
         ScriptEngineManager manager = new ScriptEngineManager();
         engine = (PyScriptEngine) manager.getEngineByName("python");
         if (engine == null) {
-            FMLLog.severe("FAILED to get Python");
+            FMLLog.severe("FAILED to getBlock Python");
         } else {
             FMLLog.fine("Got Python");
         }

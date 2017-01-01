@@ -131,7 +131,7 @@ public class PythonCode {
             pages = bookData.getTagList("pages", 8);
         } catch (NullPointerException e) {
             // this should not happen!
-            this.failz0r(world, pos, "Could not get pages from the book!?");
+            this.failz0r(world, pos, "Could not getBlock pages from the book!?");
             return true;
         }
         // collapse the pages into one string
