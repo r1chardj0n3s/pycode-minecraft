@@ -117,153 +117,8 @@ public class HandMethods extends BaseMethods {
     }
 
     private IBlockState getBlockVariant(ArgParser spec) {
-        String blockName = spec.getString("blockname");
-        Block block;
-        try {
-            block = PyRegistry.getBlock(blockName);
-        } catch (BlockTypeError e) {
-            throw Py.TypeError("Unknown block " + blockName);
-        }
-        IBlockState block_state = block.getDefaultState();
-        boolean facingSet = false;
-        BlockPos pos = this.hand.getPosition();
-        EnumFacing handFacing = this.hand.getHorizontalFacing();
-        EnumFacing opposite = handFacing.getOpposite();
-        BlockPos faced = this.hand.getFacedPos();
-        PropertyDirection direction;
-
-        if (spec.has("color")) {
-            String color = spec.getString("color");
-            EnumDyeColor dye = PythonCode.COLORMAP.get(color);
-            if (dye == null) {
-                throw Py.TypeError(blockName + " color " + color);
-            }
-            PropertyEnum<EnumDyeColor> prop;
-            try {
-                prop = (PropertyEnum<EnumDyeColor>) block.getClass().getField("COLOR").get(block);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw Py.TypeError(blockName + " cannot be colored");
-            }
-            block_state = block_state.withProperty(prop, dye);
-        }
-
-        if (spec.has("facing")) {
-            String s = spec.getString("facing");
-            EnumFacing facing;
-            if (s.equals("left")) {
-                facing = handFacing.rotateYCCW();
-            } else if (s.equals("right")) {
-                facing = handFacing.rotateY();
-            } else if (s.equals("back")) {
-                facing = handFacing.getOpposite();
-            } else {
-                facing = PythonCode.FACINGMAP.get(s);
-            }
-            if (facing == null) {
-                throw Py.TypeError("Invalid facing " + s);
-            }
-            try {
-                direction = (PropertyDirection) block_state.getBlock().getClass().getField("FACING").get(block_state.getBlock());
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw Py.TypeError(blockName + " does not have facing");
-            }
-            block_state = block_state.withProperty(direction, facing);
-            facingSet = true;
-        }
-
-        if (spec.has("type"))
-            if (block_state.getBlock() instanceof BlockPlanks) {
-                String s = spec.getString("type");
-                BlockPlanks.EnumType type = PyRegistry.PLANKTYPES.get(s);
-                if (s == null) throw Py.TypeError(blockName + " unknown type " + s);
-                block_state = block_state.withProperty(BlockPlanks.VARIANT, type);
-            } else if (block_state.getBlock() instanceof BlockStoneSlab) {
-                String s = spec.getString("type");
-                BlockStoneSlab.EnumType type = PyRegistry.STONETYPES.get(s);
-                if (s == null) throw Py.TypeError(blockName + " unknown type " + s);
-                block_state = block_state.withProperty(BlockStoneSlab.VARIANT, type);
-            }
-
-        if (spec.has("half")) {
-            if (block_state.getBlock() instanceof BlockStairs) {
-                String s = spec.getString("half");
-                BlockStairs.EnumHalf half;
-                switch (s) {
-                    case "top":
-                        half = BlockStairs.EnumHalf.TOP;
-                        break;
-                    case "bottom":
-                        half = BlockStairs.EnumHalf.BOTTOM;
-                        break;
-                    default:
-                        throw Py.TypeError(blockName + " unknown half " + s);
-                }
-                block_state = block_state.withProperty(BlockStairs.HALF, half);
-            } else if (block_state.getBlock() instanceof BlockSlab) {
-                String s = spec.getString("half");
-                BlockSlab.EnumBlockHalf half;
-                switch (s) {
-                    case "top":
-                        half = BlockSlab.EnumBlockHalf.TOP;
-                        break;
-                    case "bottom":
-                        half = BlockSlab.EnumBlockHalf.BOTTOM;
-                        break;
-                    default:
-                        throw Py.TypeError(blockName + " unknown half " + s);
-                }
-                block_state = block_state.withProperty(BlockSlab.HALF, half);
-            }
-        }
-
-        if (spec.has("seamless") && block_state.getBlock() instanceof BlockStoneSlab) {
-            block_state = block_state.withProperty(BlockStoneSlab.SEAMLESS, spec.getBoolean("seamless"));
-        }
-
-        if (spec.has("shape") && block_state.getBlock() instanceof BlockStairs) {
-            String s = spec.getString("shape");
-            BlockStairs.EnumShape shape;
-            switch (s) {
-                case "straight":
-                    shape = BlockStairs.EnumShape.STRAIGHT;
-                    break;
-                case "inner_left":
-                    shape = BlockStairs.EnumShape.INNER_LEFT;
-                    break;
-                case "inner_right":
-                    shape = BlockStairs.EnumShape.INNER_RIGHT;
-                    break;
-                case "outer_left":
-                    shape = BlockStairs.EnumShape.OUTER_LEFT;
-                    break;
-                case "outer_right":
-                    shape = BlockStairs.EnumShape.OUTER_RIGHT;
-                    break;
-                default:
-                    throw Py.TypeError(blockName + " unknown shape " + s);
-            }
-            block_state = block_state.withProperty(BlockStairs.SHAPE, shape);
-        }
-
-        // if we haven't had an explicit facing set then try to determine a good one
-        if (!facingSet) {
-            try {
-                direction = (PropertyDirection) block_state.getBlock().getClass().getField("FACING").get(block_state.getBlock());
-                if (this.world.isAirBlock(faced)) {
-                    // check whether the next pos along (pos -> faced -> farpos) is solid (attachable)
-                    BlockPos farpos = faced.add(handFacing.getDirectionVec());
-                    if (this.hand.worldObj.isSideSolid(farpos, opposite, true)) {
-                        // attach in faced pos on farpos
-                        block_state = block_state.withProperty(direction, opposite);
-                        FMLLog.fine("attach in faced pos=%s on farpos=%s", pos, opposite);
-                    }
-                }
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                FMLLog.fine("attach in current pos=%s no facing", pos);
-            }
-        }
-
-        return block_state;
+        return PyRegistry.getBlockVariant(spec, this.hand.getPosition(), this.hand.getHorizontalFacing(),
+                (WorldServer)this.world);
     }
 
     public PyObject put(PyObject[] args, String[] kws) {
@@ -504,7 +359,8 @@ public class HandMethods extends BaseMethods {
     // please don't ask why I coded the roofing to be EAST-facing predominantly
     // it made sense at the time
     public void roof(PyObject[] args, String[] kws) throws BlockTypeError {
-        ArgParser r = new ArgParser("roof", s("width", "depth", "material"), s("style"));
+        ArgParser r = new ArgParser("roof", s("width", "depth", "blockname"),
+                s("style", "color", "facing", "type", "half", "shape"));
         r.parse(args, kws);
         int aWidth = r.getInteger("width");
         int aDepth = r.getInteger("depth");
@@ -521,8 +377,8 @@ public class HandMethods extends BaseMethods {
             style = style.substring(4);
         }
 
-        RoofGen gen = new RoofGen((WorldServer)this.world, r.getString("material"),
-                this.hand.getHorizontalFacing(), aWidth, aDepth, this.hand.getPosition());
+        RoofGen gen = new RoofGen((WorldServer)this.world, this.hand.getPosition(),
+                this.hand.getHorizontalFacing(), r.getString("blockname"), aWidth, aDepth, r);
 
         switch (style) {
             case "hip":

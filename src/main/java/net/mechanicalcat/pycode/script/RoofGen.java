@@ -37,11 +37,13 @@ public class RoofGen {
     private int width, depth;
     private BlockPos pos;
 
-    public RoofGen(WorldServer world, String material, EnumFacing actualFacing, int aWidth, int aDepth, BlockPos pos) throws BlockTypeError {
+    public RoofGen(WorldServer world, BlockPos pos, EnumFacing actualFacing,
+                   String material, int aWidth, int aDepth, ArgParser spec) throws BlockTypeError {
         this.world = world;
         this.stair = this.getRoofStair(material);
         if (this.stair == null) {
-            this.stair = this.fill = this.slab = PyRegistry.getBlock(material).getDefaultState();
+            // not a stair material so go with just blocks
+            this.stair = this.fill = this.slab = PyRegistry.getBlockVariant(spec, pos, actualFacing, world);
         } else {
             this.fill = this.getRoofFiller(material);
             this.slab = this.getSlabBlock(material);
@@ -115,33 +117,45 @@ public class RoofGen {
         while (true) {
             for (int x=0; x < depth; x++) {
                 for (int z=0; z < width; z++) {
-                    if (stair == fill) {
-                        this.world.setBlockState(pos.add(x, 0, z), stair);
-                        continue;
-                    }
                     IBlockState state = stair;
                     if (x == 0) {
                         // bottom side
-                        state = state.withProperty(BlockStairs.FACING, EnumFacing.EAST);
-                        if (z == 0) {
-                            state = state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_LEFT);
-                        } else if (z == width-1) {
-                            state = state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_RIGHT);
+                        if (stair == fill) {
+                            state = fill;
+                        } else {
+                            state = state.withProperty(BlockStairs.FACING, EnumFacing.EAST);
+                            if (z == 0) {
+                                state = state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_LEFT);
+                            } else if (z == width - 1) {
+                                state = state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_RIGHT);
+                            }
                         }
                     } else if (x == depth-1) {
-                        // top side
-                        state = state.withProperty(BlockStairs.FACING, EnumFacing.WEST);
-                        if (z == 0) {
-                            state = state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_LEFT);
-                        } else if (z == width-1) {
-                            state = state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_RIGHT);
+                        if (stair == fill) {
+                            state = fill;
+                        } else {
+                            // top side
+                            state = state.withProperty(BlockStairs.FACING, EnumFacing.WEST);
+                            if (z == 0) {
+                                state = state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_LEFT);
+                            } else if (z == width - 1) {
+                                state = state.withProperty(BlockStairs.SHAPE, BlockStairs.EnumShape.OUTER_RIGHT);
+                            }
                         }
                     } else if (z == 0) {
                         // left side
-                        state = state.withProperty(BlockStairs.FACING, EnumFacing.SOUTH);
+                        if (stair == fill) {
+                            state = fill;
+                        } else {
+                            state = state.withProperty(BlockStairs.FACING, EnumFacing.SOUTH);
+                        }
                     } else if (z == width - 1) {
                         // right side
-                        state = state.withProperty(BlockStairs.FACING, EnumFacing.NORTH);
+                        if (stair == fill) {
+                            state = fill;
+                        } else {
+                            state = state.withProperty(BlockStairs.FACING, EnumFacing.NORTH);
+                        }
                     } else if (z < width-1) {
                         state = fill;
                     }
@@ -168,16 +182,20 @@ public class RoofGen {
         while (true) {
             for (int x=0; x < depth; x++) {
                 for (int z=0; z < width; z++) {
-                    if (stair == fill) {
-                        this.world.setBlockState(pos.add(x, 0, z), stair);
-                        continue;
-                    }
                     IBlockState state = stair;
                     if (north_south) {
                         if (z == 0) {
-                            state = state.withProperty(BlockStairs.FACING, EnumFacing.SOUTH);
+                            if (stair == fill) {
+                                state = fill;
+                            } else {
+                                state = state.withProperty(BlockStairs.FACING, EnumFacing.SOUTH);
+                            }
                         } else if (z == width - 1) {
-                            state = state.withProperty(BlockStairs.FACING, EnumFacing.NORTH);
+                            if (stair == fill) {
+                                state = fill;
+                            } else {
+                                state = state.withProperty(BlockStairs.FACING, EnumFacing.NORTH);
+                            }
                         } else if (box) {
                             // only fill if box gable
                             state = fill;
@@ -186,9 +204,17 @@ public class RoofGen {
                         }
                     } else {
                         if (x == 0) {
-                            state = state.withProperty(BlockStairs.FACING, EnumFacing.EAST);
+                            if (stair == fill) {
+                                state = fill;
+                            } else {
+                                state = state.withProperty(BlockStairs.FACING, EnumFacing.EAST);
+                            }
                         } else if (x == depth - 1) {
-                            state = state.withProperty(BlockStairs.FACING, EnumFacing.WEST);
+                            if (stair == fill) {
+                                state = fill;
+                            } else {
+                                state = state.withProperty(BlockStairs.FACING, EnumFacing.WEST);
+                            }
                         } else if (box) {
                             // only fill if box gable
                             state = fill;
@@ -227,14 +253,14 @@ public class RoofGen {
         while (true) {
             for (int x=0; x < depth; x++) {
                 for (int z=0; z < width; z++) {
-                    if (stair == fill) {
-                        this.world.setBlockState(pos.add(x, 0, z), stair);
-                        continue;
-                    }
                     IBlockState state = stair;
                     if (north_south) {
                         if (z == 0) {
-                            state = state.withProperty(BlockStairs.FACING, EnumFacing.SOUTH);
+                            if (stair == fill) {
+                                state = fill;
+                            } else {
+                                state = state.withProperty(BlockStairs.FACING, EnumFacing.SOUTH);
+                            }
                         } else if (box) {
                             // only fill if box gable
                             state = fill;
@@ -243,7 +269,11 @@ public class RoofGen {
                         }
                     } else {
                         if (x == 0) {
-                            state = state.withProperty(BlockStairs.FACING, EnumFacing.EAST);
+                            if (stair == fill) {
+                                state = fill;
+                            } else {
+                                state = state.withProperty(BlockStairs.FACING, EnumFacing.EAST);
+                            }
                         } else if (box) {
                             // only fill if box gable
                             state = fill;
