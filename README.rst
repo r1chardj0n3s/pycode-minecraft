@@ -222,7 +222,9 @@ Roof materials are oak, stone, brick, stone_brick, nether_brick, sandstone, spru
 birch, jungle, acacia, dark_oak, quartz, red_sandstone and purpur. Technically
 anything else registered with a block named "blockname" stairs name
 "blockname_stairs" and "blockname_slab" will suffice, with some workarounds the mod
-does for wood and stone variants of things.
+does for wood and stone variants of things. Actually, any old block will work, but
+if you want nice aesthetically pleasing angles, you'll want to use one of the stair
+compatible ones. Also, the stairs and slabs keep the monsters from spawning...
 
 Block variations are handled through keyword arguments. All of the above block-
 placing functions accept the following keywords::
