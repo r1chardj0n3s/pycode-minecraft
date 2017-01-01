@@ -515,7 +515,7 @@ public class HandMethods extends BaseMethods {
     // please don't ask why I coded the roofing to be EAST-facing predominantly
     // it made sense at the time
     public void roof(PyObject[] args, String[] kws) throws BlockTypeError {
-        ArgParser r = new ArgParser("line", s("width", "depth", "material"), s("style"));
+        ArgParser r = new ArgParser("roof", s("width", "depth", "material"), s("style"));
         r.parse(args, kws);
         int aWidth = r.getInteger("width");
         int aDepth = r.getInteger("depth");
@@ -606,16 +606,21 @@ public class HandMethods extends BaseMethods {
         STONETYPES.put("quartz", BlockStoneSlab.EnumType.QUARTZ);
     }
 
+    private IBlockState getRoofFiller(String material) throws BlockTypeError {
+        String fillMaterial = FILLER.get(material);
+        Block filler = getBlock(fillMaterial);
+        filler.getDefaultState();
+        if (fillMaterial.equals("planks") && !material.equals("oak")) {
+            return filler.getDefaultState().withProperty(BlockPlanks.VARIANT, PLANKTYPES.get(material));
+        }
+        return filler.getDefaultState();
+    }
+
     private void hipRoof(String material, int width, int depth, BlockPos pos) throws BlockTypeError {
         IBlockState stair = getStairBlock(material);
         stair = stair.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
 
-        String fillMaterial = FILLER.get(material);
-        Block filler = getBlock(fillMaterial);
-        IBlockState fill_state = filler.getDefaultState();
-        if (fillMaterial.equals("planks") && !material.equals("oak")) {
-            fill_state = fill_state.withProperty(BlockPlanks.VARIANT, PLANKTYPES.get(fillMaterial));
-        }
+        IBlockState fill_state = this.getRoofFiller(material);
 
         // always construct facing east; width is the Z axis and depth is the X axis
         EnumFacing facing = EnumFacing.EAST;
@@ -674,12 +679,7 @@ public class HandMethods extends BaseMethods {
         IBlockState stair = getStairBlock(material);
         stair = stair.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
 
-        String fillMaterial = FILLER.get(material);
-        Block filler = getBlock(fillMaterial);
-        IBlockState fill_state = filler.getDefaultState();
-        if (fillMaterial.equals("planks") && !material.equals("oak")) {
-            fill_state = fill_state.withProperty(BlockPlanks.VARIANT, PLANKTYPES.get(fillMaterial));
-        }
+        IBlockState fill_state = this.getRoofFiller(material);
 
         // always construct facing east; width is the Z axis and depth is the X axis
         EnumFacing facing = EnumFacing.EAST;

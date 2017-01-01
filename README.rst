@@ -220,8 +220,9 @@ Doc TBD::
 
 Roof materials are oak, stone, brick, stone_brick, nether_brick, sandstone, spruce,
 birch, jungle, acacia, dark_oak, quartz, red_sandstone and purpur. Technically
-anything else registered with a block named "blockname" and stairs name
-"blockname_stairs" will suffice.
+anything else registered with a block named "blockname" stairs name
+"blockname_stairs" and "blockname_slab" will suffice, with some workarounds the mod
+does for wood and stone variants of things.
 
 Block variations are handled through keyword arguments. All of the above block-
 placing functions accept the following keywords::
@@ -248,6 +249,13 @@ placing functions accept the following keywords::
     # or they will revert to straight!
     hand.put('oak_stairs', facing='left',   # or right, back, and cardinals
         half='top', shape='outer_right')
+
+Roof styles include "hip", "gable" and "box-gable" (filled gable). To get a box gable
+with overhang you could::
+
+    hand.roof(7, 5, 'oak', style='box-gable')
+    hand.sidle(1)
+    hand.roof(9, 5, 'dark_oak', style='gable')
 
 
 Examples
@@ -447,6 +455,7 @@ And upload the .jar file from ``build/libs/``.
 BUGS
 ----
 - figure out what BlockStoneSlab "seamless" does, and how isDouble works?
+- consider renaming the put argument "type" to "variant"?
 
 
 TODO
@@ -473,4 +482,5 @@ This is not an exhaustive list, and should probably be put into github issues.
  - generate redstone power
  - texture map replacement
 *hand*
- - roof generation
+ - more roof generation styles
+ - allow roof generation to work with plain blocks as fallback
