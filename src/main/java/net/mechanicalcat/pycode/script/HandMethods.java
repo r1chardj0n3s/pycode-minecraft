@@ -2,6 +2,7 @@ package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.entities.HandEntity;
 import net.minecraft.block.*;
+import net.minecraft.block.material.MapColor;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.IBlockState;
@@ -100,13 +101,34 @@ public class HandMethods extends BaseMethods {
         return block;
     }
 
+    private IBlockState getSlabBlock(String material) throws BlockTypeError {
+        Block slab;
+        if (PLANKTYPES.containsKey(material)) {
+            slab = getBlock("wooden_slab");
+            return slab.getDefaultState().withProperty(BlockPlanks.VARIANT, PLANKTYPES.get(material));
+        } else if (STONETYPES.containsKey(material)) {
+            slab = getBlock("stone_slab");
+            return slab.getDefaultState().withProperty(BlockStoneSlab.VARIANT, STONETYPES.get(material));
+        } else {
+            return getBlock(material.concat("_slab")).getDefaultState();
+        }
+    }
+
+    private IBlockState getStairBlock(String material) throws BlockTypeError {
+        if (material.equals("cobblestone")) {
+            return getBlock("stone_stairs").getDefaultState();
+        } else {
+            return getBlock(material.concat("_stairs")).getDefaultState();
+        }
+    }
+
     // this is just a little crazypants
     private String[] s(String ... strings) {
         return strings;
     }
 
     public PyObject put(PyObject[] args, String[] kws) {
-        ArgParser r = new ArgParser("put", s("blockname"), s("color", "facing", "type", "half", "shape"));
+        ArgParser r = new ArgParser("put", s("blockname"), s("color", "facing", "type", "half", "shape", "seamless"));
         r.parse(args, kws);
         this.put(this.hand.getFacedPos(), getBlockVariant(r));
         return Py.java2py(null);
@@ -167,27 +189,53 @@ public class HandMethods extends BaseMethods {
             facingSet = true;
         }
 
-        if (spec.has("type") && block_state.getBlock() instanceof BlockPlanks) {
-            String s = spec.getString("type");;
-            BlockPlanks.EnumType type = PLANKTYPES.get(s);
-            if (s == null) throw Py.TypeError(blockName + " unknown type " + s);
-            block_state = block_state.withProperty(BlockPlanks.VARIANT, type);
+        if (spec.has("type"))
+            if (block_state.getBlock() instanceof BlockPlanks) {
+                String s = spec.getString("type");
+                BlockPlanks.EnumType type = PLANKTYPES.get(s);
+                if (s == null) throw Py.TypeError(blockName + " unknown type " + s);
+                block_state = block_state.withProperty(BlockPlanks.VARIANT, type);
+            } else if (block_state.getBlock() instanceof BlockStoneSlab) {
+                String s = spec.getString("type");
+                BlockStoneSlab.EnumType type = STONETYPES.get(s);
+                if (s == null) throw Py.TypeError(blockName + " unknown type " + s);
+                block_state = block_state.withProperty(BlockStoneSlab.VARIANT, type);
         }
 
-        if (spec.has("half") && block_state.getBlock() instanceof BlockStairs) {
-            String s = spec.getString("half");
-            BlockStairs.EnumHalf half;
-            switch (s) {
-                case "top":
-                    half = BlockStairs.EnumHalf.TOP;
-                    break;
-                case "bottom":
-                    half = BlockStairs.EnumHalf.BOTTOM;
-                    break;
-                default:
-                    throw Py.TypeError(blockName + " unknown half " + s);
+        if (spec.has("half")) {
+            if (block_state.getBlock() instanceof BlockStairs) {
+                String s = spec.getString("half");
+                BlockStairs.EnumHalf half;
+                switch (s) {
+                    case "top":
+                        half = BlockStairs.EnumHalf.TOP;
+                        break;
+                    case "bottom":
+                        half = BlockStairs.EnumHalf.BOTTOM;
+                        break;
+                    default:
+                        throw Py.TypeError(blockName + " unknown half " + s);
+                }
+                block_state = block_state.withProperty(BlockStairs.HALF, half);
+            } else if (block_state.getBlock() instanceof BlockSlab) {
+                String s = spec.getString("half");
+                BlockSlab.EnumBlockHalf half;
+                switch (s) {
+                    case "top":
+                        half = BlockSlab.EnumBlockHalf.TOP;
+                        break;
+                    case "bottom":
+                        half = BlockSlab.EnumBlockHalf.BOTTOM;
+                        break;
+                    default:
+                        throw Py.TypeError(blockName + " unknown half " + s);
+                }
+                block_state = block_state.withProperty(BlockSlab.HALF, half);
             }
-            block_state = block_state.withProperty(BlockStairs.HALF, half);
+        }
+
+        if (spec.has("seamless") && block_state.getBlock() instanceof BlockStoneSlab) {
+            block_state = block_state.withProperty(BlockStoneSlab.SEAMLESS, spec.getBoolean("seamless"));
         }
 
         if (spec.has("shape") && block_state.getBlock() instanceof BlockStairs) {
@@ -464,6 +512,8 @@ public class HandMethods extends BaseMethods {
         }
     }
 
+    // please don't ask why I coded the roofing to be EAST-facing predominantly
+    // it made sense at the time
     public void roof(PyObject[] args, String[] kws) throws BlockTypeError {
         ArgParser r = new ArgParser("line", s("width", "depth", "material"), s("style"));
         r.parse(args, kws);
@@ -506,15 +556,25 @@ public class HandMethods extends BaseMethods {
                 // should never happen - hand should always be horizontal
                 return;
         }
-//        EnumFacing facing = this.hand.getHorizontalFacing();
 
-        if (r.getString("style", "hip").equals("hip")) {
-            hipRoof(r.getString("material"), width, depth, pos);
+        switch (r.getString("style", "hip")) {
+            case "hip":
+                hipRoof(r.getString("material"), width, depth, pos);
+                break;
+            case "gable":
+                gableRoof(r.getString("material"), width, depth, pos, false);
+                break;
+            case "box-gable":
+                gableRoof(r.getString("material"), width, depth, pos, true);
+                break;
+            default:
+                throw Py.TypeError(String.format("unknown style '%s'", r.getString("style")));
         }
     }
 
     private static final HashMap<String, String> FILLER = new HashMap<>();
     private static final HashMap<String, BlockPlanks.EnumType> PLANKTYPES = new HashMap<>();
+    private static final HashMap<String, BlockStoneSlab.EnumType> STONETYPES = new HashMap<>();
     static {
         FILLER.put("oak", "planks");
         FILLER.put("stone", "stone");
@@ -536,12 +596,19 @@ public class HandMethods extends BaseMethods {
         PLANKTYPES.put("jungle", BlockPlanks.EnumType.JUNGLE);
         PLANKTYPES.put("acacia", BlockPlanks.EnumType.ACACIA);
         PLANKTYPES.put("dark_oak", BlockPlanks.EnumType.DARK_OAK);
+        STONETYPES.put("stone", BlockStoneSlab.EnumType.STONE);
+        STONETYPES.put("sandstone", BlockStoneSlab.EnumType.SAND);
+        STONETYPES.put("wood_old", BlockStoneSlab.EnumType.WOOD);
+        STONETYPES.put("cobblestone", BlockStoneSlab.EnumType.COBBLESTONE);
+        STONETYPES.put("brick", BlockStoneSlab.EnumType.BRICK);
+        STONETYPES.put("stone_brick", BlockStoneSlab.EnumType.SMOOTHBRICK);
+        STONETYPES.put("nether_brick", BlockStoneSlab.EnumType.NETHERBRICK);
+        STONETYPES.put("quartz", BlockStoneSlab.EnumType.QUARTZ);
     }
 
     private void hipRoof(String material, int width, int depth, BlockPos pos) throws BlockTypeError {
-        Block stairs = getBlock(material.concat("_stairs"));
-        IBlockState stair_state = stairs.getDefaultState();
-        stair_state = stair_state.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
+        IBlockState stair = getStairBlock(material);
+        stair = stair.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
 
         String fillMaterial = FILLER.get(material);
         Block filler = getBlock(fillMaterial);
@@ -557,7 +624,7 @@ public class HandMethods extends BaseMethods {
         while (true) {
             for (int x=0; x < depth; x++) {
                 for (int z=0; z < width; z++) {
-                    IBlockState block_state = stair_state;
+                    IBlockState block_state = stair;
                     current = pos.add(x, 0, z);
                     if (x == 0) {
                         // bottom side
@@ -591,10 +658,105 @@ public class HandMethods extends BaseMethods {
             // move up a layer
             width -=2;
             depth -= 2;
+            if (width == 1) {
+                roofCap(material, width, depth, pos.add(1, 1, 1));
+            } else if (depth == 1) {
+                roofCap(material, width, depth, pos.add(1, 1, 1));
+            }
             if (width <= 1 || depth <= 1) {
                 break;
             }
             pos = pos.add(1, 1, 1);
+        }
+    }
+
+    private void gableRoof(String material, int width, int depth, BlockPos pos, boolean box) throws BlockTypeError {
+        IBlockState stair = getStairBlock(material);
+        stair = stair.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
+
+        String fillMaterial = FILLER.get(material);
+        Block filler = getBlock(fillMaterial);
+        IBlockState fill_state = filler.getDefaultState();
+        if (fillMaterial.equals("planks") && !material.equals("oak")) {
+            fill_state = fill_state.withProperty(BlockPlanks.VARIANT, PLANKTYPES.get(fillMaterial));
+        }
+
+        // always construct facing east; width is the Z axis and depth is the X axis
+        EnumFacing facing = EnumFacing.EAST;
+        EnumFacing actualFacing = this.hand.getHorizontalFacing();
+
+        boolean north_south = actualFacing == EnumFacing.NORTH || actualFacing == EnumFacing.SOUTH;
+
+        BlockPos current;
+        while (true) {
+            for (int x=0; x < depth; x++) {
+                for (int z=0; z < width; z++) {
+                    IBlockState block_state = stair;
+                    current = pos.add(x, 0, z);
+                    if (north_south) {
+                        if (z == 0) {
+                            block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateY());
+                        } else if (z == width - 1) {
+                            block_state = block_state.withProperty(BlockStairs.FACING, facing.rotateYCCW());
+                        } else if (box) {
+                            // only fill if box gable
+                            block_state = fill_state;
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        if (x == 0) {
+                            block_state = block_state.withProperty(BlockStairs.FACING, facing);
+                        } else if (x == depth - 1) {
+                            block_state = block_state.withProperty(BlockStairs.FACING, facing.getOpposite());
+                        } else if (box) {
+                            // only fill if box gable
+                            block_state = fill_state;
+                        } else {
+                            continue;
+                        }
+                    }
+                    this.world.setBlockState(current, block_state);
+                }
+            }
+
+            // move up a layer, only decreasing depth
+            if (north_south) {
+                width -= 2;
+                if (width == 1) {
+                    roofCap(material, width, depth, pos.add(0, 1, 1));
+                }
+                if (width <= 1) {
+                    break;
+                }
+                pos = pos.add(0, 1, 1);
+            } else {
+                depth -= 2;
+                if (depth == 1) {
+                    roofCap(material, width, depth, pos.add(1, 1, 0));
+                }
+                if (depth <= 1) {
+                    break;
+                }
+                pos = pos.add(1, 1, 0);
+            }
+        }
+    }
+
+    private void roofCap(String material, int width, int depth, BlockPos pos) throws BlockTypeError {
+        IBlockState slab_state = getSlabBlock(material);
+
+        // TODO add slab half to general put options
+        // stone slabs also have a "seamless" property
+        slab_state = slab_state.withProperty(BlockSlab.HALF, BlockSlab.EnumBlockHalf.BOTTOM);
+        if (width == 1) {
+            for (int x = 0; x < depth; x++) {
+                this.world.setBlockState(pos.add(x, 0, 0), slab_state);
+            }
+        } else if (depth == 1) {
+            for (int z = 0; z < width; z++) {
+                this.world.setBlockState(pos.add(0, 0, z), slab_state);
+            }
         }
     }
 }

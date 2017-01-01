@@ -229,6 +229,9 @@ placing functions accept the following keywords::
     # different plank types
     hand.put('plank', type='acacia')
 
+    # different stone slab types
+    hand.put('stone_slab', type='quartz', half='top')
+
     # if a block has orientation, it is taken from the hand's direction
     # but if there's a surface in the way we'll try to mount the thing
     # on that surface
@@ -339,6 +342,8 @@ CHANGELOG
  - Added handling of plank types in put()
  - All block placement methods can now specify block variation keywords
  - Added roof()
+ - Added half and type keyword argument handling for put()ing
+   of slabs and stone slabs in particular
 **1.6**
  - Altered the hand store/restore position methods to be a context manager
  - Added facing, half and shape and color keyword argument handling for put()
@@ -441,7 +446,7 @@ And upload the .jar file from ``build/libs/``.
 
 BUGS
 ----
-- cursor in text area not rendering correctly
+- figure out what BlockStoneSlab "seamless" does, and how isDouble works?
 
 
 TODO

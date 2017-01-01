@@ -5,9 +5,6 @@ import net.mechanicalcat.pycode.script.PythonCode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -19,7 +16,6 @@ import net.minecraft.network.play.client.CPacketCustomPayload;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.event.ClickEvent;
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
@@ -132,8 +128,6 @@ public class GuiPythonBook extends GuiScreen {
         xPosition = (this.width - BOOK_PX_WIDTH) / 2;
         yPosition = 2;
 
-        FMLLog.info("Rendering GuiPythonBook at %s,%s", xPosition, yPosition);
-
         // func_189646_b adds a button to the buttonList
         this.buttonDone = this.func_189646_b(new GuiButton(BUTTON_DONE_ID,
                 xPosition + BUTTONS_PX_LEFT, yPosition + BUTTONS_PX_TOP, 70, 20,
@@ -184,10 +178,8 @@ public class GuiPythonBook extends GuiScreen {
 
         public void setEntryValue(int id, String value) {
             if (id == PAGE_EDIT_ID) {
-                FMLLog.info("setEntryValue %d (%d) SET PAEG", id, value.length());
                 this.parent.pageSetCurrent(value);
             } else if (id == TITLE_EDIT_ID) {
-                FMLLog.info("setEntryValue %d (%d) SET TIT", id, value.length());
                 this.parent.bookTitle = value;
             }
             this.parent.bookIsModified = true;
@@ -278,8 +270,6 @@ public class GuiPythonBook extends GuiScreen {
         if (!this.bookIsModified || this.bookPages == null) {
             return;
         }
-        FMLLog.fine("Writing book to server");
-
         while (this.bookPages.tagCount() > 1) {
             String s = this.bookPages.getStringTagAt(this.bookPages.tagCount() - 1);
             if (!s.trim().isEmpty()) {

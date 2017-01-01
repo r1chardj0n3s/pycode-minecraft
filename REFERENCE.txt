@@ -252,7 +252,7 @@ structure_void
 structure_block
 
 
-Plank types:
+"plank" and "wood_slab" types:
 
 oak
 spruce
@@ -260,3 +260,13 @@ birch
 jungle
 acacia
 dark_oak
+
+"stone_slab" types:
+
+stone
+sandstone
+cobblestone
+brick
+stone_brick
+nether_brick
+quartz
