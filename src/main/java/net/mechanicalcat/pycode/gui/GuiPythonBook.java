@@ -152,19 +152,19 @@ public class GuiPythonBook extends GuiScreen {
         yPosition = 2;
 
         // func_189646_b adds a button to the buttonList
-        this.buttonDone = this.func_189646_b(new GuiButton(BUTTON_DONE_ID,
+        this.buttonDone = this.addButton(new GuiButton(BUTTON_DONE_ID,
                 xPosition + BUTTONS_PX_LEFT, yPosition + BUTTONS_PX_TOP, 70, 20,
                 I18n.format("gui.done", new Object[0])));
-        this.buttonCancel = this.func_189646_b(new GuiButton(BUTTON_CANCEL_ID,
+        this.buttonCancel = this.addButton(new GuiButton(BUTTON_CANCEL_ID,
                 xPosition + BUTTONS_PX_LEFT, yPosition + BUTTONS_PX_TOP + 22, 70, 20,
                 I18n.format("gui.cancel", new Object[0])));
 
         // TODO not sure why but these buttons seem to need to be offest by their width
-        this.buttonNextPage = this.func_189646_b(
+        this.buttonNextPage = this.addButton(
             new GuiPythonBook.NextPageButton(BUTTON_NEXT_ID,
                     xPosition + LOC_PX_LEFT + 22, yPosition + LOC_PX_TOP + 25, true)
         );
-        this.buttonPreviousPage = this.func_189646_b(
+        this.buttonPreviousPage = this.addButton(
             new GuiPythonBook.NextPageButton(BUTTON_PREV_ID,
                     xPosition + LOC_PX_LEFT + 2, yPosition + LOC_PX_TOP + 25, false)
         );
