@@ -179,6 +179,17 @@ depending on whether the block has redstone power or not::
      else:
        player.potion("slowness")
 
+Commands
+--------
+
+Both hands and blocks may invoke commands like command blocks. These
+are documented elsewhere, and the arguments to the command functions
+are the same as the commands themselves, so for example::
+
+   block.achievement('give', 'achievement.overkill')
+   block.achievement('take', 'achievement.openInventory', 'Alice')
+
+
 Hand
 ----
 
@@ -372,6 +383,7 @@ CHANGELOG
  - Added roof() with various styles
  - Added half and type keyword argument handling for put()ing
    of slabs and stone slabs in particular
+ - Added command invocation (achievement)
 **1.6**
  - Altered the hand store/restore position methods to be a context manager
  - Added facing, half and shape and color keyword argument handling for put()
