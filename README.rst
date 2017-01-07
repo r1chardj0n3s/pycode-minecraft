@@ -398,12 +398,14 @@ CHANGELOG
 =========
 
 **1.7**
- - Added handling of plank types in put()
  - All block placement methods can now specify block variation keywords
+ - Added handling of plank types in block variations
+ - Python Blocks can now do all the block placement things
  - Added roof() with various styles
  - Added half and type keyword argument handling for put()ing
    of slabs and stone slabs in particular
  - Added command invocation (achievement)
+ - Added alter() to change variations of existing blocks
 **1.6**
  - Altered the hand store/restore position methods to be a context manager
  - Added facing, half and shape and color keyword argument handling for put()
