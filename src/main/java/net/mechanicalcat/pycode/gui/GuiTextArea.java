@@ -160,6 +160,7 @@ public class GuiTextArea extends Gui {
         }
         if (GuiScreen.isKeyComboCtrlV(keyCode)) {
             this._editString(GuiScreen.getClipboardString());
+            this.setCursorPosition(0, 0);
             return;
         }
 

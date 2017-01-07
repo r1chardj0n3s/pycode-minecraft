@@ -117,16 +117,13 @@ public class HandMethods extends BaseMethods {
         return strings;
     }
 
-    private IBlockState getBlockVariant(ArgParser spec) {
-        return PyRegistry.getBlockVariant(spec, this.hand.getPosition(), this.hand.getHorizontalFacing(),
-                (WorldServer)this.world);
-    }
-
     public void put(PyObject[] args, String[] kws) {
         if (this.world == null || this.world.isRemote) return;
         ArgParser r = new ArgParser("put", s("blockname"), PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        this.put(this.hand.getFacedPos(), getBlockVariant(r), this.hand.getHorizontalFacing());
+        IBlockState state = PyRegistry.getBlockVariant(r, this.hand.getFacedPos(), this.hand.getHorizontalFacing(),
+                (WorldServer)this.world);
+        this.put(this.hand.getFacedPos(),state, this.hand.getHorizontalFacing());
     }
 
     public void alter(PyObject[] args, String[] kws) {
@@ -217,7 +214,7 @@ public class HandMethods extends BaseMethods {
         if (this.world == null || this.world.isRemote) return;
         ArgParser r = new ArgParser("roof", s("width", "depth", "blockname"),
                 // TODO PyRegistry.BLOCK_VARIATIONS
-                s("style", "color", "facing", "type", "half", "shape"));
+                s("style", "color", "facing", "type", "half", "shape", "fill"));
         r.parse(args, kws);
         RoofGen.roof(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
     }

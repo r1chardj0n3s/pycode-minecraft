@@ -203,7 +203,7 @@ public class BlockMethods extends BaseMethods {
         if (this.world == null || this.world.isRemote) return;
         ArgParser r = new ArgParser("roof", s("pos", "width", "depth", "blockname"),
                 // TODO PyRegistry.BLOCK_VARIATIONS
-                s("style", "color", "facing", "type", "half", "shape"));
+                s("style", "color", "facing", "type", "half", "shape", "fill"));
         r.parse(args, kws);
         MyBlockPos mpos = (MyBlockPos)r.get("pos").__tojava__(MyBlockPos.class);
         RoofGen.roof(r, this.world, mpos.blockPos, EnumFacing.NORTH);

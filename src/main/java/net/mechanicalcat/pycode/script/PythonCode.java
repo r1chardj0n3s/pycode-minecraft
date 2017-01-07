@@ -213,11 +213,12 @@ public class PythonCode {
         }
     }
 
-    private String[] utils = {"water", "lava", "clear", "colors"};
+    private String[] utils = {"colors", "facings"};
 
     public static HashMap<String, EnumDyeColor> COLORMAP = new HashMap<String, EnumDyeColor>();
     public static HashMap<String, EnumFacing> FACINGMAP = new HashMap<String, EnumFacing>();
     public static List<String> colors = new LinkedList<>();
+    public static List<String> facings = new LinkedList<>();
     public static void init() {
         COLORMAP.put("white", EnumDyeColor.WHITE);
         COLORMAP.put("orange", EnumDyeColor.ORANGE);
@@ -245,6 +246,9 @@ public class PythonCode {
 
         for (String name : COLORMAP.keySet()) {
             colors.add(name);
+        }
+        for (String name : FACINGMAP.keySet()) {
+            facings.add(name);
         }
     }
 }

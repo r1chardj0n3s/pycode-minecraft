@@ -82,20 +82,12 @@ use the "hand" name here too:
     pos.add(1, 0, 4)   # East/X 1, Up/Y 0 and North/Z 4
 ``chat("message")``
   Have the message appear in the in-game chat.
-``water(pos)``
-  Have a water source be created at the position, for example
-  ``water(pos.up())``. This will only work if the target position is clear.
-``lava(pos)``
-  Have a water source be created at the position. This will only work if
-  the target position is clear.
-``clear(pos)``
-  Clear the block at the position nominated.
 ``colors``
-  A list of all the standard Minecraft dye color names. Combine with
-  random.choice() for fun!
+  A list of all the standard Minecraft dye color names.
+``facings``
+  A list of all the standard Minecraft facing names.
 
-  Note: using clear with the Python Block position will remove the block!
-
+Choose colors and facings with random.choice() for extra creativity!
 
 Event Handlers
 ~~~~~~~~~~~~~~
@@ -125,7 +117,13 @@ Doc TBD::
 Event Handlers
 ~~~~~~~~~~~~~~
 
-Doc TBD::
+Both Python Blocks and Hands may define a "run" function::
+
+  def run():
+    # invoked when the Python Wand is used on the block
+
+Additionally, Python Blocks may define other functions related
+to world interaction with the block::
 
   def powerOn():
     # invoked when a redstone signal powers block
@@ -289,12 +287,18 @@ You may alter block variations after they've been put down::
     hand.put('wool', color='red')
     hand.alter(color='yellow')          # any of the keywords above are acceptable
 
-Roof styles include "hip", "gable" and "box-gable" (filled gable). To get a box gable
+Roof styles include "hip", "gable", "box-gable" (flat ended gable),
+"shed" (sloped one direction) and "box-shed". To get a box gable
 with overhang you could::
 
     hand.roof(7, 5, 'oak', style='box-gable')
     hand.sidle(1)
     hand.roof(9, 5, 'dark_oak', style='gable')
+
+By default roofs are filled to prevent spawning, but you can turn it
+off:
+
+    hand.roof(7, 5, 'oak', fill=False)
 
 
 Examples
@@ -330,12 +334,12 @@ Put each of these functions on a different page of the book::
     def tower():
       hand.down()
       hand.circle(5, 'cobblestone', fill=True)
-      for i in range(8):
+      for i in range(9):
         hand.up()
         if i in (3, 7):
           hand.circle(5, 'planks', fill=True)
         hand.circle(5, 'stone')
-        if i in (0, 4):
+        if i in (0, 4, 8):
           hand.put('torch')
 
     # page 2: door and ladder access
@@ -369,24 +373,32 @@ Put each of these functions on a different page of the book::
 
     # page 4: the complete tower
     def run():
+      with hand.remember(): tower()
+      with hand.remember(): access()
+      with hand.remember(): furnish()
       with hand.remember():
-        tower()
-      with hand.remember():
-        access()
-      furnish()
+        hand.back(6)
+        hand.sidle(5)
+        hand.up(9)
+        hand.roof(11, 11, 'dark_oak', fill=False)
 
 Roof demo::
 
     STYLES = ["hip", "gable", "shed",
      "box-gable", "box-shed"]
-    hand.face('east')
-    for style in STYLES:
-      for i in range(4):
-        hand.forward(2)
-        hand.roof(7, 5, 'oak', style=style)
-        hand.left()
-        hand.forward(2)
-      hand.forward(20)
+    def roofs(fill):
+      for style in STYLES:
+        for i in range(4):
+          hand.forward(2)
+          hand.roof(7, 5, 'oak', style=style,
+           fill=fill)
+          hand.left()
+          hand.forward(2)
+        hand.forward(20)
+    with hand.remember():
+        roofs(False)
+    hand.sidle(20)
+    roofs(True)
 
 Wand
 ----
@@ -537,4 +549,4 @@ This is not an exhaustive list, and should probably be put into github issues.
  - texture map replacement
 *hand*
  - more roof generation styles
- - allow roof generation to work with plain blocks as fallback
+ - tick() handling

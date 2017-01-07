@@ -35,9 +35,9 @@ import org.python.core.Py;
 // it made sense at the time
 
 public class RoofGen {
-    private IBlockState stair, slab, fill;
+    private IBlockState stair, slab, filler;
     private WorldServer world;
-    private boolean north_south;
+    private boolean north_south, fill;
     private int width, depth;
     private BlockPos pos;
 
@@ -81,12 +81,13 @@ public class RoofGen {
         this.stair = this.getRoofStair(material);
         if (this.stair == null) {
             // not a stair material so go with just blocks
-            this.stair = this.fill = this.slab = PyRegistry.getBlockVariant(spec, pos, actualFacing, world);
+            this.stair = this.filler = this.slab = PyRegistry.getBlockVariant(spec, pos, actualFacing, world);
         } else {
-            this.fill = this.getRoofFiller(material);
+            this.filler = this.getRoofFiller(material);
             this.slab = this.getSlabBlock(material);
         }
         this.north_south = actualFacing == EnumFacing.NORTH || actualFacing == EnumFacing.SOUTH;
+        this.fill = spec.getBoolean("fill", true);
 
         // alter pos, width and depth based on orientation so that the
         // code which always generates in the EAST facing will work
@@ -158,8 +159,8 @@ public class RoofGen {
                     IBlockState state = stair;
                     if (x == 0) {
                         // bottom side
-                        if (stair == fill) {
-                            state = fill;
+                        if (stair == filler) {
+                            state = filler;
                         } else {
                             state = state.withProperty(BlockStairs.FACING, EnumFacing.EAST);
                             if (z == 0) {
@@ -169,8 +170,8 @@ public class RoofGen {
                             }
                         }
                     } else if (x == depth-1) {
-                        if (stair == fill) {
-                            state = fill;
+                        if (stair == filler) {
+                            state = filler;
                         } else {
                             // top side
                             state = state.withProperty(BlockStairs.FACING, EnumFacing.WEST);
@@ -182,20 +183,22 @@ public class RoofGen {
                         }
                     } else if (z == 0) {
                         // left side
-                        if (stair == fill) {
-                            state = fill;
+                        if (stair == filler) {
+                            state = filler;
                         } else {
                             state = state.withProperty(BlockStairs.FACING, EnumFacing.SOUTH);
                         }
                     } else if (z == width - 1) {
                         // right side
-                        if (stair == fill) {
-                            state = fill;
+                        if (stair == filler) {
+                            state = filler;
                         } else {
                             state = state.withProperty(BlockStairs.FACING, EnumFacing.NORTH);
                         }
                     } else if (z < width-1) {
-                        state = fill;
+                        // don't fill the inside?
+                        if (!fill) continue;
+                        state = filler;
                     }
                     this.world.setBlockState(pos.add(x, 0, z), state);
                 }
@@ -223,39 +226,45 @@ public class RoofGen {
                     IBlockState state = stair;
                     if (north_south) {
                         if (z == 0) {
-                            if (stair == fill) {
-                                state = fill;
+                            if (stair == filler) {
+                                state = filler;
                             } else {
                                 state = state.withProperty(BlockStairs.FACING, EnumFacing.SOUTH);
                             }
                         } else if (z == width - 1) {
-                            if (stair == fill) {
-                                state = fill;
+                            if (stair == filler) {
+                                state = filler;
                             } else {
                                 state = state.withProperty(BlockStairs.FACING, EnumFacing.NORTH);
                             }
-                        } else if (box) {
-                            // only fill if box gable
-                            state = fill;
+                        } else if (box && (x == 0 || x == depth - 1)) {
+                            // fill ends flush if box gable
+                            state = filler;
+                        } else if (fill) {
+                            // fill insides
+                            state = filler;
                         } else {
                             continue;
                         }
                     } else {
                         if (x == 0) {
-                            if (stair == fill) {
-                                state = fill;
+                            if (stair == filler) {
+                                state = filler;
                             } else {
                                 state = state.withProperty(BlockStairs.FACING, EnumFacing.EAST);
                             }
                         } else if (x == depth - 1) {
-                            if (stair == fill) {
-                                state = fill;
+                            if (stair == filler) {
+                                state = filler;
                             } else {
                                 state = state.withProperty(BlockStairs.FACING, EnumFacing.WEST);
                             }
-                        } else if (box) {
-                            // only fill if box gable
-                            state = fill;
+                        } else if (box && (z == 0 || z == width - 1)) {
+                            // fill ends flush if box style
+                            state = filler;
+                        } else if (fill) {
+                            // fill insides
+                            state = filler;
                         } else {
                             continue;
                         }
@@ -294,27 +303,39 @@ public class RoofGen {
                     IBlockState state = stair;
                     if (north_south) {
                         if (z == 0) {
-                            if (stair == fill) {
-                                state = fill;
+                            if (stair == filler) {
+                                state = filler;
                             } else {
                                 state = state.withProperty(BlockStairs.FACING, EnumFacing.SOUTH);
                             }
-                        } else if (box) {
-                            // only fill if box gable
-                            state = fill;
+                        } else if (box && z == width - 1) {
+                            // fill ends flush if box style
+                            state = filler;
+                        } else if (box && (x == 0 || x == depth - 1)) {
+                            // fill ends flush if box style
+                            state = filler;
+                        } else if (fill) {
+                            // fill insides
+                            state = filler;
                         } else {
                             continue;
                         }
                     } else {
                         if (x == 0) {
-                            if (stair == fill) {
-                                state = fill;
+                            if (stair == filler) {
+                                state = filler;
                             } else {
                                 state = state.withProperty(BlockStairs.FACING, EnumFacing.EAST);
                             }
-                        } else if (box) {
-                            // only fill if box gable
-                            state = fill;
+                        } else if (box && x == depth - 1) {
+                            // fill ends flush if box style
+                            state = filler;
+                        } else if (box && (z == 0 || z == width - 1)) {
+                            // fill ends flush if box style
+                            state = filler;
+                        } else if (fill) {
+                            // fill insides
+                            state = filler;
                         } else {
                             continue;
                         }

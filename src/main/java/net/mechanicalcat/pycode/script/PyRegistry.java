@@ -75,7 +75,6 @@ public class PyRegistry {
         }
         IBlockState block_state = block.getDefaultState();
         EnumFacing opposite = facing.getOpposite();
-        BlockPos faced = pos.offset(facing);
         PropertyDirection direction;
 
         block_state = modifyBlockStateFromSpec(block_state, spec, facing);
@@ -83,14 +82,14 @@ public class PyRegistry {
         // if we haven't had an explicit facing set then try to determine a good one
         if (!spec.has("facing")) {
             try {
-                direction = (PropertyDirection) block_state.getBlock().getClass().getField("FACING").get(block_state.getBlock());
-                if (world.isAirBlock(faced)) {
-                    // check whether the next pos along (pos -> faced -> farpos) is solid (attachable)
-                    BlockPos farpos = faced.add(facing.getDirectionVec());
+                direction = (PropertyDirection)block.getClass().getField("FACING").get(block);
+                if (world.isAirBlock(pos)) {
+                    // check whether the next pos along (pos -> farpos) is solid (attachable)
+                    BlockPos farpos = pos.offset(facing);
                     if (world.isSideSolid(farpos, opposite, true)) {
                         // attach in faced pos on farpos
                         block_state = block_state.withProperty(direction, opposite);
-                        FMLLog.fine("attach in faced pos=%s on farpos=%s", pos, opposite);
+                        FMLLog.fine("attach in pos=%s facing=%s", pos, opposite);
                     }
                 }
             } catch (NoSuchFieldException | IllegalAccessException e) {
