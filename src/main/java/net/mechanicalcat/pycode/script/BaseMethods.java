@@ -76,10 +76,4 @@ public class BaseMethods {
             this.world.setBlockState(pos, block_state);
         }
     }
-
-    public void achievement(String... args) throws CommandException {
-        CommandAchievement achiev = new CommandAchievement();
-        WorldServer ws = (WorldServer)this.world;
-        achiev.execute(ws.getMinecraftServer(), this.player, args);
-    }
 }

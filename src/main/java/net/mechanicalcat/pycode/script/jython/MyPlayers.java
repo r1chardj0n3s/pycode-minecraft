@@ -21,16 +21,41 @@
  *
  */
 
-package net.mechanicalcat.pycode.init;
+package net.mechanicalcat.pycode.script.jython;
 
-import net.mechanicalcat.pycode.script.MyCommands;
-import net.mechanicalcat.pycode.script.PythonCode;
+import net.mechanicalcat.pycode.script.MyEntityPlayer;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
-public class ModCode {
-    public static void init() {
-        PythonCode.init();
-        MyCommands.init();
+import javax.annotation.Nullable;
+import java.util.LinkedList;
+import java.util.List;
+
+public class MyPlayers {
+    World world;
+
+    public MyPlayers(World world) {
+        this.world = world;
     }
 
-    public static void postInit() {}
+    public MyEntityPlayer[] all() {
+        List<MyEntityPlayer> l = new LinkedList<>();
+        for (EntityPlayer e : world.playerEntities) {
+            l.add(new MyEntityPlayer(e));
+        }
+        return l.toArray(new MyEntityPlayer[0]);
+    }
+
+    public MyEntityPlayer random() {
+        int i = world.rand.nextInt(world.playerEntities.size());
+        return new MyEntityPlayer(world.playerEntities.get(i));
+    }
+
+    @Nullable
+    public MyEntityPlayer closest(BlockPos pos) {
+        EntityPlayer player = world.getClosestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false);
+        if (player == null) return null;
+        return new MyEntityPlayer(player);
+    }
 }

@@ -26,6 +26,7 @@ package net.mechanicalcat.pycode.script;
 import net.mechanicalcat.pycode.PythonEngine;
 import net.mechanicalcat.pycode.init.ModItems;
 import net.mechanicalcat.pycode.items.PythonBookItem;
+import net.mechanicalcat.pycode.script.jython.MyPlayers;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -59,6 +60,7 @@ public class PythonCode {
     private Bindings bindings;
     private World world = null;
     public static String CODE_NBT_TAG = "code";
+    public MyPlayers players;
 
     public PythonCode() {
         this.context = new SimpleScriptContext();
@@ -182,7 +184,7 @@ public class PythonCode {
     public boolean eval(WorldServer world, BlockPos pos) {
         FMLLog.info("Eval my code: %s", this.code);
         this.world = world;
-//        this.bindings.put("world", world);
+        this.players = new MyPlayers(world);
         this.bindings.put("pos", new MyBlockPos(pos));
 
         // I am reasonably certain that I can't just shove the methods below directly
@@ -202,6 +204,20 @@ public class PythonCode {
             return false;
         }
 
+        // create the MyCommand curries and attach callables to utils / global scope
+        try {
+            String s = "";
+            for (String n: MyCommands.COMMANDS.keySet()) {
+                this.bindings.put(n, MyCommands.curry(n, (WorldServer)this.world));
+                // rebind the name to just the invoke method
+                s += String.format("%s = %s.invoke\n", n, n);
+            }
+            PythonEngine.eval(s, this.context);
+        } catch (ScriptException e) {
+            this.failz0r(world, pos, "Error setting up commands: %s", e.getMessage());
+            return false;
+        }
+
         // now execute the code
         try {
             PythonEngine.eval(this.code, this.context);
@@ -213,7 +229,7 @@ public class PythonCode {
         }
     }
 
-    private String[] utils = {"colors", "facings"};
+    private String[] utils = {"colors", "facings", "players"};
 
     public static HashMap<String, EnumDyeColor> COLORMAP = new HashMap<String, EnumDyeColor>();
     public static HashMap<String, EnumFacing> FACINGMAP = new HashMap<String, EnumFacing>();

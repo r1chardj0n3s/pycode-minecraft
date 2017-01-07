@@ -80,8 +80,6 @@ use the "hand" name here too:
     pos.up()
     pos.east()
     pos.add(1, 0, 4)   # East/X 1, Up/Y 0 and North/Z 4
-``chat("message")``
-  Have the message appear in the in-game chat.
 ``colors``
   A list of all the standard Minecraft dye color names.
 ``facings``
@@ -101,9 +99,9 @@ the Python Wand. For example, on a block::
 
 The player argument is optional to accept - include it if you want it::
 
-  def run(player):
-     player.chat("hello, world!")
-
+def run(player):
+   all = ", ".join(p.name for p in players.all())
+   player.chat("hello %s!" % all)
 
 Block
 -----
@@ -164,6 +162,9 @@ Say hello::
 
    player.chat("hello, world!")
 
+Players also have a name:
+
+   player.chat("hello, %s!" % player.name)
 
 Example
 ~~~~~~~
@@ -184,9 +185,27 @@ Both hands and blocks may invoke commands like command blocks. These
 are documented elsewhere, and the arguments to the command functions
 are the same as the commands themselves, so for example::
 
-   block.achievement('give', 'achievement.overkill')
-   block.achievement('take', 'achievement.openInventory', 'Alice')
+    def run(player):
+      achievement(player, 'give',
+        'achievement.overkill')
 
+      achievement(player, 'take', 'achievement.openInventory')
+
+Other examples - noting that the commands *all* take a player as
+their first argument. All other arguments are to be provided as strings::
+
+    time(player, 'set', 'day')
+    toggledownfall(player)
+    clear(player, 'minecraft:golden_sword', '-1', '-1', '{ench:[{id:16s,lvl:1s}]')
+
+Some commands have slightly nicer options. The following are equivalent::
+
+    tp(players.random(), '~3', '~10', '~5')
+    players.random().move(3, 10, 5)
+
+    # assuming we're at pos (-609, 4, 1045)
+    setblock(player, '-609', '4', '1045', 'stone', .... and on)
+    hand.put('stone')
 
 Hand
 ----
@@ -547,6 +566,7 @@ This is not an exhaustive list, and should probably be put into github issues.
  - pull from inventory, push out
  - generate redstone power
  - texture map replacement
+ - implement more commands
 *hand*
  - more roof generation styles
  - tick() handling

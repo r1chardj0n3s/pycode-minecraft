@@ -23,13 +23,19 @@
 
 package net.mechanicalcat.pycode.script;
 
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.TextComponentString;
 
 public class MyEntityPlayer extends MyEntityLiving {
+    public String name;
+
     public MyEntityPlayer(EntityPlayer player) {
         super(player);
+        this.name = player.getName();
+    }
+
+    public String toString() {
+        return this.name;
     }
 
     public void chat(String message) {
