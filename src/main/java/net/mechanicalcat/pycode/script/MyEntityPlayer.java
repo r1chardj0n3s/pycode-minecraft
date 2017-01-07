@@ -23,8 +23,16 @@
 
 package net.mechanicalcat.pycode.script;
 
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.ServerCommandManager;
+import net.minecraft.command.server.CommandAchievement;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.tileentity.CommandBlockBaseLogic;
 import net.minecraft.util.text.TextComponentString;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class MyEntityPlayer extends MyEntityLiving {
     public String name;
@@ -40,5 +48,24 @@ public class MyEntityPlayer extends MyEntityLiving {
 
     public void chat(String message) {
         ((EntityPlayer)this.entity).addChatComponentMessage(new TextComponentString(message));
+    }
+
+    public void giveAchievement(String name) throws CommandException {
+        if (!name.contains(".")) {
+            name = "achievement." + name;
+        }
+        this.achiev("give", name);
+    }
+
+    public void takeAchievement(String name) throws CommandException {
+        if (!name.contains(".")) {
+            name = "achievement." + name;
+        }
+        this.achiev("take", name);
+    }
+
+    private void achiev(String... args) throws CommandException {
+        new CommandAchievement().execute(this.entity.worldObj.getMinecraftServer(), this.entity,
+               args);
     }
 }

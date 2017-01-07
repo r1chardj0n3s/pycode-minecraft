@@ -71,7 +71,8 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
         }
         PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
         if (code_block != null) {
-            code_block.handleItemInteraction((WorldServer)world, playerIn, pos, heldItem);
+            code_block.getCode().setContext((WorldServer)world, code_block, pos);
+            code_block.handleItemInteraction(playerIn, heldItem);
         }
         return true;
     }
@@ -83,7 +84,7 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
             PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
             if (code_block != null && stack.hasTagCompound()) {
                 code_block.readFromNBT(stack.getTagCompound());
-                code_block.getCode().eval((WorldServer)world, pos);
+                code_block.getCode().setContext((WorldServer)world, code_block, pos);
             }
         }
     }

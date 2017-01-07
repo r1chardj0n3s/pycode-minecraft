@@ -23,12 +23,11 @@
 
 package net.mechanicalcat.pycode.tileentity;
 
-import net.mechanicalcat.pycode.entities.EntityEnum;
 import net.mechanicalcat.pycode.init.ModItems;
 import net.mechanicalcat.pycode.items.PythonBookItem;
 import net.mechanicalcat.pycode.script.*;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.command.CommandResultStats;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
@@ -37,21 +36,21 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemWritableBook;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityHopper;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.FMLLog;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Random;
 
 
-public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode, ITickable {
+public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode, ITickable, ICommandSender {
     private PythonCode code;
     public boolean isPowered = false;
     private int slowCountdown = -1;
@@ -82,11 +81,20 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         super.readFromNBT(compound);
         this.code.readFromNBT(compound);
         this.isPowered = compound.getBoolean("isPowered");
+        if (!this.worldObj.isRemote) {
+            // eval and set context on loading from NBT
+            this.code.setContext((WorldServer) this.worldObj, this, this.getPos());
+        }
     }
 
-    public Entity getEntity() { return null; }
+    public Entity getEntity() {
+        // TileEntity isn't really an entity
+        return null;
+    }
 
-    public boolean handleItemInteraction(WorldServer world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
+    public boolean handleItemInteraction(EntityPlayer player, ItemStack heldItem) {
+        if (this.worldObj.isRemote) return false;
+        WorldServer world = (WorldServer)this.worldObj;
         this.isPowered = world.isBlockPowered(pos);
         this.code.put("block", new BlockMethods(this, player));
 
@@ -96,14 +104,15 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         }
         Item item = heldItem.getItem();
         if (item == ModItems.python_wand) {
-            // ensure the code is compiled so we can see if run is defined
-            this.code.ensureCompiled(world, pos);
+            // set the context's ICommandSender to be this invoking player
             if (this.code.hasKey("run")) {
-                this.code.invoke(world, pos, "run", new MyEntityPlayer(player));
+                this.code.setRunner(player);
+                this.code.invoke("run", new MyEntityPlayer(player));
+                this.code.setRunner(this);
             }
             return true;
         } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
-            this.code.setCodeFromBook(world, pos, heldItem);
+            this.code.setCodeFromBook(world, this, pos, heldItem);
             return true;
         }
         return false;
@@ -112,7 +121,7 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
     public void handleEntityInteraction(MyEntity entity, String method) {
         if (!this.hasWorldObj()) return;
         if (this.worldObj.isRemote) return;
-        this.code.invoke((WorldServer) this.worldObj, this.pos, method, entity);
+        this.code.invoke(method, entity);
     }
 
     public void update() {
@@ -123,17 +132,17 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         if (isPowered != this.isPowered) {
             if (isPowered) {
                 if (this.code.hasKey("powerOn")) {
-                    this.code.invoke((WorldServer) this.worldObj, pos, "powerOn");
+                    this.code.invoke("powerOn");
                 }
             } else {
                 if (this.code.hasKey("powerOff")) {
-                    this.code.invoke((WorldServer) this.worldObj, pos, "powerOff");
+                    this.code.invoke("powerOff");
                 }
             }
         }
         this.isPowered = isPowered;
         if (this.code.hasKey("tick")) {
-            this.code.invoke((WorldServer) this.worldObj, pos, "tick");
+            this.code.invoke("tick");
         }
 //
 //        --this.slowCountdown;
@@ -221,4 +230,53 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
 
         return true;
     }
+
+
+    // ICommandSender compatibility
+    @Nullable
+    public Entity getCommandSenderEntity() {
+        return this.getEntity();
+    }
+
+    public World getEntityWorld() {
+        return this.worldObj;
+    }
+
+    @Nullable
+    public MinecraftServer getServer() {
+        return this.worldObj.getMinecraftServer();
+    }
+
+    public void addChatMessage(ITextComponent component) {
+        // do nothing
+    }
+
+    public BlockPos getPosition() {
+        return getPos();
+    }
+
+    public Vec3d getPositionVector() {
+        BlockPos pos = getPos();
+        return new Vec3d(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    public String getName() {
+        return "[Python Block]";
+    }
+
+    public boolean canCommandSenderUseCommand(int permLevel, String commandName) {
+        return true;
+    }
+
+    public void setCommandStat(CommandResultStats.Type type, int amount) {
+        // we done store command stats like command blocks; TODO should we?
+    }
+
+    public boolean sendCommandFeedback() {
+        // the block does not care :-)
+        return false;
+    }
+
+
+    // end ICommandSender
 }

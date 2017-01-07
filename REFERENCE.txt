@@ -251,7 +251,6 @@ bone_block
 structure_void
 structure_block
 
-
 "plank" and "wood_slab" types:
 
 oak
@@ -270,3 +269,43 @@ brick
 stone_brick
 nether_brick
 quartz
+
+
+Standard Minecraft achievement ids (these all start with "achievement." but
+that is added by the player.giveAchievement function and they're described
+in http://minecraft.gamepedia.com/Achievements:
+
+openInventory
+mineWood
+buildWorkBench
+buildPickaxe
+buildFurnace
+acquireIron
+buildHoe
+makeBread
+bakeCake
+buildBetterPickaxe
+cookFish
+onARail
+buildSword
+killEnemy
+killCow
+flyPig
+snipeSkeleton
+diamonds
+diamondsToYou
+portal
+ghast
+blazeRod
+potion
+theEnd
+theEnd2
+enchantments
+overkill
+bookcase
+breedCow
+spawnWither
+killWither
+fullBeacon
+exploreAllBiomes
+overpowered

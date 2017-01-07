@@ -31,5 +31,5 @@ import net.minecraft.world.WorldServer;
 
 public interface IHasPythonCode {
     public void initCode();
-    public boolean handleItemInteraction(WorldServer world, EntityPlayer player, BlockPos pos, ItemStack heldItem);
+    public boolean handleItemInteraction(EntityPlayer player, ItemStack heldItem);
 }

@@ -84,6 +84,8 @@ use the "hand" name here too:
   A list of all the standard Minecraft dye color names.
 ``facings``
   A list of all the standard Minecraft facing names.
+``players``
+  Access to the players in the game, more information below.
 
 Choose colors and facings with random.choice() for extra creativity!
 
@@ -99,9 +101,9 @@ the Python Wand. For example, on a block::
 
 The player argument is optional to accept - include it if you want it::
 
-def run(player):
-   all = ", ".join(p.name for p in players.all())
-   player.chat("hello %s!" % all)
+    def run(player):
+       all = ", ".join(p.name for p in players.all())
+       player.chat("hello %s!" % all)
 
 Block
 -----
@@ -115,12 +117,7 @@ Doc TBD::
 Event Handlers
 ~~~~~~~~~~~~~~
 
-Both Python Blocks and Hands may define a "run" function::
-
-  def run():
-    # invoked when the Python Wand is used on the block
-
-Additionally, Python Blocks may define other functions related
+Python Blocks may define additional event handler functions related
 to world interaction with the block::
 
   def powerOn():
@@ -146,9 +143,9 @@ or::
 
 
 Players and Entities
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
-Players and Entities passed into onPlayerWalk / onEntityWalk have
+Players and Entities passed into run / onPlayerWalk / onEntityWalk have
 the following methods::
 
   player.move(x, y, z)      # move by that amount
@@ -162,9 +159,24 @@ Say hello::
 
    player.chat("hello, world!")
 
-Players also have a name:
+Players also have a name::
 
    player.chat("hello, %s!" % player.name)
+
+Players have achievements. Achievements are listed in REFERENCE.txt and the standard
+Minecraft achievements have IDs starting with "achievement." which may be omitted
+for convenience. You may give and take achievements::
+
+   player.giveAchievement('achievement.overkill')
+   player.takeAchievement('overkill')   # note the "achievement." prefix is optional
+
+You also have access to all of the current players through the ``players`` global::
+
+    players.all()
+    players.random()
+    players.get('Richard')      # may throw an error, of course
+    players.closest(pos)        # closest player to the position, within 10
+                                # blocks, may return None
 
 Example
 ~~~~~~~
@@ -177,35 +189,6 @@ depending on whether the block has redstone power or not::
        player.potion("speed")
      else:
        player.potion("slowness")
-
-Commands
---------
-
-Both hands and blocks may invoke commands like command blocks. These
-are documented elsewhere, and the arguments to the command functions
-are the same as the commands themselves, so for example::
-
-    def run(player):
-      achievement(player, 'give',
-        'achievement.overkill')
-
-      achievement(player, 'take', 'achievement.openInventory')
-
-Other examples - noting that the commands *all* take a player as
-their first argument. All other arguments are to be provided as strings::
-
-    time(player, 'set', 'day')
-    toggledownfall(player)
-    clear(player, 'minecraft:golden_sword', '-1', '-1', '{ench:[{id:16s,lvl:1s}]')
-
-Some commands have slightly nicer options. The following are equivalent::
-
-    tp(players.random(), '~3', '~10', '~5')
-    players.random().move(3, 10, 5)
-
-    # assuming we're at pos (-609, 4, 1045)
-    setblock(player, '-609', '4', '1045', 'stone', .... and on)
-    hand.put('stone')
 
 Hand
 ----
@@ -424,6 +407,48 @@ Wand
 
 Invokes run() in the hand or block, if that function is defined.
 
+Commands
+--------
+
+A full set of `standard Minecraft commands`_ (think command blocks) are
+available for calling as functions. The arguments to the command
+functions are the same as the standard Minecraft commands themselves, so
+for example the Minecraft command block command::
+
+    time set day
+
+becomes::
+
+    def onPlayerWalk(player):
+      time('set', 'day')
+
+Other examples - noting that all command arguments are to be provided as
+strings::
+
+    time('set', 'day')
+    toggledownfall()
+    clear('minecraft:golden_sword', '-1', '-1', '{ench:[{id:16s,lvl:1s}]')
+
+Some commands have slightly nicer options. The following are equivalent::
+
+    tp('~3', '~10', '~5', players.random())
+    players.random().move(3, 10, 5)
+
+    # assuming we're at pos (-609, 4, 1045)
+    setblock('-609', '4', '1045', 'stone', .... and on)
+    hand.put('stone')
+
+    achievement('give', 'achievement.overkill', 'Richard')
+    player.giveAchievement('overkill')
+
+If a player activates a Python Block or Hand through the run() method
+using a Python Wand, then the command will be invoked by them. If not, the
+command will be invoked by the Block or Hand. This mostly just affects whether
+the player will see a chat message of the command result; but it also sets
+the default target of the action for commands like "achievement", "tp",
+and so on.
+
+.. _`standard Minecraft commands`: http://minecraft.gamepedia.com/Commands
 
 CHANGELOG
 =========
@@ -539,6 +564,8 @@ And upload the .jar file from ``build/libs/``.
 
 BUGS
 ----
+
+- block code setting isn't giving particle feedback
 - figure out what BlockStoneSlab "seamless" does, and how isDouble works?
 - consider renaming the put argument "type" to "variant"?
 

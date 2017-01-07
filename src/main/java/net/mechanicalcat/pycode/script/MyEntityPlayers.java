@@ -21,10 +21,14 @@
  *
  */
 
-package net.mechanicalcat.pycode.script.jython;
+package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.script.MyEntityPlayer;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -32,10 +36,10 @@ import javax.annotation.Nullable;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MyPlayers {
+public class MyEntityPlayers {
     World world;
 
-    public MyPlayers(World world) {
+    public MyEntityPlayers(World world) {
         this.world = world;
     }
 
@@ -57,5 +61,9 @@ public class MyPlayers {
         EntityPlayer player = world.getClosestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false);
         if (player == null) return null;
         return new MyEntityPlayer(player);
+    }
+
+    public MyEntityPlayer get(MinecraftServer server, ICommandSender sender, String target) throws PlayerNotFoundException {
+        return new MyEntityPlayer(CommandBase.getPlayer(server, sender, target));
     }
 }

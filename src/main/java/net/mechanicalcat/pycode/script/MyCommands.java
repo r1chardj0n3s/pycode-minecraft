@@ -23,16 +23,12 @@
 
 package net.mechanicalcat.pycode.script;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.command.*;
 import net.minecraft.command.server.*;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.WorldServer;
-import org.python.core.PyObject;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 public class MyCommands {
     public static Map<String,ICommand> COMMANDS = new HashMap<>();
@@ -69,9 +65,7 @@ public class MyCommands {
         CommandScoreboard.class,
         CommandExecuteAt.class,
         CommandTrigger.class,
-        CommandAchievement.class,
         CommandSummon.class,
-        CommandSetBlock.class,
         CommandFill.class,
         CommandClone.class,
         CommandCompare.class,
@@ -83,6 +77,8 @@ public class MyCommands {
         CommandEntityData.class,
         CommandStopSound.class,
         CommandTime.class,
+        CommandAchievement.class,       // improved
+        CommandSetBlock.class,          // improved
     };
 
     public static void init() {
@@ -110,8 +106,8 @@ public class MyCommands {
             this.world = world;
         }
 
-        public void invoke(MyEntityPlayer player, String... args) throws CommandException {
-            this.command.execute(world.getMinecraftServer(), player.entity, args);
+        public void invoke(ICommandSender sender, String... args) throws CommandException {
+            this.command.execute(this.world.getMinecraftServer(), sender, args);
         }
     }
 }

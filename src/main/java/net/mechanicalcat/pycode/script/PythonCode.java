@@ -24,24 +24,14 @@
 package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.PythonEngine;
-import net.mechanicalcat.pycode.init.ModItems;
-import net.mechanicalcat.pycode.items.PythonBookItem;
-import net.mechanicalcat.pycode.script.jython.MyPlayers;
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.item.EnumDyeColor;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemWritableBook;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLLog;
 import org.python.core.Py;
@@ -49,6 +39,8 @@ import org.python.core.PyFunction;
 import org.python.core.PyObject;
 
 import javax.script.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -58,9 +50,11 @@ public class PythonCode {
     private boolean codeChanged = false;
     private SimpleScriptContext context;
     private Bindings bindings;
-    private World world = null;
+    private WorldServer world = null;
+    private BlockPos pos;
+    private ICommandSender runner;
     public static String CODE_NBT_TAG = "code";
-    public MyPlayers players;
+    public MyEntityPlayers players;
 
     public PythonCode() {
         this.context = new SimpleScriptContext();
@@ -103,8 +97,7 @@ public class PythonCode {
         FMLLog.severe(fmt, args);
     }
 
-    public void invoke(WorldServer world, BlockPos pos, String method, MyEntity entity) {
-        this.ensureCompiled(world, pos);
+    public void invoke(String method, MyEntity entity) {
         // wrap entity in MyEntity!
         PyObject obj = (PyObject) this.bindings.get(method);
         if (obj == null) {
@@ -133,8 +126,7 @@ public class PythonCode {
         }
     }
 
-    public void invoke(WorldServer world, BlockPos pos, String method) {
-        this.ensureCompiled(world, pos);
+    public void invoke(String method) {
         PyObject obj = (PyObject) this.bindings.get(method);
         if (obj == null) {
             this.failz0r(world, pos, "Unknown function '%s'", method);
@@ -148,7 +140,7 @@ public class PythonCode {
         }
     }
 
-    public boolean setCodeFromBook(WorldServer world, BlockPos pos, ItemStack heldItem) {
+    public boolean setCodeFromBook(WorldServer world, ICommandSender runner, BlockPos pos, ItemStack heldItem) {
         NBTTagCompound bookData = heldItem.getTagCompound();
         NBTTagList pages;
         try {
@@ -167,25 +159,27 @@ public class PythonCode {
             sbStr.append(s);
         }
         this.setCodeString(sbStr.toString());
-        this.ensureCompiled(world, pos);
+        this.setContext(world, runner, pos);
         return true;
     }
 
-    public void ensureCompiled(WorldServer world, BlockPos pos) {
-        if (this.codeChanged) {
-            this.eval(world, pos);
-            this.codeChanged = false;
-        }
-
-        // ensure this is up to date
-        this.bindings.put("pos", new MyBlockPos(pos));
+    public void setRunner(ICommandSender runner) {
+        this.runner = runner;
+        this.bindings.put("__runner__", runner);
     }
 
-    public boolean eval(WorldServer world, BlockPos pos) {
-        FMLLog.info("Eval my code: %s", this.code);
+    public void setContext(WorldServer world, ICommandSender runner, BlockPos pos) {
+        if (this.world == world && this.runner == runner && this.pos == pos) {
+            this.ensureCompiled();
+            return;
+        }
+
         this.world = world;
-        this.players = new MyPlayers(world);
+        this.pos = pos;
+        this.runner = runner;
+        this.players = new MyEntityPlayers(world);
         this.bindings.put("pos", new MyBlockPos(pos));
+        this.bindings.put("__runner__", runner);
 
         // I am reasonably certain that I can't just shove the methods below directly
         // into the script engine namespace because I can't pass a Runnable as a
@@ -201,32 +195,45 @@ public class PythonCode {
             PythonEngine.eval(s, this.context);
         } catch (ScriptException e) {
             this.failz0r(world, pos, "Error setting up utils: %s", e.getMessage());
-            return false;
+            return;
         }
 
         // create the MyCommand curries and attach callables to utils / global scope
         try {
             String s = "";
             for (String n: MyCommands.COMMANDS.keySet()) {
-                this.bindings.put(n, MyCommands.curry(n, (WorldServer)this.world));
-                // rebind the name to just the invoke method
-                s += String.format("%s = %s.invoke\n", n, n);
+                // bind the name to just the invoke method, using the dynamic runner value
+                this.bindings.put("__" + n, MyCommands.curry(n, (WorldServer)this.world));
+                s += String.format("%s = lambda *a: __%s.invoke(__runner__, *a)\n", n, n);
             }
             PythonEngine.eval(s, this.context);
         } catch (ScriptException e) {
             this.failz0r(world, pos, "Error setting up commands: %s", e.getMessage());
-            return false;
+            return;
         }
+
+        this.ensureCompiled();
+    }
+
+    public static final String stackTraceToString(Throwable t) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        t.printStackTrace(pw);
+        return sw.toString();
+    }
+
+    private void ensureCompiled() {
+        if (!this.codeChanged) return;
+        FMLLog.fine("Eval my code: %s", this.code);
 
         // now execute the code
         try {
             PythonEngine.eval(this.code, this.context);
             world.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
-            return true;
         } catch (ScriptException e) {
-            this.failz0r(world, pos, "Error running code: %s", e.getMessage());
-            return false;
+            this.failz0r(world, pos, "Error running code, traceback:\n%s", stackTraceToString(e));
         }
+        this.codeChanged = false;
     }
 
     private String[] utils = {"colors", "facings", "players"};

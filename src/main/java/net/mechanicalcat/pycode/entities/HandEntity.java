@@ -96,6 +96,10 @@ public class HandEntity extends Entity implements IHasPythonCode {
     public void initCode() {
         this.code = new PythonCode();
         this.code.setCodeString(this.dataManager.get(CODE));
+        if (!this.worldObj.isRemote) {
+            // eval and set context on loading from NBT
+            this.code.setContext((WorldServer) this.worldObj, this, this.getPosition());
+        }
     }
 
     protected void writeEntityToNBT(NBTTagCompound compound) {
@@ -105,6 +109,10 @@ public class HandEntity extends Entity implements IHasPythonCode {
     protected void readEntityFromNBT(NBTTagCompound compound) {
         this.code.readFromNBT(compound);
         this.dataManager.set(CODE, this.code.getCode());
+        if (!this.worldObj.isRemote) {
+            // eval and set context on loading from NBT
+            this.code.setContext((WorldServer) this.worldObj, this, this.getPosition());
+        }
     }
 
     @Override
@@ -126,8 +134,8 @@ public class HandEntity extends Entity implements IHasPythonCode {
         return getPosition().offset(getHorizontalFacing());
     }
 
-    public boolean handleItemInteraction(WorldServer world, EntityPlayer player, BlockPos pos, ItemStack heldItem) {
-        FMLLog.info("interact with %s", this.code.getCode());
+    public boolean handleItemInteraction(EntityPlayer player, ItemStack heldItem) {
+        FMLLog.info("interact with %s", this.code);
         this.code.put("hand", new HandMethods(this, player));
 
         // this is only ever invoked on the server
@@ -135,15 +143,17 @@ public class HandEntity extends Entity implements IHasPythonCode {
             return false;
         }
         Item item = heldItem.getItem();
+        WorldServer world = (WorldServer)this.getEntityWorld();
+        BlockPos pos = this.getPosition();
         if (item == ModItems.python_wand) {
-            // ensure the code is compiled so we can see if run is defined
-            this.code.ensureCompiled(world, pos);
             if (this.code.hasKey("run")) {
-                this.code.invoke(world, pos, "run", new MyEntityPlayer(player));
+                this.code.setRunner(player);
+                this.code.invoke("run", new MyEntityPlayer(player));
+                this.code.setRunner(this);
             }
             return true;
         } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
-            this.code.setCodeFromBook(world, pos, heldItem);
+            this.code.setCodeFromBook(world, this, pos, heldItem);
             return true;
         }
         return false;
@@ -170,8 +180,8 @@ public class HandEntity extends Entity implements IHasPythonCode {
     }
 
     public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand) {
-        World world = player.getEntityWorld();
-        return world.isRemote || this.handleItemInteraction((WorldServer)world, player, this.getPosition(), stack);
+        if (this.worldObj.isRemote) return true;
+        return this.handleItemInteraction(player, stack);
     }
 
     /**
