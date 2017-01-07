@@ -136,7 +136,7 @@ public class HandEntity extends Entity implements IHasPythonCode {
         }
         Item item = heldItem.getItem();
         if (item == ModItems.python_wand) {
-            // TODO this is a bit yuck, but hasKey doesn't know about world/pos
+            // ensure the code is compiled so we can see if run is defined
             this.code.ensureCompiled(world, pos);
             if (this.code.hasKey("run")) {
                 this.code.invoke(world, pos, "run", new MyEntityPlayer(player));
@@ -144,7 +144,6 @@ public class HandEntity extends Entity implements IHasPythonCode {
             return true;
         } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
             this.code.setCodeFromBook(world, pos, heldItem);
-            this.dataManager.set(CODE, this.code.getCode());
             return true;
         }
         return false;

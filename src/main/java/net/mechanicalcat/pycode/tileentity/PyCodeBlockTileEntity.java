@@ -96,7 +96,7 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         }
         Item item = heldItem.getItem();
         if (item == ModItems.python_wand) {
-            // TODO this is a bit yuck, but hasKey doesn't know about world/pos
+            // ensure the code is compiled so we can see if run is defined
             this.code.ensureCompiled(world, pos);
             if (this.code.hasKey("run")) {
                 this.code.invoke(world, pos, "run", new MyEntityPlayer(player));
