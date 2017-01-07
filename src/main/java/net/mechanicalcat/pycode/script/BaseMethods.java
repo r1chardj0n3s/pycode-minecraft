@@ -24,14 +24,20 @@
 package net.mechanicalcat.pycode.script;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockBed;
+import net.minecraft.block.BlockDoor;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.server.CommandAchievement;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemDoor;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -44,6 +50,31 @@ public class BaseMethods {
     protected BaseMethods(World world, EntityPlayer player) {
         this.world = world;
         this.player = player;
+    }
+
+    protected void put(BlockPos pos, IBlockState block_state, EnumFacing facing) {
+        Block block = block_state.getBlock();
+
+        FMLLog.info("Putting %s at %s", block_state, pos);
+
+        // handle special cases
+        if (block instanceof BlockDoor) {
+            ItemDoor.placeDoor(this.world, pos, facing, block, true);
+        } else if (block instanceof BlockBed) {
+            BlockPos headpos = pos.offset(facing);
+            if (this.world.getBlockState(pos.down()).isSideSolid(this.world, pos.down(), EnumFacing.UP) &&
+                    this.world.getBlockState(headpos.down()).isSideSolid(this.world, headpos.down(), EnumFacing.UP)) {
+                block_state = block_state
+                        .withProperty(BlockBed.OCCUPIED, false).withProperty(BlockBed.FACING, facing)
+                        .withProperty(BlockBed.PART, BlockBed.EnumPartType.FOOT);
+                if (this.world.setBlockState(pos, block_state, 11)) {
+                    block_state = block_state.withProperty(BlockBed.PART, BlockBed.EnumPartType.HEAD);
+                    this.world.setBlockState(headpos, block_state, 11);
+                }
+            }
+        } else {
+            this.world.setBlockState(pos, block_state);
+        }
     }
 
     public void achievement(String... args) throws CommandException {

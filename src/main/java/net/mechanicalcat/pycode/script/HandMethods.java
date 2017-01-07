@@ -29,6 +29,7 @@ import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemDoor;
 import net.minecraft.util.EnumFacing;
@@ -121,278 +122,103 @@ public class HandMethods extends BaseMethods {
                 (WorldServer)this.world);
     }
 
-    public PyObject put(PyObject[] args, String[] kws) {
-        ArgParser r = new ArgParser("put", s("blockname"), s("color", "facing", "type", "half", "shape", "seamless"));
+    public void put(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
+        ArgParser r = new ArgParser("put", s("blockname"), PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        this.put(this.hand.getFacedPos(), getBlockVariant(r));
-        return Py.java2py(null);
+        this.put(this.hand.getFacedPos(), getBlockVariant(r), this.hand.getHorizontalFacing());
     }
 
-    private void put(BlockPos pos, IBlockState block_state) {
-        Block block = block_state.getBlock();
-        EnumFacing facing = this.hand.getHorizontalFacing();
+    public void alter(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
+        ArgParser r = new ArgParser("put", s(), PyRegistry.BLOCK_VARIATIONS);
+        r.parse(args, kws);
 
-        FMLLog.info("Putting %s at %s", block_state, pos);
-
-        // handle special cases
-        if (block instanceof BlockDoor) {
-            ItemDoor.placeDoor(this.world, pos, facing, block, true);
-        } else if (block instanceof BlockBed) {
-            BlockPos headpos = pos.offset(facing);
-            if (this.world.getBlockState(pos.down()).isSideSolid(this.world, pos.down(), EnumFacing.UP) &&
-                    this.world.getBlockState(headpos.down()).isSideSolid(this.world, headpos.down(), EnumFacing.UP)) {
-                block_state = block_state
-                        .withProperty(BlockBed.OCCUPIED, false).withProperty(BlockBed.FACING, facing)
-                        .withProperty(BlockBed.PART, BlockBed.EnumPartType.FOOT);
-                if (this.world.setBlockState(pos, block_state, 11)) {
-                    block_state = block_state.withProperty(BlockBed.PART, BlockBed.EnumPartType.HEAD);
-                    this.world.setBlockState(headpos, block_state, 11);
-                }
-            }
-        } else {
-            this.world.setBlockState(pos, block_state);
+        BlockPos pos = this.hand.getFacedPos();
+        IBlockState state = this.world.getBlockState(pos);
+        EnumFacing facing = PyRegistry.getBlockFacing(state);
+        IBlockState modified = PyRegistry.modifyBlockStateFromSpec(state, r, facing);
+        if (state != modified) {
+            this.world.setBlockState(pos, modified);
         }
     }
 
-    public void water() {
-        this.hand.code.water(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
-    }
-
-    public void lava() {
-        this.hand.code.lava(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
-    }
+//        TileEntity tileentity = world.getTileEntity(pos);
+//        NBTTagCompound original = tileentity.writeToNBT(new NBTTagCompound());
+//        NBTTagCompound modified = original.copy();
 
     public void clear() {
-        this.hand.code.clear(this.hand.getPosition().add(this.hand.getHorizontalFacing().getDirectionVec()));
+        if (this.world == null || this.world.isRemote) return;
+        BlockPos pos = this.hand.getFacedPos();
+        Block b = this.world.getBlockState(pos).getBlock();
+        if (!this.world.isAirBlock(pos)) {
+            this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
+        }
     }
 
-    public PyObject line(PyObject[] args, String[] kws) {
+    public void line(PyObject[] args, String[] kws) {
         ArgParser r = new ArgParser("line", s("distance", "blockname"),
-                s("color", "facing", "type", "half", "shape"));
+                PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        int distance = r.getInteger("distance");
-        IBlockState block_state = getBlockVariant(r);
-        BlockPos pos = this.hand.getPosition();
-        Vec3i direction = this.hand.getHorizontalFacing().getDirectionVec();
-        for (int i=0; i<distance; i++) {
-            pos = pos.add(direction);
-            this.world.setBlockState(pos, block_state);
-        }
-        return Py.java2py(null);
+        ShapeGen.line(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
     }
 
     public void ladder(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
         ArgParser r = new ArgParser("line", s("height", "blockname"),
-                s("color", "facing", "type", "half", "shape"));
+                PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        int height = r.getInteger("height");
-        IBlockState block_state = getBlockVariant(r);
-        BlockPos pos = this.hand.getFacedPos();
-        for (int i=0; i<height; i++) {
-            this.world.setBlockState(pos, block_state);
-            pos = pos.add(0, 1, 0);
-        }
+        ShapeGen.ladder(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
     }
 
     public void floor(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
         ArgParser r = new ArgParser("line", s("width", "depth", "blockname"),
-                s("color", "facing", "type", "half", "shape"));
+                PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        IBlockState block_state = getBlockVariant(r);
-        BlockPos pos = this.hand.getFacedPos();
-        EnumFacing facing = this.hand.getHorizontalFacing();
-        this.floor(r.getInteger("width"), r.getInteger("depth"), block_state, pos, facing);
-    }
-
-    private void floor(int width, int depth, IBlockState block_state, BlockPos pos, EnumFacing facing) {
-        Vec3i front = facing.getDirectionVec();
-        Vec3i side = facing.rotateY().getDirectionVec();
-        for (int j=0; j < width; j++) {
-            BlockPos set = pos.add(side.getX() * j, 0, side.getZ() * j);
-            for (int i = 0; i < depth; i++) {
-                this.world.setBlockState(set, block_state);
-                set = set.add(front);
-            }
-        }
+        ShapeGen.floor(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
     }
 
     public void wall(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
         ArgParser r = new ArgParser("line", s("depth", "height", "blockname"),
-                s("color", "facing", "type", "half", "shape"));
+                PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        IBlockState block_state = getBlockVariant(r);
-        BlockPos pos = this.hand.getFacedPos();
-        EnumFacing facing = this.hand.getHorizontalFacing();
-        this.wall(r.getInteger("depth"), r.getInteger("height"), block_state, pos, facing);
-    }
-
-    private void wall(int depth, int height, IBlockState block_state, BlockPos pos, EnumFacing facing) {
-        Vec3i front = facing.getDirectionVec();
-        for (int j=0; j<height; j++) {
-            BlockPos set = pos.add(0, j, 0);
-            for (int i = 0; i < depth; i++) {
-                this.world.setBlockState(set, block_state);
-                set = set.add(front);
-            }
-        }
+        ShapeGen.wall(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
     }
 
     public void cube(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
         ArgParser r = new ArgParser("line", s("width", "depth", "height", "blockname"),
-                s("color", "facing", "type", "half", "shape"));
+                PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        int width = r.getInteger("width");
-        int depth = r.getInteger("depth");
-        int height = r.getInteger("height");
-        IBlockState block_state = getBlockVariant(r);
-        BlockPos pos = this.hand.getFacedPos();
-        EnumFacing facing = this.hand.getHorizontalFacing();
-        this.floor(width, depth, block_state, pos, facing);
-        this.floor(width, depth, block_state, pos.offset(EnumFacing.UP, height), facing);
-        for (int i=0; i<4; i++) {
-            this.wall(depth, height, block_state, pos, facing);
-            pos = pos.offset(facing, depth-1);
-            facing = facing.rotateY();
-        }
+        ShapeGen.cube(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
     }
 
     public void circle(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
         ArgParser r = new ArgParser("line", s("radius", "blockname"),
+                // TODO PyRegistry.BLOCK_VARIATIONS
                 s("color", "facing", "type", "half", "shape", "fill"));
         r.parse(args, kws);
-        int radius = r.getInteger("radius");
-        IBlockState block_state = getBlockVariant(r);
-        BlockPos pos = this.hand.getPosition();
-
-        if (r.getBoolean("fill", false)) {
-            int r_squared = radius * radius;
-            for (int y = -radius; y <= radius; y++) {
-                int y_squared = y * y;
-                for (int x = -radius; x <= radius; x++) {
-                    if ((x * x) + y_squared <= r_squared) {
-                        this.world.setBlockState(pos.add(x, 0, y), block_state);
-                    }
-                }
-            }
-        } else {
-            int l = (int) (radius * Math.cos(Math.PI / 4));
-            for (int x = 0; x <= l; x++) {
-                int y = (int) Math.sqrt ((double) (radius * radius) - (x * x));
-                this.world.setBlockState(pos.add(+x, 0, +y), block_state);
-                this.world.setBlockState(pos.add(+y, 0, +x), block_state);
-                this.world.setBlockState(pos.add(-y, 0, +x), block_state);
-                this.world.setBlockState(pos.add(-x, 0, +y), block_state);
-                this.world.setBlockState(pos.add(-x, 0, -y), block_state);
-                this.world.setBlockState(pos.add(-y, 0, -x), block_state);
-                this.world.setBlockState(pos.add(+y, 0, -x), block_state);
-                this.world.setBlockState(pos.add(+x, 0, -y), block_state);
-            }
-        }
+        ShapeGen.circle(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
     }
 
     public void ellipse(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
         ArgParser r = new ArgParser("line", s("radius_x", "radius_z", "blockname"),
+                // TODO PyRegistry.BLOCK_VARIATIONS
                 s("color", "facing", "type", "half", "shape", "fill"));
         r.parse(args, kws);
-        int radius_x = r.getInteger("radius_x");
-        int radius_z = r.getInteger("radius_z");
-        IBlockState block_state = getBlockVariant(r);
-        BlockPos pos = this.hand.getPosition();
-
-        if (r.getBoolean("fill", false)) {
-            for (int x=-radius_x; x <= radius_x; x++) {
-                int dy = (int) (Math.sqrt((radius_z * radius_z) * (1.0 - (double)(x * x) / (double)(radius_x * radius_x))));
-                for (int y=-dy; y <= dy; y++) {
-                    this.world.setBlockState(pos.add(x, 0, y), block_state);
-                }
-            }
-        } else {
-            double radius_x_sq = radius_x * radius_x;
-            double radius_z_sq = radius_z * radius_z;
-            int x = 0, y = radius_z;
-            double p, px = 0, py = 2 * radius_x_sq * y;
-
-            this.world.setBlockState(pos.add(+x, 0, +y), block_state);
-            this.world.setBlockState(pos.add(-x, 0, +y), block_state);
-            this.world.setBlockState(pos.add(+x, 0, -y), block_state);
-            this.world.setBlockState(pos.add(-x, 0, -y), block_state);
-
-            // Region 1
-            p = radius_z_sq - (radius_x_sq * radius_z) + (0.25 * radius_x_sq);
-            while (px < py) {
-                x++;
-                px = px + 2 * radius_z_sq;
-                if (p < 0) {
-                    p = p + radius_z_sq + px;
-                } else {
-                    y--;
-                    py = py - 2 * radius_x_sq;
-                    p = p + radius_z_sq + px - py;
-
-                }
-                this.world.setBlockState(pos.add(+x, 0, +y), block_state);
-                this.world.setBlockState(pos.add(-x, 0, +y), block_state);
-                this.world.setBlockState(pos.add(+x, 0, -y), block_state);
-                this.world.setBlockState(pos.add(-x, 0, -y), block_state);
-            }
-
-            // Region 2
-            p = radius_z_sq*(x+0.5)*(x+0.5) + radius_x_sq*(y-1)*(y-1) - radius_x_sq*radius_z_sq;
-            while (y > 0) {
-                y--;
-                py = py -2 * radius_x_sq;
-                if (p > 0) {
-                    p = p + radius_x_sq - py;
-                } else {
-                    x++;
-                    px = px + 2 * radius_z_sq;
-                    p = p + radius_x_sq - py + px;
-                }
-                this.world.setBlockState(pos.add(+x, 0, +y), block_state);
-                this.world.setBlockState(pos.add(-x, 0, +y), block_state);
-                this.world.setBlockState(pos.add(+x, 0, -y), block_state);
-                this.world.setBlockState(pos.add(-x, 0, -y), block_state);
-            }
-        }
+        ShapeGen.ellipse(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
     }
 
-    // please don't ask why I coded the roofing to be EAST-facing predominantly
-    // it made sense at the time
     public void roof(PyObject[] args, String[] kws) throws BlockTypeError {
+        if (this.world == null || this.world.isRemote) return;
         ArgParser r = new ArgParser("roof", s("width", "depth", "blockname"),
+                // TODO PyRegistry.BLOCK_VARIATIONS
                 s("style", "color", "facing", "type", "half", "shape"));
         r.parse(args, kws);
-        int aWidth = r.getInteger("width");
-        int aDepth = r.getInteger("depth");
-        if (aWidth < 2) {
-            throw Py.TypeError("width must be > 1");
-        }
-        if (aDepth < 2) {
-            throw Py.TypeError("depth must be > 1");
-        }
-        String style = r.getString("style", "hip");
-        boolean box = false;
-        if (style.startsWith("box-")) {
-            box = true;
-            style = style.substring(4);
-        }
-
-        RoofGen gen = new RoofGen((WorldServer)this.world, this.hand.getPosition(),
-                this.hand.getHorizontalFacing(), r.getString("blockname"), aWidth, aDepth, r);
-
-        switch (style) {
-            case "hip":
-                gen.hip();
-                break;
-            case "gable":
-                gen.gable(box);
-                break;
-            case "shed":
-                gen.shed(box);
-                break;
-            default:
-                throw Py.TypeError(String.format("unknown style '%s'", r.getString("style")));
-        }
+        RoofGen.roof(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
     }
-
 }

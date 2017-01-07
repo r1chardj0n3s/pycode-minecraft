@@ -211,11 +211,23 @@ More complete docs TBD::
       hand.forward(10)
     # hand is now back at pos, and has the same facing
 
-    hand.water()   # only if clear
-    hand.lava()    # only if clear
-    hand.clear()
+Putting Down Blocks
+-------------------
+
+Python Blocks and Hands may place blocks in the world. They both have the same
+methos listed below, the only difference is that blocks have a "pos" first argument,
+so for example, placing a ladder::
+
+    hand.ladder(8, 'ladder')            # place a bunch of the block in a vertical line
+    block.ladder(pos.up(), 8, 'ladder') # place the ladder on top of this block
+
+Note that it is possible to place a block in the same position as the Python Block
+which will remove it from the game!
+
+The block placement functions are::
 
     hand.put('cobblestone')             # the REFERENCE.txt file lists block names
+    hand.clear()                        # set to air - hand.put('air')
     hand.line(5, 'stone')
     hand.ladder(8, 'ladder')            # place a bunch of the block in a vertical line
     hand.wall(5, 3, 'planks')           # depth, height
@@ -247,7 +259,10 @@ Block variations are handled through keyword arguments. All of the above block-
 placing functions accept the following keywords::
 
     # different plank types
-    hand.put('plank', type='acacia')
+    hand.put('planks', type='acacia')
+
+    # if you use an invalid keyword, it will fail
+    hand.put('planks', color='red')
 
     # different stone slab types
     hand.put('stone_slab', type='quartz', half='top')
@@ -268,6 +283,11 @@ placing functions accept the following keywords::
     # or they will revert to straight!
     hand.put('oak_stairs', facing='left',   # or right, back, and cardinals
         half='top', shape='outer_right')
+
+You may alter block variations after they've been put down::
+
+    hand.put('wool', color='red')
+    hand.alter(color='yellow')          # any of the keywords above are acceptable
 
 Roof styles include "hip", "gable" and "box-gable" (filled gable). To get a box gable
 with overhang you could::

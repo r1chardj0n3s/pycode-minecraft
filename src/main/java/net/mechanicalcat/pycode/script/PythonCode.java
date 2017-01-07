@@ -215,46 +215,6 @@ public class PythonCode {
 
     private String[] utils = {"water", "lava", "clear", "colors"};
 
-    // MyBlockPos for python code, other one for "internal" use without shenanigans
-    public void water(MyBlockPos pos) {
-        this.water(pos.blockPos);
-    }
-    public void water(BlockPos pos) {
-        if (this.world == null || this.world.isRemote) return;
-
-        Block b = this.world.getBlockState(pos).getBlock();
-
-        if (this.world.isAirBlock(pos)) {
-            this.world.setBlockState(pos, Blocks.FLOWING_WATER.getDefaultState());
-        }
-    }
-
-    public void lava(MyBlockPos pos) {
-        this.lava(pos.blockPos);
-    }
-    public void lava(BlockPos pos) {
-        if (this.world == null || this.world.isRemote) return;
-
-        Block b = this.world.getBlockState(pos).getBlock();
-
-        if (this.world.isAirBlock(pos)) {
-            this.world.setBlockState(pos, Blocks.FLOWING_LAVA.getDefaultState());
-        }
-    }
-
-    public void clear(MyBlockPos pos) {
-        this.clear(pos.blockPos);
-    }
-    public void clear(BlockPos pos) {
-        if (this.world == null || this.world.isRemote) return;
-
-        Block b = this.world.getBlockState(pos).getBlock();
-
-        if (!this.world.isAirBlock(pos)) {
-            this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
-        }
-    }
-
     public static HashMap<String, EnumDyeColor> COLORMAP = new HashMap<String, EnumDyeColor>();
     public static HashMap<String, EnumFacing> FACINGMAP = new HashMap<String, EnumFacing>();
     public static List<String> colors = new LinkedList<>();

@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 import net.mechanicalcat.pycode.entities.EntityEnum;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraft.entity.player.EntityPlayer;
@@ -39,11 +40,13 @@ import net.minecraft.item.ItemFirework;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.registry.GameData;
+import org.python.core.Py;
 import org.python.core.PyObject;
 
 import java.util.List;
@@ -99,5 +102,110 @@ public class BlockMethods extends BaseMethods {
         }
         if (this.world.isRemote) return;
         entityType.spawn(this.world, this.block.getPos().add(0.5, 1.0, 0.5));
+    }
+
+    // this is just a little crazypants
+    private String[] s(String ... strings) {
+        return strings;
+    }
+
+    public void put(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
+        ArgParser r = new ArgParser("put", s("pos", "blockname"), PyRegistry.BLOCK_VARIATIONS);
+        r.parse(args, kws);
+        MyBlockPos mpos = (MyBlockPos)r.get("pos").__tojava__(MyBlockPos.class);
+        BlockPos pos = mpos.blockPos;
+        EnumFacing facing = EnumFacing.NORTH;
+        IBlockState state = PyRegistry.getBlockVariant(r, pos, facing, (WorldServer)this.world);
+        this.put(pos, state, facing);
+    }
+
+    public void alter(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
+        ArgParser r = new ArgParser("put", s("pos"), PyRegistry.BLOCK_VARIATIONS);
+        r.parse(args, kws);
+        MyBlockPos mpos = (MyBlockPos)r.get("pos").__tojava__(MyBlockPos.class);
+        BlockPos pos = mpos.blockPos;
+        IBlockState state = this.world.getBlockState(pos);
+        EnumFacing facing = PyRegistry.getBlockFacing(state);
+        IBlockState modified = PyRegistry.modifyBlockStateFromSpec(state, r, facing);
+        if (state != modified) {
+            this.world.setBlockState(pos, modified);
+        }
+    }
+
+    public void clear(MyBlockPos pos) {
+        this.clear(pos.blockPos);
+    }
+    public void clear(BlockPos pos) {
+        if (this.world == null || this.world.isRemote) return;
+        Block b = this.world.getBlockState(pos).getBlock();
+        if (!this.world.isAirBlock(pos)) {
+            this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
+        }
+    }
+
+    public void line(PyObject[] args, String[] kws) {
+        ArgParser r = new ArgParser("line", s("pos", "distance", "blockname"),
+                PyRegistry.BLOCK_VARIATIONS);
+        r.parse(args, kws);
+        MyBlockPos mpos = (MyBlockPos)r.get("pos").__tojava__(MyBlockPos.class);
+        ShapeGen.line(r, this.world, mpos.blockPos, EnumFacing.NORTH);
+    }
+
+    public void ladder(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
+        ArgParser r = new ArgParser("line", s("pos", "height", "blockname"),
+                PyRegistry.BLOCK_VARIATIONS);
+        r.parse(args, kws);
+        MyBlockPos mpos = (MyBlockPos)r.get("pos").__tojava__(MyBlockPos.class);
+        ShapeGen.ladder(r, this.world, mpos.blockPos, EnumFacing.NORTH);
+    }
+
+    public void floor(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
+        ArgParser r = new ArgParser("line", s("pos", "width", "depth", "blockname"),
+                PyRegistry.BLOCK_VARIATIONS);
+        r.parse(args, kws);
+        MyBlockPos mpos = (MyBlockPos)r.get("pos").__tojava__(MyBlockPos.class);
+        ShapeGen.floor(r, this.world, mpos.blockPos, EnumFacing.NORTH);
+    }
+
+    public void wall(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
+        ArgParser r = new ArgParser("line", s("pos", "depth", "height", "blockname"),
+                PyRegistry.BLOCK_VARIATIONS);
+        r.parse(args, kws);
+        MyBlockPos mpos = (MyBlockPos)r.get("pos").__tojava__(MyBlockPos.class);
+        ShapeGen.wall(r, this.world, mpos.blockPos, EnumFacing.NORTH);
+    }
+
+    public void cube(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
+        ArgParser r = new ArgParser("line", s("pos", "width", "depth", "height", "blockname"),
+                PyRegistry.BLOCK_VARIATIONS);
+        r.parse(args, kws);
+        MyBlockPos mpos = (MyBlockPos)r.get("pos").__tojava__(MyBlockPos.class);
+        ShapeGen.cube(r, this.world, mpos.blockPos, EnumFacing.NORTH);
+    }
+
+    public void circle(PyObject[] args, String[] kws) {
+        if (this.world == null || this.world.isRemote) return;
+        ArgParser r = new ArgParser("line", s("pos", "radius", "blockname"),
+                // TODO PyRegistry.BLOCK_VARIATIONS
+                s("color", "facing", "type", "half", "shape", "fill"));
+        r.parse(args, kws);
+        MyBlockPos mpos = (MyBlockPos)r.get("pos").__tojava__(MyBlockPos.class);
+        ShapeGen.circle(r, this.world, mpos.blockPos, EnumFacing.NORTH);
+    }
+
+    public void roof(PyObject[] args, String[] kws) throws BlockTypeError {
+        if (this.world == null || this.world.isRemote) return;
+        ArgParser r = new ArgParser("roof", s("pos", "width", "depth", "blockname"),
+                // TODO PyRegistry.BLOCK_VARIATIONS
+                s("style", "color", "facing", "type", "half", "shape"));
+        r.parse(args, kws);
+        MyBlockPos mpos = (MyBlockPos)r.get("pos").__tojava__(MyBlockPos.class);
+        RoofGen.roof(r, this.world, mpos.blockPos, EnumFacing.NORTH);
     }
 }

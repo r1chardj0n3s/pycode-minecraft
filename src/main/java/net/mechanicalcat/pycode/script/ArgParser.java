@@ -77,7 +77,7 @@ public class ArgParser {
         return this.args.containsKey(name);
     }
 
-    private PyObject get(String name) {
+    public PyObject get(String name) {
         PyObject value = this.args.get(name);
         if(value == null) {
             throw Py.TypeError(String.format("Missing argument to %s(): %s",

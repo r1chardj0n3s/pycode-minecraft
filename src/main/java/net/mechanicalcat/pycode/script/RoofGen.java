@@ -27,8 +27,12 @@ import net.minecraft.block.*;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import org.python.core.Py;
 
+// please don't ask why I coded the roofing to be EAST-facing predominantly
+// it made sense at the time
 
 public class RoofGen {
     private IBlockState stair, slab, fill;
@@ -36,6 +40,40 @@ public class RoofGen {
     private boolean north_south;
     private int width, depth;
     private BlockPos pos;
+
+    public static void roof(ArgParser r, World world, BlockPos pos, EnumFacing facing) throws BlockTypeError {
+        int aWidth = r.getInteger("width");
+        int aDepth = r.getInteger("depth");
+        if (aWidth < 2) {
+            throw Py.TypeError("width must be > 1");
+        }
+        if (aDepth < 2) {
+            throw Py.TypeError("depth must be > 1");
+        }
+        String style = r.getString("style", "hip");
+        boolean box = false;
+        if (style.startsWith("box-")) {
+            box = true;
+            style = style.substring(4);
+        }
+
+        RoofGen gen = new RoofGen((WorldServer) world, pos, facing,
+                r.getString("blockname"), aWidth, aDepth, r);
+
+        switch (style) {
+            case "hip":
+                gen.hip();
+                break;
+            case "gable":
+                gen.gable(box);
+                break;
+            case "shed":
+                gen.shed(box);
+                break;
+            default:
+                throw Py.TypeError(String.format("unknown style '%s'", r.getString("style")));
+        }
+    }
 
     public RoofGen(WorldServer world, BlockPos pos, EnumFacing actualFacing,
                    String material, int aWidth, int aDepth, ArgParser spec) throws BlockTypeError {

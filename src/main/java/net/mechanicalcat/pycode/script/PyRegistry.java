@@ -27,7 +27,10 @@ import net.minecraft.block.*;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.command.CommandBlockData;
 import net.minecraft.item.EnumDyeColor;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -35,6 +38,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLLog;
 import org.python.core.Py;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 
 public class PyRegistry {
@@ -47,6 +51,20 @@ public class PyRegistry {
         return block;
     }
 
+    @Nullable
+    public static EnumFacing getBlockFacing(IBlockState state) {
+        Block block = state.getBlock();
+        PropertyDirection direction;
+
+        try {
+            direction = (PropertyDirection)block.getClass().getField("FACING").get(state.getBlock());
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            return null;
+        }
+        return state.getValue(direction);
+    }
+
+    public static String[] BLOCK_VARIATIONS = {"color", "facing", "type", "half", "shape", "seamless"};
     public static IBlockState getBlockVariant(ArgParser spec, BlockPos pos, EnumFacing facing, WorldServer world) {
         String blockName = spec.getString("blockname");
         Block block;
@@ -56,10 +74,36 @@ public class PyRegistry {
             throw Py.TypeError("Unknown block " + blockName);
         }
         IBlockState block_state = block.getDefaultState();
-        boolean facingSet = false;
         EnumFacing opposite = facing.getOpposite();
         BlockPos faced = pos.offset(facing);
         PropertyDirection direction;
+
+        block_state = modifyBlockStateFromSpec(block_state, spec, facing);
+
+        // if we haven't had an explicit facing set then try to determine a good one
+        if (!spec.has("facing")) {
+            try {
+                direction = (PropertyDirection) block_state.getBlock().getClass().getField("FACING").get(block_state.getBlock());
+                if (world.isAirBlock(faced)) {
+                    // check whether the next pos along (pos -> faced -> farpos) is solid (attachable)
+                    BlockPos farpos = faced.add(facing.getDirectionVec());
+                    if (world.isSideSolid(farpos, opposite, true)) {
+                        // attach in faced pos on farpos
+                        block_state = block_state.withProperty(direction, opposite);
+                        FMLLog.fine("attach in faced pos=%s on farpos=%s", pos, opposite);
+                    }
+                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                FMLLog.fine("attach in current pos=%s no facing", pos);
+            }
+        }
+
+        return block_state;
+    }
+
+    public static IBlockState modifyBlockStateFromSpec(IBlockState block_state, ArgParser spec, EnumFacing facing) {
+        Block block = block_state.getBlock();
+        String blockName = block.getLocalizedName();
 
         if (spec.has("color")) {
             String color = spec.getString("color");
@@ -91,13 +135,13 @@ public class PyRegistry {
             if (blockFacing == null) {
                 throw Py.TypeError("Invalid facing " + s);
             }
+            PropertyDirection direction;
             try {
                 direction = (PropertyDirection) block_state.getBlock().getClass().getField("FACING").get(block_state.getBlock());
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 throw Py.TypeError(blockName + " does not have facing");
             }
             block_state = block_state.withProperty(direction, blockFacing);
-            facingSet = true;
         }
 
         if (spec.has("type"))
@@ -174,30 +218,12 @@ public class PyRegistry {
             block_state = block_state.withProperty(BlockStairs.SHAPE, shape);
         }
 
-        // if we haven't had an explicit facing set then try to determine a good one
-        if (!facingSet) {
-            try {
-                direction = (PropertyDirection) block_state.getBlock().getClass().getField("FACING").get(block_state.getBlock());
-                if (world.isAirBlock(faced)) {
-                    // check whether the next pos along (pos -> faced -> farpos) is solid (attachable)
-                    BlockPos farpos = faced.add(facing.getDirectionVec());
-                    if (world.isSideSolid(farpos, opposite, true)) {
-                        // attach in faced pos on farpos
-                        block_state = block_state.withProperty(direction, opposite);
-                        FMLLog.fine("attach in faced pos=%s on farpos=%s", pos, opposite);
-                    }
-                }
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                FMLLog.fine("attach in current pos=%s no facing", pos);
-            }
-        }
-
         return block_state;
     }
 
-    public static final HashMap<String, String> FILLER = new HashMap<>();
-    public static final HashMap<String, BlockPlanks.EnumType> PLANKTYPES = new HashMap<>();
-    public static final HashMap<String, BlockStoneSlab.EnumType> STONETYPES = new HashMap<>();
+    public static HashMap<String, String> FILLER = new HashMap<>();
+    public static HashMap<String, BlockPlanks.EnumType> PLANKTYPES = new HashMap<>();
+    public static HashMap<String, BlockStoneSlab.EnumType> STONETYPES = new HashMap<>();
     static {
         FILLER.put("oak", "planks");
         FILLER.put("stone", "stone");
