@@ -169,17 +169,24 @@ public class GuiTextArea extends Gui {
 
         int line_width;
         int last_line = this.lines.length - 1;
+        String line;
         switch (keyCode) {
             case Keyboard.KEY_BACK:
-                String line = this.lines[this.cursorRow];
+                line = this.lines[this.cursorRow];
                 if (this.cursorColumn == 0) {
+                    // backspace at SOL will join with previous line
                     // TODO joining long lines will be an issue
                     if (this.cursorRow == 0) {
+                        // we are on the first line, nothing to join with
                         return;
                     }
                     String s = this.lines[this.cursorRow - 1];
+
+                    // join lines
                     this.lines[this.cursorRow - 1] = s.substring(0, s.length()) + this.lines[this.cursorRow];
                     this.cursorColumn = s.length();
+
+                    // remove the moved line
                     List<String> temp = new LinkedList<>();
                     for (int i = 0; i < this.lines.length; i++) {
                         if (i != this.cursorRow) {
@@ -193,6 +200,34 @@ public class GuiTextArea extends Gui {
                     this.lines[this.cursorRow] = newline;
                     this._editString(String.join("\n", this.lines));
                     this.cursorColumn -= 1;
+                }
+                return;
+            case Keyboard.KEY_DELETE:
+                line = this.lines[this.cursorRow];
+                if (this.cursorColumn == this.lines[this.cursorRow].length()) {
+                    // delete at EOL will join with previous line
+                    // TODO joining long lines will be an issue
+                    if (this.cursorRow == this.lines.length - 1) {
+                        // we are at the last line, nothing to join with
+                        return;
+                    }
+                    String s = this.lines[this.cursorRow + 1];
+
+                    // join lines
+                    this.lines[this.cursorRow] = line.substring(0, line.length()) + this.lines[this.cursorRow + 1];
+
+                    // remove the moved line
+                    List<String> temp = new LinkedList<>();
+                    for (int i = 0; i < this.lines.length; i++) {
+                        if (i != this.cursorRow + 1) {
+                            temp.add(this.lines[i]);
+                        }
+                    }
+                    this._editString(String.join("\n", temp));
+                } else {
+                    String newline = line.substring(0, this.cursorColumn) + line.substring(this.cursorColumn + 1, line.length());
+                    this.lines[this.cursorRow] = newline;
+                    this._editString(String.join("\n", this.lines));
                 }
                 return;
             case Keyboard.KEY_RETURN:
