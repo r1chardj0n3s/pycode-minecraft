@@ -25,6 +25,7 @@ package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.PythonEngine;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -140,7 +141,7 @@ public class PythonCode {
         }
     }
 
-    public boolean setCodeFromBook(WorldServer world, ICommandSender runner, BlockPos pos, ItemStack heldItem) {
+    public boolean setCodeFromBook(WorldServer world, EntityPlayer player, ICommandSender runner, BlockPos pos, ItemStack heldItem) {
         NBTTagCompound bookData = heldItem.getTagCompound();
         NBTTagList pages;
         try {
@@ -159,7 +160,10 @@ public class PythonCode {
             sbStr.append(s);
         }
         this.setCodeString(sbStr.toString());
-        this.setContext(world, runner, pos);
+        // set context using the player so they get feedback on success/fail
+        this.setContext(world, player, pos);
+        // now set the default runner to be the code entity
+        this.setRunner(runner);
         return true;
     }
 

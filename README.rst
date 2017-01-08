@@ -565,7 +565,6 @@ And upload the .jar file from ``build/libs/``.
 BUGS
 ----
 
-- block code setting isn't giving particle feedback
 - figure out what BlockStoneSlab "seamless" does, and how isDouble works?
 - consider renaming the put argument "type" to "variant"?
 

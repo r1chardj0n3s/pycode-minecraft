@@ -112,7 +112,7 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
             }
             return true;
         } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
-            this.code.setCodeFromBook(world, this, pos, heldItem);
+            this.code.setCodeFromBook(world, player, this, pos, heldItem);
             return true;
         }
         return false;
