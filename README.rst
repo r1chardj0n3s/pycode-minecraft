@@ -431,8 +431,8 @@ strings::
 
 Some commands have slightly nicer options. The following are equivalent::
 
-    tp('~3', '~10', '~5', players.random())
-    players.random().move(3, 10, 5)
+    tp('~3', '~10', '~5', '@r')
+    players.random().move(3, 10, 5)         # fewer target selectors here though
 
     # assuming we're at pos (-609, 4, 1045)
     setblock('-609', '4', '1045', 'stone', .... and on)
@@ -460,7 +460,7 @@ CHANGELOG
  - Added roof() with various styles
  - Added half and type keyword argument handling for put()ing
    of slabs and stone slabs in particular
- - Added command invocation (achievement)
+ - Added standard Minecraft command invocation
  - Added alter() to change variations of existing blocks
 **1.6**
  - Altered the hand store/restore position methods to be a context manager
