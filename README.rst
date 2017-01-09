@@ -567,7 +567,7 @@ BUGS
 
 - figure out what BlockStoneSlab "seamless" does, and how isDouble works?
 - consider renaming the put argument "type" to "variant"?
-
+- promote runner to non-private object
 
 TODO
 ----
@@ -588,6 +588,8 @@ This is not an exhaustive list, and should probably be put into github issues.
 *wand*
  - bring up a REPL when activated against air?
  - REPL would want to have auto-complete
+ - use on book (on ground?) to program wand
+ - invoke(target) where target could be ground or entity
 *blocks*
  - pull from inventory, push out
  - generate redstone power
