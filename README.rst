@@ -588,8 +588,8 @@ This is not an exhaustive list, and should probably be put into github issues.
 *wand*
  - bring up a REPL when activated against air?
  - REPL would want to have auto-complete
- - use on book (on ground?) to program wand
- - invoke(target) where target could be ground or entity
+ - use book on wand that's on the ground to program wand
+ - invoke(target) where target could be .isBlock(), .isPlayer(), .isEntity(), .isAir()
 *blocks*
  - pull from inventory, push out
  - generate redstone power
