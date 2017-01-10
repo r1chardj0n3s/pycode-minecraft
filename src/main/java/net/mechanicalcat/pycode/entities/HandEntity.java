@@ -51,7 +51,9 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nullable;
 
@@ -134,28 +136,31 @@ public class HandEntity extends Entity implements IHasPythonCode {
         return getPosition().offset(getHorizontalFacing());
     }
 
-    public boolean handleItemInteraction(EntityPlayer player, ItemStack heldItem) {
-        FMLLog.info("interact with %s", this.code);
-        this.code.put("hand", new HandMethods(this, player));
+    public boolean handleItemInteraction(EntityPlayer player, @Nullable ItemStack heldItem, EnumHand hand) {
+        FMLLog.info("interact from %s with %s", player, heldItem);
 
         // this is only ever invoked on the server
         if (heldItem == null) {
-            return false;
-        }
-        Item item = heldItem.getItem();
-        WorldServer world = (WorldServer)this.getEntityWorld();
-        BlockPos pos = this.getPosition();
-        if (item == ModItems.python_wand) {
+            if (this.worldObj.isRemote) return true;
             if (this.code.hasKey("run")) {
+                this.code.put("hand", new HandMethods(this, player));
                 this.code.setRunner(player);
                 this.code.invoke("run", new MyEntityPlayer(player));
                 this.code.setRunner(this);
+                return true;
             }
-            return true;
-        } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
+            return false;
+        }
+        Item item = heldItem.getItem();
+        if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
+            if (this.worldObj.isRemote) return true;
+            WorldServer world = (WorldServer)this.getEntityWorld();
+            BlockPos pos = this.getPosition();
+            this.code.put("hand", new HandMethods(this, player));
             this.code.setCodeFromBook(world, player, this, pos, heldItem);
             return true;
         }
+        FMLLog.info("... returning FALSE YEAH");
         return false;
     }
 
@@ -177,11 +182,6 @@ public class HandEntity extends Entity implements IHasPythonCode {
 
     public boolean canBeCollidedWith() {
         return true;
-    }
-
-    public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand) {
-        if (this.worldObj.isRemote) return true;
-        return this.handleItemInteraction(player, stack);
     }
 
     /**

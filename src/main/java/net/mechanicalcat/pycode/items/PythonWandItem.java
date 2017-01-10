@@ -23,9 +23,10 @@
 
 package net.mechanicalcat.pycode.items;
 
-import net.mechanicalcat.pycode.PyCode;
 import net.mechanicalcat.pycode.Reference;
-import net.mechanicalcat.pycode.script.PythonCode;
+import net.mechanicalcat.pycode.script.*;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -34,7 +35,10 @@ import net.minecraft.item.ItemWritableBook;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLLog;
@@ -48,32 +52,42 @@ public class PythonWandItem extends Item {
         setCreativeTab(CreativeTabs.TOOLS);
     }
 
-    @Nonnull
-    public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemstack, World world, EntityPlayer player, EnumHand hand) {
-        FMLLog.info("onItemRightClick %s", world.isRemote);
-
-        if (world.isRemote) return new ActionResult(EnumActionResult.PASS, itemstack);
-        WorldServer ws = (WorldServer)world;
-
+    static public boolean useItem(ItemStack itemstack, EntityPlayer player, WorldServer world, BlockPos pos) {
         ItemStack offhand = player.getHeldItemOffhand();
-        if (offhand == null) new ActionResult(EnumActionResult.PASS, itemstack);
+        if (offhand == null) return false;
 
         Item offitem = offhand.getItem();
         if (offitem instanceof PythonBookItem || offitem instanceof ItemWritableBook) {
-            System.out.println("WE HAZ A BOOK!");
-            NBTTagCompound nbt = itemstack.getTagCompound();
-            if (nbt == null) {
-                nbt = new NBTTagCompound();
-                itemstack.setTagCompound(nbt);
+            String content = PythonCode.bookAsString(offhand);
+            if (content == null) {
+                PythonCode.failz0r(world, player.getPosition(), "Could not get pages from the book!?");
+                return true;
             }
-            String code = PythonCode.bookAsString(offhand);
-            if (code == null) {
-                PythonCode.failz0r(ws, player.getPosition(), "Could not get pages from the book!?");
-                return new ActionResult(EnumActionResult.FAIL, itemstack);
+            PythonCode code = new PythonCode();
+            code.setCodeString(content);
+
+            // the following will actually run the code; TODO maybe setContext could be better-named?
+            code.setContext(world, player, player.getPosition());
+
+            if (code.hasKey("invoke")) {
+                RayTraceResult target = Minecraft.getMinecraft().objectMouseOver;
+                MyBase interaction = null;
+                if (target.typeOfHit == RayTraceResult.Type.BLOCK) {
+                    IBlockState block = world.getBlockState(target.getBlockPos());
+                    interaction = new MyBlock(block, target.getBlockPos());
+                } else if (target.typeOfHit == RayTraceResult.Type.ENTITY) {
+                    if (target.entityHit instanceof EntityPlayer) {
+                        interaction = new MyEntityPlayer((EntityPlayer)target.entityHit);
+                    } else {
+                        interaction = new MyEntity(target.entityHit);
+                    }
+                }
+                code.invoke("invoke", interaction);
             }
-            nbt.setString("code", code);
+            return true;
         }
 
-        return new ActionResult(EnumActionResult.SUCCESS, itemstack);
+        return false;
     }
+
 }

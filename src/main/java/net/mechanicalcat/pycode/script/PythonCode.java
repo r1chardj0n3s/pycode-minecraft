@@ -25,11 +25,14 @@ package net.mechanicalcat.pycode.script;
 
 import net.mechanicalcat.pycode.PythonEngine;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
@@ -39,6 +42,7 @@ import org.python.core.Py;
 import org.python.core.PyFunction;
 import org.python.core.PyObject;
 
+import javax.annotation.Nullable;
 import javax.script.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -98,8 +102,8 @@ public class PythonCode {
         FMLLog.severe(fmt, args);
     }
 
+    // TODO refactor this to be more generic
     public void invoke(String method, MyEntity entity) {
-        // wrap entity in MyEntity!
         PyObject obj = (PyObject) this.bindings.get(method);
         if (obj == null) {
             failz0r(world, pos, "Unknown function '%s'", method);
@@ -124,6 +128,32 @@ public class PythonCode {
             func.__call__(Py.java2py(entity));
         } catch (NullPointerException e) {
             failz0r(world, pos, "Error running code: %s", e.getMessage());
+        }
+    }
+
+    public void invoke(String method, @Nullable MyBase target) {
+        PyObject obj = (PyObject) this.bindings.get(method);
+        if (obj == null) {
+            failz0r(world, pos, "Unknown function '%s'", method);
+            return;
+        }
+        PyFunction func = (PyFunction)obj;
+
+        // handle instances of optional player argument
+        PyObject co_varnames = func.__code__.__getattr__("co_varnames");
+        if (co_varnames.__contains__(Py.java2py("target"))) {
+            try {
+                func.__call__(Py.java2py(target));
+            } catch (NullPointerException e) {
+                failz0r(world, pos, "Error running code: %s", e.getMessage());
+            }
+        } else {
+            // don't pass the target in if it's not expected
+            try {
+                func.__call__();
+            } catch (NullPointerException e) {
+                failz0r(world, pos, "Error running code: ", e.getMessage());
+            }
         }
     }
 
@@ -191,7 +221,14 @@ public class PythonCode {
         this.runner = runner;
         this.players = new MyEntityPlayers(world);
         this.bindings.put("pos", new MyBlockPos(pos));
-        this.bindings.put("__runner__", runner);
+        if (runner instanceof EntityPlayer || runner instanceof EntityPlayerMP) {
+            this.bindings.put("runner", new MyEntityPlayer((EntityPlayer)runner));
+        } else if (runner instanceof Entity) {
+            this.bindings.put("runner", new MyEntity((Entity) runner));
+        } else if (runner instanceof TileEntity) {
+            BlockPos bp = ((TileEntity) runner).getPos();
+            this.bindings.put("runner", new MyBlock(world.getBlockState(bp), bp));
+        }
 
         // I am reasonably certain that I can't just shove the methods below directly
         // into the script engine namespace because I can't pass a Runnable as a
@@ -216,7 +253,7 @@ public class PythonCode {
             for (String n: MyCommands.COMMANDS.keySet()) {
                 // bind the name to just the invoke method, using the dynamic runner value
                 this.bindings.put("__" + n, MyCommands.curry(n, (WorldServer)this.world));
-                s += String.format("%s = lambda *a: __%s.invoke(__runner__, *a)\n", n, n);
+                s += String.format("%s = lambda *a: __%s.invoke(runner, *a)\n", n, n);
             }
             PythonEngine.eval(s, this.context);
         } catch (ScriptException e) {

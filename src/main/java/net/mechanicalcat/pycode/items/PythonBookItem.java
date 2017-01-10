@@ -52,9 +52,10 @@ public class PythonBookItem extends Item {
     }
 
     @Nonnull
+    @Override
     public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand) {
         // don't activate the GUI if in offhand
-        if (hand == EnumHand.OFF_HAND)return new ActionResult(EnumActionResult.PASS, itemStackIn);
+        if (hand == EnumHand.OFF_HAND) return new ActionResult(EnumActionResult.PASS, itemStackIn);
 
         PyCode.proxy.openBook(playerIn, itemStackIn);
         return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
@@ -69,23 +70,6 @@ public class PythonBookItem extends Item {
             if (!title.isEmpty()) {
                 tooltip.add(title);
             }
-        }
-    }
-
-    public static boolean isNBTValid(NBTTagCompound nbt) {
-        if (nbt == null) {
-            return false;
-        } else if (!nbt.hasKey("pages", 9)) {
-            return false;
-        } else {
-            NBTTagList nbttaglist = nbt.getTagList("pages", 8);
-            for (int i = 0; i < nbttaglist.tagCount(); ++i) {
-                String s = nbttaglist.getStringTagAt(i);
-                if (s.length() > 32767) {
-                    return false;
-                }
-            }
-            return true;
         }
     }
 }

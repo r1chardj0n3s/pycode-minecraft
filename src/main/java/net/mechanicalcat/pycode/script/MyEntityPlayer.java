@@ -28,6 +28,7 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ServerCommandManager;
 import net.minecraft.command.server.CommandAchievement;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.tileentity.CommandBlockBaseLogic;
 import net.minecraft.util.text.TextComponentString;
 
@@ -42,12 +43,17 @@ public class MyEntityPlayer extends MyEntityLiving {
         this.name = player.getName();
     }
 
+    @Override
+    public boolean isPlayer() {
+        return true;
+    }
+
     public String toString() {
         return this.name;
     }
 
     public void chat(String message) {
-        ((EntityPlayer)this.entity).addChatComponentMessage(new TextComponentString(message));
+        ((EntityPlayer) this.entity).addChatComponentMessage(new TextComponentString(message));
     }
 
     public void giveAchievement(String name) throws CommandException {

@@ -23,12 +23,25 @@
 
 package net.mechanicalcat.pycode.script;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
 
+public class MyBlock extends MyBase {
+    public IBlockState block;
+    public BlockPos pos;
+    public String name;
+    public MyBlock(IBlockState block, BlockPos pos) {
+        this.block = block;
+        this.name = block.getBlock().getLocalizedName();
+        this.pos = pos;
+    }
 
-public interface IHasPythonCode {
-    public void initCode();
+    @Override
+    public boolean isBlock() {
+        return true;
+    }
+
+    public String toString() {
+        return String.format("[%s at %s]", this.block, this.pos);
+    }
 }

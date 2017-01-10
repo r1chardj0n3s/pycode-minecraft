@@ -106,8 +106,14 @@ public class MyCommands {
             this.world = world;
         }
 
-        public void invoke(ICommandSender sender, String... args) throws CommandException {
-            this.command.execute(this.world.getMinecraftServer(), sender, args);
+        public void invoke(Object sender, String... args) throws CommandException {
+            ICommandSender commandSender;
+            if (sender instanceof MyEntity) {
+                commandSender = ((MyEntity) sender).entity;
+            } else {
+                commandSender = (ICommandSender)sender;
+            }
+            this.command.execute(this.world.getMinecraftServer(), commandSender, args);
         }
     }
 }

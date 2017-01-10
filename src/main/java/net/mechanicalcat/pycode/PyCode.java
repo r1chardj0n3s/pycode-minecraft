@@ -23,9 +23,11 @@
 
 package net.mechanicalcat.pycode;
 
+import net.mechanicalcat.pycode.events.PyCodeEventHandler;
 import net.mechanicalcat.pycode.init.*;
 import net.mechanicalcat.pycode.proxy.CommonProxy;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -42,10 +44,15 @@ public class PyCode {
     @SidedProxy(clientSide = Reference.CLIENT_PROXY_CLASS, serverSide = Reference.SERVER_PROXY_CLASS)
     public static CommonProxy proxy;
 
+    PyCodeEventHandler events = new PyCodeEventHandler();
+
     @EventHandler
     public void preinit(FMLPreInitializationEvent event) {
         System.out.println(String.format("%s (%s) %s initialising",
                 Reference.MODNAME, Reference.MODID, Reference.VERSION));
+
+        MinecraftForge.EVENT_BUS.register(events);
+
         ModBlocks.init();
         ModBlocks.register();
 

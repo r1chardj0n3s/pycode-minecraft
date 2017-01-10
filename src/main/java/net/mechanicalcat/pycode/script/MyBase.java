@@ -23,12 +23,20 @@
 
 package net.mechanicalcat.pycode.script;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
+// TODO document me
+public abstract class MyBase {
+    public boolean isBlock() {
+        return false;
+    }
+    public boolean isEntity() {
+        return false;
+    }
+    public boolean isPlayer() {
+        return false;
+    }
+    public boolean isItem() {
+        return false;
+    }
 
-
-public interface IHasPythonCode {
-    public void initCode();
+    abstract public String toString();
 }

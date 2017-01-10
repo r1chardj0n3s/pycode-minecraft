@@ -92,26 +92,25 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         return null;
     }
 
-    public boolean handleItemInteraction(EntityPlayer player, ItemStack heldItem) {
+    public boolean handleItemInteraction(EntityPlayer player, @Nullable ItemStack heldItem) {
         if (this.worldObj.isRemote) return false;
+
         WorldServer world = (WorldServer)this.worldObj;
         this.isPowered = world.isBlockPowered(pos);
         this.code.put("block", new BlockMethods(this, player));
 
-        // this is only ever invoked on the server
         if (heldItem == null) {
-            return false;
-        }
-        Item item = heldItem.getItem();
-        if (item == ModItems.python_wand) {
-            // set the context's ICommandSender to be this invoking player
             if (this.code.hasKey("run")) {
                 this.code.setRunner(player);
                 this.code.invoke("run", new MyEntityPlayer(player));
                 this.code.setRunner(this);
+                return true;
             }
-            return true;
-        } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
+            return false;
+        }
+
+        Item item = heldItem.getItem();
+        if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
             this.code.setCodeFromBook(world, player, this, pos, heldItem);
             return true;
         }

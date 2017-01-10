@@ -32,17 +32,27 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.FMLLog;
 
 
-public class MyEntity {
+public class MyEntity extends MyBase {
     public Entity entity;
 
     public MyEntity(Entity entity) {
         this.entity = entity;
     }
 
+    // TODO document me
+    public void tp(int x, int y, int z) {
+        this.entity.setPosition(x, y, z);
+    }
+
     public void move(int x, int y, int z) {
         BlockPos pos = this.entity.getPosition();
         pos = pos.add(x, y, z);
         this.entity.setPosition(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public boolean isEntity() {
+        return true;
     }
 
     public String toString() {
