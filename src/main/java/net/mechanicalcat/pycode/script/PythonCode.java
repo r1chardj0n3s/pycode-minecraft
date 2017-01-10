@@ -93,7 +93,7 @@ public class PythonCode {
         return this.bindings.containsKey(key);
     }
 
-    private void failz0r(WorldServer world, BlockPos pos, String fmt, Object... args) {
+    static public void failz0r(WorldServer world, BlockPos pos, String fmt, Object... args) {
         world.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
         FMLLog.severe(fmt, args);
     }
@@ -102,7 +102,7 @@ public class PythonCode {
         // wrap entity in MyEntity!
         PyObject obj = (PyObject) this.bindings.get(method);
         if (obj == null) {
-            this.failz0r(world, pos, "Unknown function '%s'", method);
+            failz0r(world, pos, "Unknown function '%s'", method);
             return;
         }
         PyFunction func = (PyFunction)obj;
@@ -114,7 +114,7 @@ public class PythonCode {
             try {
                 func.__call__();
             } catch (NullPointerException e) {
-                this.failz0r(world, pos, "Error running code: ", e.getMessage());
+                failz0r(world, pos, "Error running code: ", e.getMessage());
             }
             return;
         }
@@ -123,34 +123,33 @@ public class PythonCode {
         try {
             func.__call__(Py.java2py(entity));
         } catch (NullPointerException e) {
-            this.failz0r(world, pos, "Error running code: %s", e.getMessage());
+            failz0r(world, pos, "Error running code: %s", e.getMessage());
         }
     }
 
     public void invoke(String method) {
         PyObject obj = (PyObject) this.bindings.get(method);
         if (obj == null) {
-            this.failz0r(world, pos, "Unknown function '%s'", method);
+            failz0r(world, pos, "Unknown function '%s'", method);
             return;
         }
         PyFunction func = (PyFunction)obj;
         try {
             func.__call__();
         } catch (NullPointerException e) {
-            this.failz0r(world, pos, "Error running code: ", e.getMessage());
+            failz0r(world, pos, "Error running code: ", e.getMessage());
         }
     }
 
-    public boolean setCodeFromBook(WorldServer world, EntityPlayer player, ICommandSender runner, BlockPos pos, ItemStack heldItem) {
-        NBTTagCompound bookData = heldItem.getTagCompound();
+    public static final String bookAsString(ItemStack book) {
+        NBTTagCompound bookData = book.getTagCompound();
         NBTTagList pages;
         try {
             // pages are all of type TAG_String == 8
             pages = bookData.getTagList("pages", 8);
         } catch (NullPointerException e) {
             // this should not happen!
-            this.failz0r(world, pos, "Could not getBlock pages from the book!?");
-            return true;
+            return null;
         }
         // collapse the pages into one string
         StringBuilder sbStr = new StringBuilder();
@@ -159,7 +158,16 @@ public class PythonCode {
             if (i > 0) sbStr.append("\n");
             sbStr.append(s);
         }
-        this.setCodeString(sbStr.toString());
+        return sbStr.toString();
+    }
+
+    public boolean setCodeFromBook(WorldServer world, EntityPlayer player, ICommandSender runner, BlockPos pos, ItemStack heldItem) {
+        String code = bookAsString(heldItem);
+        if (code == null) {
+            failz0r(world, pos, "Could not get pages from the book!?");
+            return false;
+        }
+        this.setCodeString(code);
         // set context using the player so they get feedback on success/fail
         this.setContext(world, player, pos);
         // now set the default runner to be the code entity
@@ -198,7 +206,7 @@ public class PythonCode {
             }
             PythonEngine.eval(s, this.context);
         } catch (ScriptException e) {
-            this.failz0r(world, pos, "Error setting up utils: %s", e.getMessage());
+            failz0r(world, pos, "Error setting up utils: %s", e.getMessage());
             return;
         }
 
@@ -212,7 +220,7 @@ public class PythonCode {
             }
             PythonEngine.eval(s, this.context);
         } catch (ScriptException e) {
-            this.failz0r(world, pos, "Error setting up commands: %s", e.getMessage());
+            failz0r(world, pos, "Error setting up commands: %s", e.getMessage());
             return;
         }
 
@@ -235,7 +243,7 @@ public class PythonCode {
             PythonEngine.eval(this.code, this.context);
             world.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
         } catch (ScriptException e) {
-            this.failz0r(world, pos, "Error running code, traceback:\n%s", stackTraceToString(e));
+            failz0r(world, pos, "Error running code, traceback:\n%s", stackTraceToString(e));
         }
         this.codeChanged = false;
     }

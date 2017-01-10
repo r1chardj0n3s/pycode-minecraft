@@ -23,14 +23,57 @@
 
 package net.mechanicalcat.pycode.items;
 
+import net.mechanicalcat.pycode.PyCode;
 import net.mechanicalcat.pycode.Reference;
+import net.mechanicalcat.pycode.script.PythonCode;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemWritableBook;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.FMLLog;
 
-public class PythonWandItem extends Item{
+import javax.annotation.Nonnull;
+
+public class PythonWandItem extends Item {
     public PythonWandItem() {
         setUnlocalizedName(Reference.PyCodeRegistrations.WAND.getUnlocalizedName());
         setRegistryName(Reference.PyCodeRegistrations.WAND.getRegistryName());
         setCreativeTab(CreativeTabs.TOOLS);
+    }
+
+    @Nonnull
+    public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemstack, World world, EntityPlayer player, EnumHand hand) {
+        FMLLog.info("onItemRightClick %s", world.isRemote);
+
+        if (world.isRemote) return new ActionResult(EnumActionResult.PASS, itemstack);
+        WorldServer ws = (WorldServer)world;
+
+        ItemStack offhand = player.getHeldItemOffhand();
+        if (offhand == null) new ActionResult(EnumActionResult.PASS, itemstack);
+
+        Item offitem = offhand.getItem();
+        if (offitem instanceof PythonBookItem || offitem instanceof ItemWritableBook) {
+            System.out.println("WE HAZ A BOOK!");
+            NBTTagCompound nbt = itemstack.getTagCompound();
+            if (nbt == null) {
+                nbt = new NBTTagCompound();
+                itemstack.setTagCompound(nbt);
+            }
+            String code = PythonCode.bookAsString(offhand);
+            if (code == null) {
+                PythonCode.failz0r(ws, player.getPosition(), "Could not get pages from the book!?");
+                return new ActionResult(EnumActionResult.FAIL, itemstack);
+            }
+            nbt.setString("code", code);
+        }
+
+        return new ActionResult(EnumActionResult.SUCCESS, itemstack);
     }
 }

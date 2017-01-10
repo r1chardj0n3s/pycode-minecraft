@@ -53,6 +53,9 @@ public class PythonBookItem extends Item {
 
     @Nonnull
     public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand) {
+        // don't activate the GUI if in offhand
+        if (hand == EnumHand.OFF_HAND)return new ActionResult(EnumActionResult.PASS, itemStackIn);
+
         PyCode.proxy.openBook(playerIn, itemStackIn);
         return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
     }
