@@ -28,12 +28,12 @@ import net.minecraft.util.math.BlockPos;
 
 public class MyBlock extends MyBase {
     public IBlockState block;
-    public BlockPos pos;
+    public MyBlockPos pos;
     public String name;
     public MyBlock(IBlockState block, BlockPos pos) {
         this.block = block;
         this.name = block.getBlock().getLocalizedName();
-        this.pos = pos;
+        this.pos = new MyBlockPos(pos);
     }
 
     @Override
@@ -42,6 +42,6 @@ public class MyBlock extends MyBase {
     }
 
     public String toString() {
-        return String.format("[%s at %s]", this.block, this.pos);
+        return String.format("[%s at %s]", this.block, this.pos.blockPos);
     }
 }

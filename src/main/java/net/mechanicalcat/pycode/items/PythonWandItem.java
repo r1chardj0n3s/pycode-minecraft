@@ -28,6 +28,7 @@ import net.mechanicalcat.pycode.script.*;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -95,6 +96,8 @@ public class PythonWandItem extends Item {
                         if (target.typeOfHit == RayTraceResult.Type.ENTITY) {
                             if (target.entityHit instanceof EntityPlayer) {
                                 interaction = new MyEntityPlayer((EntityPlayer) target.entityHit);
+                            } else if (target.entityHit instanceof EntityLiving) {
+                                    interaction = new MyEntityLiving((EntityLiving) target.entityHit);
                             } else {
                                 interaction = new MyEntity(target.entityHit);
                             }

@@ -31,6 +31,9 @@ public abstract class MyBase {
     public boolean isEntity() {
         return false;
     }
+    public boolean isMob() {
+        return false;
+    }
     public boolean isPlayer() {
         return false;
     }

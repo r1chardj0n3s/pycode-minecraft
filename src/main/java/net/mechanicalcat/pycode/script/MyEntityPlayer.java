@@ -47,13 +47,21 @@ public class MyEntityPlayer extends MyEntityLiving {
     public boolean isPlayer() {
         return true;
     }
+    public boolean isMob() {
+        return false;
+    }
 
     public String toString() {
         return this.name;
     }
 
-    public void chat(String message) {
-        ((EntityPlayer) this.entity).addChatComponentMessage(new TextComponentString(message));
+    public void chat(Object... args) {
+        StringBuilder sbStr = new StringBuilder();
+        for (Object arg : args) {
+            if (arg != args[0]) sbStr.append(" ");
+            sbStr.append(arg);
+        }
+        ((EntityPlayer) this.entity).addChatComponentMessage(new TextComponentString(sbStr.toString()));
     }
 
     public void giveAchievement(String name) throws CommandException {

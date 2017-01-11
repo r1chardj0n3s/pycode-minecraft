@@ -71,6 +71,15 @@ message appear in the in-game chat, you would use::
 From this point on, I will refer to the block name, but you can also
 use the "hand" name here too:
 
+``runner``
+  This is the game "thing" that is running the code. If a player runs
+  the code using a wand, then the runner will be that player. If the
+  code is installed in a Python Block and triggered by redstone or any
+  event other than the player *using* the block then the runner will
+  be the Python Block (if the player uses the block then the runner is
+  the player again). If the code is installed in a Python Hand then the
+  same rules apply as with Python Blocks, except of course that the
+  runner will be the Python Hand.
 ``pos``
   The block-space position of the block or hand. Block space uses only
   integer (whole) numbers to locate things in the world using X
@@ -93,17 +102,17 @@ Event Handlers
 ~~~~~~~~~~~~~~
 
 Both Python Blocks and Python Hands may define a ``run()`` function that
-will be invoked when the block or hand is activated (right-clicked) with
-the Python Wand. For example, on a block::
+will be invoked when the block or hand is activated (right-clicked) by the
+player. For example, on a block::
 
   def run():
     block.firework()
 
-The player argument is optional to accept - include it if you want it::
+Or you can do something more fancy::
 
-    def run(player):
+    def run():
        all = ", ".join(p.name for p in players.all())
-       player.chat("hello %s!" % all)
+       runner.chat("hello", all)
 
 Block
 -----
@@ -149,6 +158,8 @@ Players and Entities passed into run / onPlayerWalk / onEntityWalk have
 the following methods::
 
   player.move(x, y, z)      # move by that amount
+  player.tp(x, y, z)        # teleport to those coordinates
+  player.tp(pos)            # or to a location given by a position object
 
 Living entities have the following methods::
 
@@ -162,6 +173,15 @@ Say hello::
 Players also have a name::
 
    player.chat("hello, %s!" % player.name)
+
+Chat can also take a comma-separated list of things to put in the chat message, just
+like Python's print() function can::
+
+   player.chat("hello", player)
+
+This would display something like::
+
+   hello Richard
 
 Players have achievements. Achievements are listed in REFERENCE.txt and the standard
 Minecraft achievements have IDs starting with "achievement." which may be omitted
@@ -177,6 +197,16 @@ You also have access to all of the current players through the ``players`` globa
     players.get('Richard')      # may throw an error, of course
     players.closest(pos)        # closest player to the position, within 10
                                 # blocks, may return None
+
+There's also a few type-checking methods on entities::
+
+    player.isPlayer()           # returns true for just players
+
+    mob.isMob()                 # returns true for all living entities except the player
+    player.isMob()              # returns false
+
+    mob.isEntity()              # returns true for all entities
+    entity.isEntity()           # including minecarts and other non-living entities
 
 Example
 ~~~~~~~
@@ -405,7 +435,26 @@ Roof demo::
 Wand
 ----
 
-Invokes run() in the hand or block, if that function is defined.
+When held in the main hand with a book in the off hand, the wand
+will execute the code in the book. If the book defines an ``invoke``
+function, it can do extra things::
+
+    def invoke():
+      runner.chat('hello')
+
+The runner variable is always the player holding the wand.
+By adding a ``target`` argument to your invoke function you can
+cast wither on mobs::
+
+def invoke(target):
+  if target.isMob():
+    target.potion('wither')
+
+Or, teleport somewhere::
+
+    def invoke(target):
+      if target.isBlock():
+        runner.tp(target.pos.up())
 
 Commands
 --------
@@ -441,12 +490,10 @@ Some commands have slightly nicer options. The following are equivalent::
     achievement('give', 'achievement.overkill', 'Richard')
     player.giveAchievement('overkill')
 
-If a player activates a Python Block or Hand through the run() method
-using a Python Wand, then the command will be invoked by them. If not, the
-command will be invoked by the Block or Hand. This mostly just affects whether
-the player will see a chat message of the command result; but it also sets
-the default target of the action for commands like "achievement", "tp",
-and so on.
+The command will be invoked by the **runner** active for the code. This
+mostly just affects whether the player will see a chat message of the command
+result; but it also sets the default target of the action for commands like
+"achievement", "tp", and so on.
 
 .. _`standard Minecraft commands`: http://minecraft.gamepedia.com/Commands
 
@@ -462,6 +509,7 @@ CHANGELOG
    of slabs and stone slabs in particular
  - Added standard Minecraft command invocation
  - Added alter() to change variations of existing blocks
+ - Altered wand so it invokes code in an off-hand book
 **1.6**
  - Altered the hand store/restore position methods to be a context manager
  - Added facing, half and shape and color keyword argument handling for put()

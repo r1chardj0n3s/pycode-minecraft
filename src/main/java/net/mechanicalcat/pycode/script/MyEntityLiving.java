@@ -35,6 +35,10 @@ public class MyEntityLiving extends MyEntity {
         super(entity);
     }
 
+    public boolean isMob() {
+        return true;
+    }
+
     public void potion(String effect) {
         Potion potion = Potion.REGISTRY.getObject(new ResourceLocation(effect));
 

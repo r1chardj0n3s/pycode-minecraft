@@ -39,7 +39,10 @@ public class MyEntity extends MyBase {
         this.entity = entity;
     }
 
-    // TODO document me
+    public void tp(MyBlockPos pos) {
+        BlockPos p = pos.blockPos;
+        this.entity.setPosition(p.getX(), p.getY(), p.getZ());
+    }
     public void tp(int x, int y, int z) {
         this.entity.setPosition(x, y, z);
     }
