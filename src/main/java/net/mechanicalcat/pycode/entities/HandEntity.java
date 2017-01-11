@@ -26,6 +26,7 @@ package net.mechanicalcat.pycode.entities;
 
 import net.mechanicalcat.pycode.init.ModItems;
 import net.mechanicalcat.pycode.items.PythonBookItem;
+import net.mechanicalcat.pycode.items.PythonWandItem;
 import net.mechanicalcat.pycode.script.IHasPythonCode;
 import net.mechanicalcat.pycode.script.MyEntityPlayer;
 import net.mechanicalcat.pycode.script.PythonCode;
@@ -42,6 +43,7 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
@@ -136,28 +138,37 @@ public class HandEntity extends Entity implements IHasPythonCode {
         return getPosition().offset(getHorizontalFacing());
     }
 
-    public boolean handleItemInteraction(EntityPlayer player, @Nullable ItemStack heldItem, EnumHand hand) {
-        FMLLog.info("interact from %s with %s", player, heldItem);
+    @Override
+    public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand) {
+        return this.handleItemInteraction(player, stack);
+    }
 
-        // this is only ever invoked on the server
+    public boolean handleItemInteraction(EntityPlayer player, ItemStack heldItem) {
+        FMLLog.info("Hand Entity handleItemInteraction remote=%s item=%s", this.worldObj.isRemote, heldItem);
+
         if (heldItem == null) {
-            if (this.worldObj.isRemote) return true;
-            if (this.code.hasKey("run")) {
-                this.code.put("hand", new HandMethods(this, player));
-                this.code.setRunner(player);
-                this.code.invoke("run", new MyEntityPlayer(player));
-                this.code.setRunner(this);
-                return true;
+            // this is only ever invoked on the server
+            if (!this.worldObj.isRemote) {
+                if (this.code.hasKey("run")) {
+                    this.code.put("hand", new HandMethods(this, player));
+                    this.code.setRunner(player);
+                    this.code.invoke("run", new MyEntityPlayer(player));
+                    this.code.setRunner(this);
+                }
             }
-            return false;
+            return true;
         }
+
         Item item = heldItem.getItem();
-        if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
-            if (this.worldObj.isRemote) return true;
-            WorldServer world = (WorldServer)this.getEntityWorld();
-            BlockPos pos = this.getPosition();
-            this.code.put("hand", new HandMethods(this, player));
-            this.code.setCodeFromBook(world, player, this, pos, heldItem);
+        if (item instanceof PythonWandItem) {
+            return PythonWandItem.attemptItemUse(heldItem, player, this.worldObj, null, EnumHand.MAIN_HAND) == EnumActionResult.SUCCESS;
+        } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
+            if (!this.worldObj.isRemote) {
+                WorldServer world = (WorldServer) this.getEntityWorld();
+                BlockPos pos = this.getPosition();
+                this.code.put("hand", new HandMethods(this, player));
+                this.code.setCodeFromBook(world, player, this, pos, heldItem);
+            }
             return true;
         }
         FMLLog.info("... returning FALSE YEAH");

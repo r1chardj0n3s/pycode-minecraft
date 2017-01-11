@@ -62,20 +62,19 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
         setHardness(1.0f);
     }
 
-    static public boolean handleItemInteraction(WorldServer world, BlockPos pos, EntityPlayer player, ItemStack item) {
-        PyCodeBlockTileEntity code_block = getEntity(world, pos);
-        if (code_block != null) {
-            code_block.getCode().setContext(world, code_block, pos);
-            return code_block.handleItemInteraction(player, item);
-        }
-        return true;
+    @Override
+    public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand,
+                                    @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
+        FMLLog.info("onBlockActivated remote=%s", world.isRemote);
+        PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
+        return code_block == null || code_block.handleItemInteraction(playerIn, heldItem);
     }
 
     @Override
     public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
         super.onBlockPlacedBy(world, pos, state, placer, stack);
         if (!world.isRemote) {
-            PyCodeBlockTileEntity code_block = getEntity(world, pos);
+            PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
             if (code_block != null && stack.hasTagCompound()) {
                 code_block.readFromNBT(stack.getTagCompound());
                 code_block.getCode().setContext((WorldServer)world, code_block, pos);
@@ -84,7 +83,7 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
     }
 
     @Nullable
-    static private PyCodeBlockTileEntity getEntity(World world, BlockPos pos) {
+    private PyCodeBlockTileEntity getEntity(World world, BlockPos pos) {
         TileEntity entity = world.getTileEntity(pos);
         if (entity instanceof PyCodeBlockTileEntity) {
             return (PyCodeBlockTileEntity) entity;
@@ -103,7 +102,7 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
             // don't run on the client
             return;
         }
-        PyCodeBlockTileEntity code_block = getEntity(world, pos);
+        PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
         if (entity instanceof EntityPlayer && code_block.getCode().hasKey("onPlayerWalk")) {
             code_block.handleEntityInteraction(new MyEntityPlayer((EntityPlayer) entity), "onPlayerWalk");
         } else if (entity instanceof EntityLivingBase) {
@@ -114,7 +113,7 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
     }
 
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-        PyCodeBlockTileEntity entity = getEntity(worldIn, pos);
+        PyCodeBlockTileEntity entity = this.getEntity(worldIn, pos);
 
         if (entity != null && !entity.getCode().getCode().isEmpty()) {
             ItemStack itemstack = this.createStackedBlock(state);

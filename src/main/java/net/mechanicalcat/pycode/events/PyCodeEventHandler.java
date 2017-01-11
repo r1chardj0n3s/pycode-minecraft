@@ -46,57 +46,57 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 
 public class PyCodeEventHandler {
-    @SubscribeEvent
-    public void onHandClick(PlayerInteractEvent.EntityInteractSpecific e){
-        if (e.getWorld().isRemote) return;
-
-        FMLLog.info("ENTITY INTERACT %s", e.getTarget());
-        Entity entity = e.getTarget();
-
-        if (entity instanceof HandEntity) {
-            EntityPlayer player = e.getEntityPlayer();
-            HandEntity h = (HandEntity) e.getTarget();
-            e.setCanceled(h.handleItemInteraction(player, e.getItemStack(), e.getHand()));
-        }
-    }
-
-    @SubscribeEvent
-    public void onBlockClick(PlayerInteractEvent.RightClickBlock e){
-        World world = e.getWorld();
-        if (world.isRemote) return;
-
-        EnumHand hand = e.getHand();
-        if (hand == EnumHand.OFF_HAND) return;
-
-        BlockPos pos = e.getPos();
-        IBlockState state = e.getWorld().getBlockState(pos);
-
-        if (!(state.getBlock() instanceof PythonBlock)) return;
-
-        ItemStack stack = e.getItemStack();
-        FMLLog.info("BLOCK INTERACT %s with %s", state, stack);
-
-        e.setCanceled(PythonBlock.handleItemInteraction((WorldServer)world, pos, e.getEntityPlayer(), stack));
-    }
-
-    // this should be called only for air clicks
-    @SubscribeEvent
-    public void onUseItem(PlayerInteractEvent.RightClickItem e){
-        World world = e.getWorld();
-        if (world.isRemote) return;
-        EnumHand hand = e.getHand();
-        if (hand == EnumHand.OFF_HAND) return;
-
-        ItemStack stack = e.getItemStack();
-        if (stack == null) return;
-        Item item = stack.getItem();
-        FMLLog.info("ITEM INTERACT %s", stack);
-
-        if (item instanceof PythonBookItem) {
-            // can't do this here because it somehow screws up GUI mode, and there's no mouse pointer
-//            PyCode.proxy.openBook(e.getEntityPlayer(), stack);
-        } else if (item instanceof PythonWandItem) {
-            PythonWandItem.useItem(stack, e.getEntityPlayer(), (WorldServer)world, e.getPos());
-        }
-    }
+//    @SubscribeEvent
+//    public void onHandClick(PlayerInteractEvent.EntityInteractSpecific e){
+//        if (e.getWorld().isRemote) return;
+//
+//        FMLLog.info("ENTITY INTERACT %s", e.getTarget());
+//        Entity entity = e.getTarget();
+//
+//        if (entity instanceof HandEntity) {
+//            EntityPlayer player = e.getEntityPlayer();
+//            HandEntity h = (HandEntity) e.getTarget();
+//            e.setCanceled(h.handleItemInteraction(player, e.getItemStack(), e.getHand()));
+//        }
+//    }
+//
+//    @SubscribeEvent
+//    public void onBlockClick(PlayerInteractEvent.RightClickBlock e){
+//        World world = e.getWorld();
+//        if (world.isRemote) return;
+//
+//        EnumHand hand = e.getHand();
+//        if (hand == EnumHand.OFF_HAND) return;
+//
+//        BlockPos pos = e.getPos();
+//        IBlockState state = e.getWorld().getBlockState(pos);
+//
+//        if (!(state.getBlock() instanceof PythonBlock)) return;
+//
+//        ItemStack stack = e.getItemStack();
+//        FMLLog.info("BLOCK INTERACT %s with %s", state, stack);
+//
+//        e.setCanceled(PythonBlock.handleItemInteraction((WorldServer)world, pos, e.getEntityPlayer(), stack));
+//    }
+//
+//    // this should be called only for air clicks
+//    @SubscribeEvent
+//    public void onUseItem(PlayerInteractEvent.RightClickItem e){
+//        World world = e.getWorld();
+//        if (world.isRemote) return;
+//        EnumHand hand = e.getHand();
+//        if (hand == EnumHand.OFF_HAND) return;
+//
+//        ItemStack stack = e.getItemStack();
+//        if (stack == null) return;
+//        Item item = stack.getItem();
+//        FMLLog.info("ITEM INTERACT %s", stack);
+//
+//        if (item instanceof PythonBookItem) {
+//            // can't do this here because it somehow screws up GUI mode, and there's no mouse pointer
+////            PyCode.proxy.openBook(e.getEntityPlayer(), stack);
+//        } else if (item instanceof PythonWandItem) {
+//            PythonWandItem.useItem(stack, e.getEntityPlayer(), (WorldServer)world, e.getPos());
+//        }
+//    }
 }

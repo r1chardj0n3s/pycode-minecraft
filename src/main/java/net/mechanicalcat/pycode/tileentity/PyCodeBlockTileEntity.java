@@ -25,6 +25,7 @@ package net.mechanicalcat.pycode.tileentity;
 
 import net.mechanicalcat.pycode.init.ModItems;
 import net.mechanicalcat.pycode.items.PythonBookItem;
+import net.mechanicalcat.pycode.items.PythonWandItem;
 import net.mechanicalcat.pycode.script.*;
 import net.minecraft.command.CommandResultStats;
 import net.minecraft.command.ICommandSender;
@@ -38,13 +39,16 @@ import net.minecraft.item.ItemWritableBook;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.FMLLog;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -92,28 +96,40 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         return null;
     }
 
-    public boolean handleItemInteraction(EntityPlayer player, @Nullable ItemStack heldItem) {
+    public boolean handleItemInteraction(EntityPlayer player, ItemStack heldItem) {
+        FMLLog.info("Block Entity handleItemInteraction remote=%s, item=%s", this.worldObj.isRemote, heldItem);
         if (this.worldObj.isRemote) return false;
-
-        WorldServer world = (WorldServer)this.worldObj;
-        this.isPowered = world.isBlockPowered(pos);
-        this.code.put("block", new BlockMethods(this, player));
+        this.isPowered = this.worldObj.isBlockPowered(this.getPosition());
 
         if (heldItem == null) {
-            if (this.code.hasKey("run")) {
-                this.code.setRunner(player);
-                this.code.invoke("run", new MyEntityPlayer(player));
-                this.code.setRunner(this);
-                return true;
+            // this is only ever invoked on the server
+            if (!this.worldObj.isRemote) {
+                if (this.code.hasKey("run")) {
+                    WorldServer world = (WorldServer) this.getEntityWorld();
+                    this.code.put("block", new BlockMethods(this, player));
+                    this.code.setContext(world, player, this.getPosition() );
+                    this.code.invoke("run", new MyEntityPlayer(player));
+                    this.code.setRunner(this);
+                }
             }
-            return false;
+            return true;
         }
 
         Item item = heldItem.getItem();
-        if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
-            this.code.setCodeFromBook(world, player, this, pos, heldItem);
+        if (item instanceof PythonWandItem) {
+            // TODO the wand item should really be handling this in onItemUse, maybe?
+            return PythonWandItem.attemptItemUse(heldItem, player, this.worldObj,
+                    this.getPosition(), EnumHand.MAIN_HAND) == EnumActionResult.SUCCESS;
+        } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
+            if (!this.worldObj.isRemote) {
+                WorldServer world = (WorldServer) this.getEntityWorld();
+                BlockPos pos = this.getPosition();
+                this.code.put("block", new BlockMethods(this, player));
+                this.code.setCodeFromBook(world, player, this, pos, heldItem);
+            }
             return true;
         }
+
         return false;
     }
 

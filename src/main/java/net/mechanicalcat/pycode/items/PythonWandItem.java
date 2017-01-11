@@ -44,6 +44,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLLog;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class PythonWandItem extends Item {
     public PythonWandItem() {
@@ -52,42 +53,65 @@ public class PythonWandItem extends Item {
         setCreativeTab(CreativeTabs.TOOLS);
     }
 
-    static public boolean useItem(ItemStack itemstack, EntityPlayer player, WorldServer world, BlockPos pos) {
+    public EnumActionResult onItemUse(ItemStack itemstack, EntityPlayer player, World world, BlockPos pos,
+                                      EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+        FMLLog.info("Wand onItemUse remote=%s, stack=%s, hand=%s", world.isRemote, itemstack, hand);
+        return attemptItemUse(itemstack, player, world, pos, hand);
+    }
+
+    static public EnumActionResult attemptItemUse(ItemStack itemstack, EntityPlayer player, World world, @Nullable BlockPos pos, EnumHand hand) {
         ItemStack offhand = player.getHeldItemOffhand();
-        if (offhand == null) return false;
+        if (offhand == null) {
+            FMLLog.info("... nothing in off hand so pass");
+            return EnumActionResult.PASS;
+        }
 
         Item offitem = offhand.getItem();
         if (offitem instanceof PythonBookItem || offitem instanceof ItemWritableBook) {
-            String content = PythonCode.bookAsString(offhand);
-            if (content == null) {
-                PythonCode.failz0r(world, player.getPosition(), "Could not get pages from the book!?");
-                return true;
-            }
-            PythonCode code = new PythonCode();
-            code.setCodeString(content);
-
-            // the following will actually run the code; TODO maybe setContext could be better-named?
-            code.setContext(world, player, player.getPosition());
-
-            if (code.hasKey("invoke")) {
-                RayTraceResult target = Minecraft.getMinecraft().objectMouseOver;
-                MyBase interaction = null;
-                if (target.typeOfHit == RayTraceResult.Type.BLOCK) {
-                    IBlockState block = world.getBlockState(target.getBlockPos());
-                    interaction = new MyBlock(block, target.getBlockPos());
-                } else if (target.typeOfHit == RayTraceResult.Type.ENTITY) {
-                    if (target.entityHit instanceof EntityPlayer) {
-                        interaction = new MyEntityPlayer((EntityPlayer)target.entityHit);
-                    } else {
-                        interaction = new MyEntity(target.entityHit);
-                    }
+            // code invocation on server only
+            if (!world.isRemote) {
+                FMLLog.info("... invoking code on server");
+                WorldServer ws = (WorldServer)world;
+                String content = PythonCode.bookAsString(offhand);
+                if (content == null) {
+                    PythonCode.failz0r(ws, player.getPosition(), "Could not get pages from the book!?");
+                    return EnumActionResult.SUCCESS;
                 }
-                code.invoke("invoke", interaction);
-            }
-            return true;
-        }
 
-        return false;
+                PythonCode code = new PythonCode();
+                code.setCodeString(content);
+
+                // the following will actually run the code; TODO maybe setContext could be better-named?
+                code.setContext(ws, player, player.getPosition());
+
+                if (code.hasKey("invoke")) {
+                    MyBase interaction = null;
+                    if (pos != null) {
+                        IBlockState state = ws.getBlockState(pos);
+                        interaction = new MyBlock(state, pos);
+                    } else {
+                        RayTraceResult target = Minecraft.getMinecraft().objectMouseOver;
+
+                        if (target.typeOfHit == RayTraceResult.Type.ENTITY) {
+                            if (target.entityHit instanceof EntityPlayer) {
+                                interaction = new MyEntityPlayer((EntityPlayer) target.entityHit);
+                            } else {
+                                interaction = new MyEntity(target.entityHit);
+                            }
+                        }
+                    }
+                    code.invoke("invoke", interaction);
+                }
+            }
+            return EnumActionResult.SUCCESS;
+        }
+        return EnumActionResult.PASS;
     }
 
+    @Nonnull
+    @Override
+    public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemstack, World world, EntityPlayer player, EnumHand hand) {
+        FMLLog.info("Wand onItemRightClick remote=%s, stack=%s, hand=%s", world.isRemote, itemstack, hand);
+        return new ActionResult(attemptItemUse(itemstack, player, world, null, hand), itemstack);
+    }
 }

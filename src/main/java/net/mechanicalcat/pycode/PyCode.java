@@ -44,14 +44,14 @@ public class PyCode {
     @SidedProxy(clientSide = Reference.CLIENT_PROXY_CLASS, serverSide = Reference.SERVER_PROXY_CLASS)
     public static CommonProxy proxy;
 
-    PyCodeEventHandler events = new PyCodeEventHandler();
+//    PyCodeEventHandler events = new PyCodeEventHandler();
 
     @EventHandler
     public void preinit(FMLPreInitializationEvent event) {
         System.out.println(String.format("%s (%s) %s initialising",
                 Reference.MODNAME, Reference.MODID, Reference.VERSION));
 
-        MinecraftForge.EVENT_BUS.register(events);
+//        MinecraftForge.EVENT_BUS.register(events);
 
         ModBlocks.init();
         ModBlocks.register();

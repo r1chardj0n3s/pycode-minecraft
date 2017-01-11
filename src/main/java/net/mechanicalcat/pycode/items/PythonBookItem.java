@@ -36,6 +36,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.FMLLog;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -53,12 +54,13 @@ public class PythonBookItem extends Item {
 
     @Nonnull
     @Override
-    public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand) {
-        // don't activate the GUI if in offhand
-        if (hand == EnumHand.OFF_HAND) return new ActionResult(EnumActionResult.PASS, itemStackIn);
+    public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemstack, World world, EntityPlayer playerIn, EnumHand hand) {
+        FMLLog.info("Book onItemRightClick remote=%s, stack=%s, hand=%s", world.isRemote, itemstack, hand);
+        // don't activate the GUI if in offhand; don't do *anything*
+        if (hand == EnumHand.OFF_HAND) return new ActionResult(EnumActionResult.FAIL, itemstack);
 
-        PyCode.proxy.openBook(playerIn, itemStackIn);
-        return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
+        PyCode.proxy.openBook(playerIn, itemstack);
+        return new ActionResult(EnumActionResult.SUCCESS, itemstack);
     }
 
     @Override
@@ -72,4 +74,21 @@ public class PythonBookItem extends Item {
             }
         }
     }
+
+//    public static boolean isNBTValid(NBTTagCompound nbt) {
+//        if (nbt == null) {
+//            return false;
+//        } else if (!nbt.hasKey("pages", 9)) {
+//            return false;
+//        } else {
+//            NBTTagList nbttaglist = nbt.getTagList("pages", 8);
+//            for (int i = 0; i < nbttaglist.tagCount(); ++i) {
+//                String s = nbttaglist.getStringTagAt(i);
+//                if (s.length() > 32767) {
+//                    return false;
+//                }
+//            }
+//            return true;
+//        }
+//    }
 }
