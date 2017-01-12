@@ -516,6 +516,7 @@ CHANGELOG
  - Added standard Minecraft command invocation
  - Added alter() to change variations of existing blocks
  - Altered wand so it invokes code in an off-hand book
+ - player.ignite() ... because (also works as creeper.ignite())
 **1.6**
  - Altered the hand store/restore position methods to be a context manager
  - Added facing, half and shape and color keyword argument handling for put()
