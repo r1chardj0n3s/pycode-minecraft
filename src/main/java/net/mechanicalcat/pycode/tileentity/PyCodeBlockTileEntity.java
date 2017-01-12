@@ -97,36 +97,28 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
     }
 
     public boolean handleItemInteraction(EntityPlayer player, ItemStack heldItem) {
-        FMLLog.info("Block Entity handleItemInteraction remote=%s, item=%s", this.worldObj.isRemote, heldItem);
-        if (this.worldObj.isRemote) return false;
+        FMLLog.info("Block Entity handleItemInteraction item=%s", heldItem);
         this.isPowered = this.worldObj.isBlockPowered(this.getPosition());
 
         if (heldItem == null) {
             // this is only ever invoked on the server
-            if (!this.worldObj.isRemote) {
-                if (this.code.hasKey("run")) {
-                    WorldServer world = (WorldServer) this.getEntityWorld();
-                    this.code.put("block", new BlockMethods(this, player));
-                    this.code.setContext(world, player, this.getPosition() );
-                    this.code.invoke("run", new MyEntityPlayer(player));
-                    this.code.setRunner(this);
-                }
+            if (this.code.hasKey("run")) {
+                this.code.put("block", new BlockMethods(this, player));
+                this.code.setContext(this.worldObj, player, this.getPosition() );
+                this.code.invoke("run", new MyEntityPlayer(player));
+                this.code.setRunner(this);
             }
             return true;
         }
 
         Item item = heldItem.getItem();
         if (item instanceof PythonWandItem) {
-            // TODO the wand item should really be handling this in onItemUse, maybe?
-            return PythonWandItem.attemptItemUse(heldItem, player, this.worldObj,
-                    this.getPosition(), EnumHand.MAIN_HAND) == EnumActionResult.SUCCESS;
+            PythonWandItem.invokeOnBlock(player, this.getPosition());
+            return true;
         } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
-            if (!this.worldObj.isRemote) {
-                WorldServer world = (WorldServer) this.getEntityWorld();
-                BlockPos pos = this.getPosition();
-                this.code.put("block", new BlockMethods(this, player));
-                this.code.setCodeFromBook(world, player, this, pos, heldItem);
-            }
+            BlockPos pos = this.getPosition();
+            this.code.put("block", new BlockMethods(this, player));
+            this.code.setCodeFromBook(this.worldObj, player, this, pos, heldItem);
             return true;
         }
 
@@ -135,13 +127,11 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
 
     public void handleEntityInteraction(MyEntity entity, String method) {
         if (!this.hasWorldObj()) return;
-        if (this.worldObj.isRemote) return;
         this.code.invoke(method, entity);
     }
 
     public void update() {
         if (!this.hasWorldObj()) return;
-        if (this.worldObj.isRemote) return;
 
         boolean isPowered = this.worldObj.isBlockPowered(pos);
         if (isPowered != this.isPowered) {

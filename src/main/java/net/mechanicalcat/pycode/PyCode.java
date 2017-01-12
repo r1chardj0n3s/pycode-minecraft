@@ -25,6 +25,7 @@ package net.mechanicalcat.pycode;
 
 import net.mechanicalcat.pycode.events.PyCodeEventHandler;
 import net.mechanicalcat.pycode.init.*;
+import net.mechanicalcat.pycode.net.ModNetwork;
 import net.mechanicalcat.pycode.proxy.CommonProxy;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
 import net.minecraftforge.common.MinecraftForge;
@@ -64,6 +65,8 @@ public class PyCode {
         ModEntities.register();
 
         ModCrafting.register();
+
+        ModNetwork.init();
 
         proxy.preInit();
 

@@ -65,7 +65,7 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand,
                                     @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
-        FMLLog.info("onBlockActivated remote=%s", world.isRemote);
+        FMLLog.info("onBlockActivated item=%s", heldItem);
         PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
         return code_block == null || code_block.handleItemInteraction(playerIn, heldItem);
     }
@@ -73,12 +73,10 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
     @Override
     public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
         super.onBlockPlacedBy(world, pos, state, placer, stack);
-        if (!world.isRemote) {
-            PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
-            if (code_block != null && stack.hasTagCompound()) {
-                code_block.readFromNBT(stack.getTagCompound());
-                code_block.getCode().setContext((WorldServer)world, code_block, pos);
-            }
+        PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
+        if (code_block != null && stack.hasTagCompound()) {
+            code_block.readFromNBT(stack.getTagCompound());
+            code_block.getCode().setContext(world, code_block, pos);
         }
     }
 
@@ -98,10 +96,6 @@ public final class PythonBlock extends Block implements ITileEntityProvider {
 
     @Override
     public void onEntityWalk(World world, BlockPos pos, Entity entity) {
-        if (world.isRemote) {
-            // don't run on the client
-            return;
-        }
         PyCodeBlockTileEntity code_block = this.getEntity(world, pos);
         if (entity instanceof EntityPlayer && code_block.getCode().hasKey("onPlayerWalk")) {
             code_block.handleEntityInteraction(new MyEntityPlayer((EntityPlayer) entity), "onPlayerWalk");

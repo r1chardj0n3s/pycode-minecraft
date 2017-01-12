@@ -28,12 +28,19 @@ import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBlockData;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLLog;
 import org.python.core.Py;
@@ -42,6 +49,21 @@ import javax.annotation.Nullable;
 import java.util.HashMap;
 
 public class PyRegistry {
+    @Nullable
+    public static MyBase myWrapper(World world, ICommandSender object) {
+        if (object instanceof EntityPlayer || object instanceof EntityPlayerMP) {
+            return new MyEntityPlayer((EntityPlayer)object);
+        } else if (object instanceof EntityLivingBase) {
+            return new MyEntityLiving((EntityLivingBase) object);
+        } else if (object instanceof Entity) {
+            return new MyEntity((Entity) object);
+        } else if (object instanceof TileEntity) {
+            BlockPos bp = ((TileEntity) object).getPos();
+            return new MyBlock(world.getBlockState(bp), bp);
+        }
+        return null;
+    }
+
     public static Block getBlock(String blockName) throws BlockTypeError {
         Block block = Block.REGISTRY.getObject(new ResourceLocation(blockName));
         FMLLog.info("getBlock asked for '%s', got '%s'", blockName, block.getUnlocalizedName());

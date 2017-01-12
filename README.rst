@@ -166,6 +166,11 @@ Living entities have the following methods::
   player.potion("jump")     # affect with a potion effect name - only living entities
                             # the REFERENCE.txt file lists potion names
 
+Set 'em on fire::
+
+    player.ignite()
+    player.ignite(10)       # default is 4 seconds, this is 10 seconds
+
 Say hello::
 
    player.chat("hello, world!")
@@ -446,14 +451,15 @@ The runner variable is always the player holding the wand.
 By adding a ``target`` argument to your invoke function you can
 cast wither on mobs::
 
-def invoke(target):
-  if target.isMob():
-    target.potion('wither')
+    def invoke(target):
+      if target and target.isMob():
+        target.potion('wither')
 
+Noting that the target may be None, if you're not pointing at anything!
 Or, teleport somewhere::
 
     def invoke(target):
-      if target.isBlock():
+      if target and target.isBlock():
         runner.tp(target.pos.up())
 
 Commands

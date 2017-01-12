@@ -23,8 +23,10 @@
 
 package net.mechanicalcat.pycode.script;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
@@ -40,6 +42,9 @@ public class MyEntityLiving extends MyEntity {
     }
 
     public void potion(String effect) {
+        // don't run potion effects on the client
+        if (this.entity.worldObj.isRemote) return;
+
         Potion potion = Potion.REGISTRY.getObject(new ResourceLocation(effect));
 
         if (potion == null) {
@@ -47,6 +52,15 @@ public class MyEntityLiving extends MyEntity {
             return;
         }
 
-        ((EntityLivingBase) this.entity).addPotionEffect(new PotionEffect(potion, 50, 1));
+        FMLLog.info("potion %s on entity %s", potion, this.entity);
+
+        PotionEffect potioneffect = new PotionEffect(potion, 50, 1);
+        EntityLivingBase entitylivingbase = (EntityLivingBase)this.entity;
+
+        if (potion.isInstant()) {
+            potion.affectEntity(null, null, entitylivingbase, potioneffect.getAmplifier(), 0.5D);
+        } else {
+            entitylivingbase.addPotionEffect(potioneffect);
+        }
     }
 }

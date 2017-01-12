@@ -36,6 +36,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLLog;
 import org.python.core.Py;
@@ -55,7 +56,7 @@ public class PythonCode {
     private boolean codeChanged = false;
     private SimpleScriptContext context;
     private Bindings bindings;
-    private WorldServer world = null;
+    private World world = null;
     private BlockPos pos;
     private ICommandSender runner;
     public static String CODE_NBT_TAG = "code";
@@ -97,8 +98,11 @@ public class PythonCode {
         return this.bindings.containsKey(key);
     }
 
-    static public void failz0r(WorldServer world, BlockPos pos, String fmt, Object... args) {
-        world.spawnParticle(EnumParticleTypes.SPELL, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
+    static public void failz0r(World world, BlockPos pos, String fmt, Object... args) {
+        if (world.isRemote) return;
+        ((WorldServer)world).spawnParticle(EnumParticleTypes.SPELL,
+                pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,
+                20, 0, 0, 0, .5, new int[0]);
         FMLLog.severe(fmt, args);
     }
 
@@ -191,7 +195,7 @@ public class PythonCode {
         return sbStr.toString();
     }
 
-    public boolean setCodeFromBook(WorldServer world, EntityPlayer player, ICommandSender runner, BlockPos pos, ItemStack heldItem) {
+    public boolean setCodeFromBook(World world, EntityPlayer player, ICommandSender runner, BlockPos pos, ItemStack heldItem) {
         String code = bookAsString(heldItem);
         if (code == null) {
             failz0r(world, pos, "Could not get pages from the book!?");
@@ -210,7 +214,7 @@ public class PythonCode {
         this.bindings.put("__runner__", runner);
     }
 
-    public void setContext(WorldServer world, ICommandSender runner, BlockPos pos) {
+    public void setContext(World world, ICommandSender runner, BlockPos pos) {
         if (this.world == world && this.runner == runner && this.pos == pos) {
             this.ensureCompiled();
             return;
@@ -221,14 +225,7 @@ public class PythonCode {
         this.runner = runner;
         this.players = new MyEntityPlayers(world);
         this.bindings.put("pos", new MyBlockPos(pos));
-        if (runner instanceof EntityPlayer || runner instanceof EntityPlayerMP) {
-            this.bindings.put("runner", new MyEntityPlayer((EntityPlayer)runner));
-        } else if (runner instanceof Entity) {
-            this.bindings.put("runner", new MyEntity((Entity) runner));
-        } else if (runner instanceof TileEntity) {
-            BlockPos bp = ((TileEntity) runner).getPos();
-            this.bindings.put("runner", new MyBlock(world.getBlockState(bp), bp));
-        }
+        this.bindings.put("runner", PyRegistry.myWrapper(world, runner));
 
         // I am reasonably certain that I can't just shove the methods below directly
         // into the script engine namespace because I can't pass a Runnable as a
@@ -252,7 +249,7 @@ public class PythonCode {
             String s = "";
             for (String n: MyCommands.COMMANDS.keySet()) {
                 // bind the name to just the invoke method, using the dynamic runner value
-                this.bindings.put("__" + n, MyCommands.curry(n, (WorldServer)this.world));
+                this.bindings.put("__" + n, MyCommands.curry(n, this.world));
                 s += String.format("%s = lambda *a: __%s.invoke(runner, *a)\n", n, n);
             }
             PythonEngine.eval(s, this.context);
@@ -278,7 +275,11 @@ public class PythonCode {
         // now execute the code
         try {
             PythonEngine.eval(this.code, this.context);
-            world.spawnParticle(EnumParticleTypes.CRIT, pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,  20, 0, 0, 0, .5, new int[0]);
+            if (!world.isRemote) {
+                ((WorldServer)world).spawnParticle(EnumParticleTypes.CRIT,
+                        pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5,
+                        20, 0, 0, 0, .5, new int[0]);
+            }
         } catch (ScriptException e) {
             failz0r(world, pos, "Error running code, traceback:\n%s", stackTraceToString(e));
         }

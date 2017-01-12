@@ -55,7 +55,7 @@ public class PythonBookItem extends Item {
     @Nonnull
     @Override
     public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemstack, World world, EntityPlayer playerIn, EnumHand hand) {
-        FMLLog.info("Book onItemRightClick remote=%s, stack=%s, hand=%s", world.isRemote, itemstack, hand);
+        FMLLog.info("Book onItemRightClick stack=%s, hand=%s", itemstack, hand);
         // don't activate the GUI if in offhand; don't do *anything*
         if (hand == EnumHand.OFF_HAND) return new ActionResult(EnumActionResult.FAIL, itemstack);
 

@@ -25,6 +25,8 @@ package net.mechanicalcat.pycode.script;
 
 import net.minecraft.command.*;
 import net.minecraft.command.server.*;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
 import java.util.HashMap;
@@ -93,14 +95,14 @@ public class MyCommands {
         }
     }
 
-    public static CurriedCommand curry(String command, WorldServer world) {
+    public static CurriedCommand curry(String command, World world) {
         return new CurriedCommand(COMMANDS.get(command), world);
     }
 
     public static class CurriedCommand {
         ICommand command;
-        WorldServer world;
-        public CurriedCommand(ICommand command, WorldServer world) {
+        World world;
+        public CurriedCommand(ICommand command, World world) {
             super();
             this.command = command;
             this.world = world;
@@ -113,7 +115,8 @@ public class MyCommands {
             } else {
                 commandSender = (ICommandSender)sender;
             }
-            this.command.execute(this.world.getMinecraftServer(), commandSender, args);
+            MinecraftServer s = this.world.getMinecraftServer();
+            if (s != null) this.command.execute(s, commandSender, args);
         }
     }
 }

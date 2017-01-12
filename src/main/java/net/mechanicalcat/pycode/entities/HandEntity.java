@@ -91,8 +91,7 @@ public class HandEntity extends Entity implements IHasPythonCode {
 
     public void notifyDataManagerChange(DataParameter<?> key) {
         super.notifyDataManagerChange(key);
-        if (CODE.equals(key) && this.worldObj.isRemote) {
-            FMLLog.info("notifyDataManagerChange for CODE, setting to %s", this.dataManager.get(CODE));
+        if (CODE.equals(key)) {
             this.code.setCodeString(this.dataManager.get(CODE));
         }
     }
@@ -100,10 +99,7 @@ public class HandEntity extends Entity implements IHasPythonCode {
     public void initCode() {
         this.code = new PythonCode();
         this.code.setCodeString(this.dataManager.get(CODE));
-        if (!this.worldObj.isRemote) {
-            // eval and set context on loading from NBT
-            this.code.setContext((WorldServer) this.worldObj, this, this.getPosition());
-        }
+        this.code.setContext(this.worldObj, this, this.getPosition());
     }
 
     protected void writeEntityToNBT(NBTTagCompound compound) {
@@ -113,10 +109,7 @@ public class HandEntity extends Entity implements IHasPythonCode {
     protected void readEntityFromNBT(NBTTagCompound compound) {
         this.code.readFromNBT(compound);
         this.dataManager.set(CODE, this.code.getCode());
-        if (!this.worldObj.isRemote) {
-            // eval and set context on loading from NBT
-            this.code.setContext((WorldServer) this.worldObj, this, this.getPosition());
-        }
+        this.code.setContext(this.worldObj, this, this.getPosition());
     }
 
     @Override
@@ -144,31 +137,26 @@ public class HandEntity extends Entity implements IHasPythonCode {
     }
 
     public boolean handleItemInteraction(EntityPlayer player, ItemStack heldItem) {
-        FMLLog.info("Hand Entity handleItemInteraction remote=%s item=%s", this.worldObj.isRemote, heldItem);
+        FMLLog.info("Hand Entity handleItemInteraction item=%s", heldItem);
 
         if (heldItem == null) {
-            // this is only ever invoked on the server
-            if (!this.worldObj.isRemote) {
-                if (this.code.hasKey("run")) {
-                    this.code.put("hand", new HandMethods(this, player));
-                    this.code.setRunner(player);
-                    this.code.invoke("run", new MyEntityPlayer(player));
-                    this.code.setRunner(this);
-                }
+            if (this.code.hasKey("run")) {
+                this.code.put("hand", new HandMethods(this, player));
+                this.code.setRunner(player);
+                this.code.invoke("run", new MyEntityPlayer(player));
+                this.code.setRunner(this);
             }
             return true;
         }
 
         Item item = heldItem.getItem();
         if (item instanceof PythonWandItem) {
-            return PythonWandItem.attemptItemUse(heldItem, player, this.worldObj, null, EnumHand.MAIN_HAND) == EnumActionResult.SUCCESS;
+            PythonWandItem.invokeOnEntity(player, this);
+            return true;
         } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
-            if (!this.worldObj.isRemote) {
-                WorldServer world = (WorldServer) this.getEntityWorld();
-                BlockPos pos = this.getPosition();
-                this.code.put("hand", new HandMethods(this, player));
-                this.code.setCodeFromBook(world, player, this, pos, heldItem);
-            }
+            BlockPos pos = this.getPosition();
+            this.code.put("hand", new HandMethods(this, player));
+            this.code.setCodeFromBook(this.getEntityWorld(), player, this, pos, heldItem);
             return true;
         }
         FMLLog.info("... returning FALSE YEAH");
