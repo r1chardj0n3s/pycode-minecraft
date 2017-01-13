@@ -25,28 +25,23 @@ package net.mechanicalcat.pycode.script;
 
 
 import com.google.common.collect.Lists;
-import net.mechanicalcat.pycode.entities.EntityEnum;
 import net.mechanicalcat.pycode.tileentity.PyCodeBlockTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
 import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemDye;
-import net.minecraft.item.ItemFirework;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.registry.GameData;
-import org.python.core.Py;
 import org.python.core.PyObject;
 
 import java.util.List;
@@ -95,13 +90,13 @@ public class BlockMethods extends BaseMethods {
         this.world.spawnEntityInWorld(firework);
     }
 
-    public void spawn(String entityName) throws EntityNameError {
-        EntityEnum entityType = EntityEnum.getByName(entityName);
-        if (entityType == null) {
-            throw new EntityNameError(entityName);
-        }
-        if (this.world.isRemote) return;
-        entityType.spawn(this.world, this.block.getPos().add(0.5, 1.0, 0.5));
+    public MyBase spawn(String entityName) throws EntityNameError {
+        Entity entity = EntityList.createEntityByName(entityName, this.world);
+        if (entity == null) throw new EntityNameError(entityName);
+        BlockPos pos = this.block.getPos().add(0.5, 1.0, 0.5);
+        entity.setPosition(pos.getX(), pos.getY(), pos.getZ());
+        world.spawnEntityInWorld(entity);
+        return PyRegistry.myWrapper(world, entity);
     }
 
     // this is just a little crazypants

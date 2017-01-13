@@ -121,7 +121,13 @@ Doc TBD::
 
     block.isPowered()           # returns boolean
     block.firework()
-    block.spawn('creeper')      # ('zombie', 'skeleton')
+    block.spawn('Sheep')       # see REFERENCE.txt for a list
+
+The spawn() method also returns the entity so you can do additional
+things::
+
+    sheep = block.spawn('Sheep')
+    sheep.potion('glowing')
 
 Event Handlers
 ~~~~~~~~~~~~~~
@@ -148,7 +154,7 @@ For example::
 or::
 
     def powerOn():
-      block.spawn('zombie')
+      block.spawn('Zombie')
 
 
 Players and Entities
@@ -506,6 +512,8 @@ result; but it also sets the default target of the action for commands like
 CHANGELOG
 =========
 
+**1.8**
+ - Completed the list of entities spawnable
 **1.7**
  - All block placement methods can now specify block variation keywords
  - Added handling of plank types in block variations
@@ -643,13 +651,13 @@ This is not an exhaustive list, and should probably be put into github issues.
 *wand*
  - bring up a REPL when activated against air?
  - REPL would want to have auto-complete
- - use book on wand that's on the ground to program wand
- - invoke(target) where target could be .isBlock(), .isPlayer(), .isEntity(), .isAir()
 *blocks*
  - pull from inventory, push out
  - generate redstone power
  - texture map replacement
- - implement more commands
+ - replace more vanilla commands with nicer API
 *hand*
  - more roof generation styles
  - tick() handling
+*code*
+ - consider allowing event handlers to be generators, to hold state?

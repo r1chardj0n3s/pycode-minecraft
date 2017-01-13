@@ -21,7 +21,7 @@
  *
  */
 
-package net.mechanicalcat.pycode.entities;
+package net.mechanicalcat.pycode.script;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.EntityCreeper;
@@ -34,6 +34,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+@Deprecated
 public enum EntityEnum {
     CREEPER("creeper", EntityCreeper.class),
     ZOMBIE("zombie", EntityZombie.class),
