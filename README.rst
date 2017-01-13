@@ -526,6 +526,7 @@ CHANGELOG
 
 **1.8**
  - Completed the list of entities spawnable
+ - Many bugfixes
 **1.7**
  - All block placement methods can now specify block variation keywords
  - Added handling of plank types in block variations
