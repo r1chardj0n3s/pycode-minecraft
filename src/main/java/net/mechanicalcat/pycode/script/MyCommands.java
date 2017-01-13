@@ -109,6 +109,7 @@ public class MyCommands {
         }
 
         public void invoke(Object sender, String... args) throws CommandException {
+            if (this.world == null || this.world.isRemote) return;
             ICommandSender commandSender;
             if (sender instanceof MyEntity) {
                 commandSender = ((MyEntity) sender).entity;

@@ -85,10 +85,8 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         super.readFromNBT(compound);
         this.code.readFromNBT(compound);
         this.isPowered = compound.getBoolean("isPowered");
-        if (!this.worldObj.isRemote) {
-            // eval and set context on loading from NBT
-            this.code.setContext((WorldServer) this.worldObj, this, this.getPos());
-        }
+        this.code.put("block", new BlockMethods(this));
+        this.code.setContext(this.worldObj, this, this.getPos());
     }
 
     public Entity getEntity() {
@@ -103,7 +101,7 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
         if (heldItem == null) {
             // this is only ever invoked on the server
             if (this.code.hasKey("run")) {
-                this.code.put("block", new BlockMethods(this, player));
+                this.code.put("block", new BlockMethods(this));
                 this.code.setContext(this.worldObj, player, this.getPosition() );
                 this.code.invoke("run", new MyEntityPlayer(player));
                 this.code.setRunner(this);
@@ -117,7 +115,7 @@ public class PyCodeBlockTileEntity extends TileEntity implements IHasPythonCode,
             return true;
         } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
             BlockPos pos = this.getPosition();
-            this.code.put("block", new BlockMethods(this, player));
+            this.code.put("block", new BlockMethods(this));
             this.code.setCodeFromBook(this.worldObj, player, this, pos, heldItem);
             return true;
         }

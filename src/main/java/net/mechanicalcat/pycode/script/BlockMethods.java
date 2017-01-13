@@ -43,14 +43,15 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import org.python.core.PyObject;
+import org.python.jline.internal.Nullable;
 
 import java.util.List;
 
 public class BlockMethods extends BaseMethods {
     private PyCodeBlockTileEntity block;
 
-    public BlockMethods(PyCodeBlockTileEntity block, EntityPlayer player) {
-        super(block.getWorld(), player);
+    public BlockMethods(PyCodeBlockTileEntity block) {
+        super(block.getWorld());
         this.block = block;
     }
     protected World getWorld() {return null;}
@@ -90,7 +91,9 @@ public class BlockMethods extends BaseMethods {
         this.world.spawnEntityInWorld(firework);
     }
 
+    @Nullable
     public MyBase spawn(String entityName) throws EntityNameError {
+        if (this.world == null || this.world.isRemote) return null;
         Entity entity = EntityList.createEntityByName(entityName, this.world);
         if (entity == null) throw new EntityNameError(entityName);
         BlockPos pos = this.block.getPos().add(0.5, 1.0, 0.5);

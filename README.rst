@@ -129,8 +129,12 @@ things::
     sheep = block.spawn('Sheep')
     sheep.potion('glowing')
 
-Event Handlers
-~~~~~~~~~~~~~~
+Warning: you are **strongly** advised to put all code inside a
+function like run() or powerOn() - code not in such a function will
+be executed every time the block is loaded!
+
+Event Functions
+~~~~~~~~~~~~~~~
 
 Python Blocks may define additional event handler functions related
 to world interaction with the block::
@@ -252,6 +256,10 @@ More complete docs TBD::
       hand.forward(10)
     # hand is now back at pos, and has the same facing
 
+Warning: you are **strongly** advised to put all code inside a
+function like run() or powerOn() - code not in such a function will
+be executed every time the block is loaded!
+
 Putting Down Blocks
 -------------------
 
@@ -347,27 +355,30 @@ off:
 Examples
 ~~~~~~~~
 
+Note that these examples put all the code inside functions
+so they're not executed every time the hand is loaded!
+
 An example making a little house::
 
-    hand.down(1)
-    hand.cube(7, 7, 5, 'planks', type='dark_oak')
-    hand.up(1)
-    with hand.remember():
-      hand.up(4); hand.back(1); hand.sidle(1)
-      hand.roof(9, 9, 'oak')
-    hand.sidle(-3)
-    hand.put('wooden_door')
-    hand.forward(3)
-    hand.put('torch')
-    hand.forward()
-    hand.put('bed')
-    hand.left()
-    hand.forward(1)
-    hand.put('crafting_table')
-    hand.sidle(1)
-    hand.put('chest')
-    hand.sidle(1)
-    hand.put('furnace')
+    def run():
+      hand.down(1)
+      hand.cube(7, 7, 5, 'planks', type='oak')
+      hand.up(1)
+      with hand.remember():
+        hand.up(4); hand.back(2); hand.sidle(1)
+        hand.roof(9, 9, 'dark_oak', style='gable')
+      hand.sidle(-3)
+      hand.put('wooden_door')
+      hand.forward(3)
+      hand.put('torch')
+      hand.forward()
+      hand.put('bed')
+      hand.left(); hand.forward(1)
+      hand.put('crafting_table')
+      hand.sidle(1)
+      hand.put('chest')
+      hand.sidle(1)
+      hand.put('furnace')
 
 A more complete example which creates a little two-storey
 tower with a door, bed and ladder from ground up to the roof.
@@ -427,21 +438,22 @@ Put each of these functions on a different page of the book::
 
 Roof demo::
 
-    STYLES = ["hip", "gable", "shed",
-     "box-gable", "box-shed"]
-    def roofs(fill):
-      for style in STYLES:
-        for i in range(4):
-          hand.forward(2)
-          hand.roof(7, 5, 'oak', style=style,
-           fill=fill)
-          hand.left()
-          hand.forward(2)
-        hand.forward(20)
-    with hand.remember():
-        roofs(False)
-    hand.sidle(20)
-    roofs(True)
+    def run():
+      STYLES = ["hip", "gable", "shed",
+       "box-gable", "box-shed"]
+      def roofs(fill):
+        for style in STYLES:
+          for i in range(4):
+            hand.forward(2)
+            hand.roof(7, 5, 'oak', style=style,
+             fill=fill)
+            hand.left()
+            hand.forward(2)
+          hand.forward(20)
+      with hand.remember():
+          roofs(False)
+      hand.sidle(20)
+      roofs(True)
 
 Wand
 ----
@@ -630,7 +642,8 @@ BUGS
 
 - figure out what BlockStoneSlab "seamless" does, and how isDouble works?
 - consider renaming the put argument "type" to "variant"?
-- promote runner to non-private object
+- clear book title field on click
+
 
 TODO
 ----

@@ -109,6 +109,7 @@ public class HandEntity extends Entity implements IHasPythonCode {
     protected void readEntityFromNBT(NBTTagCompound compound) {
         this.code.readFromNBT(compound);
         this.dataManager.set(CODE, this.code.getCode());
+        this.code.put("hand", new HandMethods(this));
         this.code.setContext(this.worldObj, this, this.getPosition());
     }
 
@@ -141,7 +142,7 @@ public class HandEntity extends Entity implements IHasPythonCode {
 
         if (heldItem == null) {
             if (this.code.hasKey("run")) {
-                this.code.put("hand", new HandMethods(this, player));
+                this.code.put("hand", new HandMethods(this));
                 this.code.setRunner(player);
                 this.code.invoke("run", new MyEntityPlayer(player));
                 this.code.setRunner(this);
@@ -155,7 +156,7 @@ public class HandEntity extends Entity implements IHasPythonCode {
             return true;
         } else if (item instanceof PythonBookItem || item instanceof ItemWritableBook) {
             BlockPos pos = this.getPosition();
-            this.code.put("hand", new HandMethods(this, player));
+            this.code.put("hand", new HandMethods(this));
             this.code.setCodeFromBook(this.getEntityWorld(), player, this, pos, heldItem);
             return true;
         }

@@ -44,15 +44,16 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nullable;
 
 public class BaseMethods {
-    protected EntityPlayer player;
     protected World world;
 
-    protected BaseMethods(World world, EntityPlayer player) {
+    protected BaseMethods(World world) {
         this.world = world;
-        this.player = player;
     }
 
     protected void put(BlockPos pos, IBlockState block_state, EnumFacing facing) {
+        // don't run on client
+        if (this.world == null || this.world.isRemote) return;
+
         Block block = block_state.getBlock();
 
         FMLLog.info("Putting %s at %s", block_state, pos);

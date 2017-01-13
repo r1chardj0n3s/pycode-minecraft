@@ -56,6 +56,7 @@ public class MyEntityPlayer extends MyEntityLiving {
     }
 
     public void chat(Object... args) {
+        if (this.entity.worldObj == null || !this.entity.worldObj.isRemote) return;
         StringBuilder sbStr = new StringBuilder();
         for (Object arg : args) {
             if (arg != args[0]) sbStr.append(" ");
@@ -79,6 +80,7 @@ public class MyEntityPlayer extends MyEntityLiving {
     }
 
     private void achiev(String... args) throws CommandException {
+        if (this.entity.worldObj == null || this.entity.worldObj.isRemote) return;
         new CommandAchievement().execute(this.entity.worldObj.getMinecraftServer(), this.entity,
                args);
     }

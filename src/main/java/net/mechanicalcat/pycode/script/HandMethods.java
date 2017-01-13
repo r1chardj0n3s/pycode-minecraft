@@ -46,8 +46,8 @@ import org.python.core.PyObject;
 public class HandMethods extends BaseMethods {
     private HandEntity hand;
 
-    public HandMethods(HandEntity hand, EntityPlayer player) {
-        super(hand.getEntityWorld(), player);
+    public HandMethods(HandEntity hand) {
+        super(hand.getEntityWorld());
         this.hand = hand;
     }
 
@@ -157,7 +157,7 @@ public class HandMethods extends BaseMethods {
         ArgParser r = new ArgParser("line", s("distance", "blockname"),
                 PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        ShapeGen.line(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
+        ShapeGen.line(r, this.world, this.hand.getFacedPos(), this.hand.getHorizontalFacing());
     }
 
     public void ladder(PyObject[] args, String[] kws) {
@@ -165,7 +165,7 @@ public class HandMethods extends BaseMethods {
         ArgParser r = new ArgParser("line", s("height", "blockname"),
                 PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        ShapeGen.ladder(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
+        ShapeGen.ladder(r, this.world, this.hand.getFacedPos(), this.hand.getHorizontalFacing());
     }
 
     public void floor(PyObject[] args, String[] kws) {
@@ -173,7 +173,7 @@ public class HandMethods extends BaseMethods {
         ArgParser r = new ArgParser("line", s("width", "depth", "blockname"),
                 PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        ShapeGen.floor(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
+        ShapeGen.floor(r, this.world, this.hand.getFacedPos(), this.hand.getHorizontalFacing());
     }
 
     public void wall(PyObject[] args, String[] kws) {
@@ -181,7 +181,7 @@ public class HandMethods extends BaseMethods {
         ArgParser r = new ArgParser("line", s("depth", "height", "blockname"),
                 PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        ShapeGen.wall(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
+        ShapeGen.wall(r, this.world, this.hand.getFacedPos(), this.hand.getHorizontalFacing());
     }
 
     public void cube(PyObject[] args, String[] kws) {
@@ -189,7 +189,7 @@ public class HandMethods extends BaseMethods {
         ArgParser r = new ArgParser("line", s("width", "depth", "height", "blockname"),
                 PyRegistry.BLOCK_VARIATIONS);
         r.parse(args, kws);
-        ShapeGen.cube(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
+        ShapeGen.cube(r, this.world, this.hand.getFacedPos(), this.hand.getHorizontalFacing());
     }
 
     public void circle(PyObject[] args, String[] kws) {
@@ -198,7 +198,7 @@ public class HandMethods extends BaseMethods {
                 // TODO PyRegistry.BLOCK_VARIATIONS
                 s("color", "facing", "type", "half", "shape", "fill"));
         r.parse(args, kws);
-        ShapeGen.circle(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
+        ShapeGen.circle(r, this.world, this.hand.getFacedPos(), this.hand.getHorizontalFacing());
     }
 
     public void ellipse(PyObject[] args, String[] kws) {
@@ -207,7 +207,7 @@ public class HandMethods extends BaseMethods {
                 // TODO PyRegistry.BLOCK_VARIATIONS
                 s("color", "facing", "type", "half", "shape", "fill"));
         r.parse(args, kws);
-        ShapeGen.ellipse(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
+        ShapeGen.ellipse(r, this.world, this.hand.getFacedPos(), this.hand.getHorizontalFacing());
     }
 
     public void roof(PyObject[] args, String[] kws) throws BlockTypeError {
@@ -216,6 +216,6 @@ public class HandMethods extends BaseMethods {
                 // TODO PyRegistry.BLOCK_VARIATIONS
                 s("style", "color", "facing", "type", "half", "shape", "fill"));
         r.parse(args, kws);
-        RoofGen.roof(r, this.world, this.hand.getPosition(), this.hand.getHorizontalFacing());
+        RoofGen.roof(r, this.world, this.hand.getFacedPos(), this.hand.getHorizontalFacing());
     }
 }
