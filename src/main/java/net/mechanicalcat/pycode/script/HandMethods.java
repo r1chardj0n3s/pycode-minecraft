@@ -112,7 +112,7 @@ public class HandMethods extends BaseMethods {
         this.hand.moveEntity(x, y, z);
     }
 
-    // this is just a little crazypants
+    // this is just a little crazypants, but Java doesn't have string array literals in function calls
     private String[] s(String ... strings) {
         return strings;
     }
@@ -139,10 +139,6 @@ public class HandMethods extends BaseMethods {
             this.world.setBlockState(pos, modified);
         }
     }
-
-//        TileEntity tileentity = world.getTileEntity(pos);
-//        NBTTagCompound original = tileentity.writeToNBT(new NBTTagCompound());
-//        NBTTagCompound modified = original.copy();
 
     public void clear() {
         if (this.world == null || this.world.isRemote) return;

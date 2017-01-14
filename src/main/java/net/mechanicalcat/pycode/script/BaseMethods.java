@@ -50,6 +50,7 @@ public class BaseMethods {
         this.world = world;
     }
 
+    // common method invoked by both hand and block
     protected void put(BlockPos pos, IBlockState block_state, EnumFacing facing) {
         // don't run on client
         if (this.world == null || this.world.isRemote) return;

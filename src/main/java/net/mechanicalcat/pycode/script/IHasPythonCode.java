@@ -28,7 +28,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 
-
+// this used to do a lot more, but it doesn't any longer, and it can probably go away
 public interface IHasPythonCode {
     public void initCode();
 }

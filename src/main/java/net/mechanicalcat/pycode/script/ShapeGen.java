@@ -33,11 +33,6 @@ import org.python.core.PyObject;
 
 
 public class ShapeGen {
-    // this is just a little crazypants
-    private static String[] s(String ... strings) {
-        return strings;
-    }
-
     public static void line(ArgParser r, World world, BlockPos pos, EnumFacing facing) {
         if (world == null || world.isRemote) return;
         int distance = r.getInteger("distance");

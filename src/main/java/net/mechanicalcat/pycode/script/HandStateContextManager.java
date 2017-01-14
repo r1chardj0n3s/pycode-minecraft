@@ -28,6 +28,8 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import org.python.core.*;
 
+// Provides a Python context manager allowing recording and restoration
+// of the position/facing of the Python Hand.
 public class HandStateContextManager extends PyObject implements ContextManager {
     private BlockPos storedPos;
     private EnumFacing storedFacing;

@@ -126,7 +126,8 @@ public class PythonWandItem extends Item {
 
     @Nonnull
     @Override
-    public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemstack, World world, EntityPlayer player, EnumHand hand) {
+    public ActionResult<ItemStack> onItemRightClick(@Nonnull ItemStack itemstack, World world,
+                                                    EntityPlayer player, EnumHand hand) {
         FMLLog.info("Wand onItemRightClick stack=%s, hand=%s", itemstack, hand);
         if (world.isRemote) {
             // figure out what we're looking at and send it to the server
