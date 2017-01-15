@@ -24,14 +24,14 @@
 package net.mechanicalcat.pycode.gui;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiPageButtonList;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -51,6 +51,8 @@ public class GuiTextArea extends Gui {
     public int height;
     public int maxRows;
 
+    private int xScissor, yScissor, wScissor, hScissor;
+
     /** If this value is true then keyTyped will process the keys. */
     private boolean isFocused;
 
@@ -67,9 +69,18 @@ public class GuiTextArea extends Gui {
         this.xPosition = x;
         this.yPosition = y;
         this.width = width;
-        this.height = height;
+        this.maxRows = height / fontRenderer.FONT_HEIGHT;
+        this.height = maxRows * fontRenderer.FONT_HEIGHT;
 
-        this.maxRows = this.height / this.fontRenderer.FONT_HEIGHT;
+        ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
+        int factor = sr.getScaleFactor();
+
+        // screen y increases up, figure where the bottom of the text area is
+        int by = Minecraft.getMinecraft().currentScreen.height - (this.yPosition + this.height);
+        this.xScissor = this.xPosition*factor;
+        this.yScissor = by*factor;
+        this.wScissor = this.width*factor;
+        this.hScissor = this.height*factor;
     }
 
     public int getId()
@@ -147,8 +158,15 @@ public class GuiTextArea extends Gui {
         }
         drawModalRectWithCustomSizedTexture(cursor_x, cursor_y, 52, 215, 3, 11, TEX_WIDTH, TEX_HEIGHT);
 
+        ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
+        int factor = sr.getScaleFactor();
+
         // draw content
+        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(xScissor, yScissor, wScissor, hScissor);
         this.fontRenderer.drawSplitString(content, this.xPosition, this.yPosition, this.width, 0);
+        GL11.glPopAttrib();
     }
 
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
@@ -299,7 +317,7 @@ public class GuiTextArea extends Gui {
         int num_lines = this.lines.length;
         if (this.cursorRow < 0) this.cursorRow = 0;
         else if (this.cursorRow >= num_lines) this.cursorRow = num_lines - 1;
-        else if (this.cursorRow > this.maxRows) this.cursorRow = this.maxRows;
+        else if (this.cursorRow >= this.maxRows) this.cursorRow = this.maxRows - 1;
         this.fixCursorColumn();
     }
 
@@ -331,6 +349,7 @@ public class GuiTextArea extends Gui {
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         int modX = mouseX - xPosition;
         int modY = mouseY - yPosition;
+        FMLLog.info("MOUSE AT %d,%d", mouseX, mouseY);
         boolean inside = modX > 0 && modY > 0 && modX < width && modY < height;
 
         this.setFocused(inside);

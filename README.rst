@@ -384,34 +384,34 @@ A more complete example which creates a little two-storey
 tower with a door, bed and ladder from ground up to the roof.
 Put each of these functions on a different page of the book::
 
-    # page 1: the basic tower structure
-    def tower():
-      hand.down()
-      hand.circle(5, 'cobblestone', fill=True)
-      for i in range(9):
-        hand.up()
-        if i in (3, 7):
-          hand.circle(5, 'planks', fill=True)
-        hand.circle(5, 'stone')
-        if i in (0, 4, 8):
-          hand.put('torch')
-
-    # page 2: door and ladder access
-    def access():
-      hand.back(6)
-      for i in range(3):
-        hand.clear()
-        hand.up()
-      hand.down()
-      hand.forward()
-      hand.put('planks')
-      hand.back()
+# page 1: the basic tower structure
+def tower():
+  hand.down()
+  hand.circle(5, 'cobblestone', fill=True)
+  for i in range(9):
+    hand.up()
+    if i in (3, 7):
+      hand.circle(5, 'planks', fill=True)
+    hand.circle(5, 'stone')
+    if i in (0, 4, 8):
       hand.put('torch')
-      hand.forward()
-      hand.down(2)
-      hand.put('wooden_door')
-      hand.forward(8)
-      hand.ladder(8, 'ladder')
+
+# page 2: door and ladder access
+def access():
+  hand.back(6)
+  for i in range(3):
+    hand.clear()
+    hand.up()
+  hand.down()
+  hand.forward()
+  hand.put('planks')
+  hand.back()
+  hand.put('torch')
+  hand.forward()
+  hand.down(2)
+  hand.put('wooden_door')
+  hand.forward(8)
+  hand.ladder(8, 'ladder')
 
     # page 3: ground floor furnishings
     def furnish():
