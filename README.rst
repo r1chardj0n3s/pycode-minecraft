@@ -10,11 +10,14 @@ control, syntax checking and some other features.
 
 .. image:: screenshot/editor.png
 
-Install using the download from https://minecraft.curseforge.com/projects/python-code
+Install using the `download`_ and follow the standard Forge mod
+`installation instructions`_.
 
   Copyright (c) 2017 Richard Jones <richard@mechanicalcat.net>
   All Rights Reserved
 
+.. _`download`: https://minecraft.curseforge.com/projects/python-code
+.. _`installation instructions`: http://www.minecraftmods.com/how-to-install-mods-for-minecraft-forge/
 
 What you can do
 ===============
