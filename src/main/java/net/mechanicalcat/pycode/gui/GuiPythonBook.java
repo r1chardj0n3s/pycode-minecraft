@@ -182,6 +182,7 @@ public class GuiPythonBook extends GuiScreen {
         this.titleEdit = new GuiVertTextField(TITLE_EDIT_ID, this.fontRendererObj,
                 xPosition + TITLE_PX_LEFT, yPosition + TITLE_PX_BOTTOM, 176, 15);
         this.titleEdit.setFocused(false);
+        this.titleEdit.setDefaultText(TITLE_PLACEHOLDER);
         this.titleEdit.setText(this.bookTitle);
         this.titleEdit.setEnableBackgroundDrawing(false);
         this.titleEdit.setTextColor(0);
@@ -214,7 +215,7 @@ public class GuiPythonBook extends GuiScreen {
         // I have no idea why, but sometimes pageEdit is null when this is invoked!!
         if (this.pageEdit == null) { return; }
 
-        this.pageEdit.updateCursorCounter();
+        this.pageEdit.update();
         this.titleEdit.updateCursorCounter();
 
         if (this.titleEdit.getText().equals(TITLE_PLACEHOLDER)) {

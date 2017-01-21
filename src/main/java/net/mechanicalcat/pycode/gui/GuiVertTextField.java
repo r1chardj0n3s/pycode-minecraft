@@ -46,6 +46,7 @@ public class GuiVertTextField extends Gui {
     public int height;
     /** Has the current text being edited on the textbox. */
     private String text = "";
+    private String defaultText = "";
     private int maxStringLength = 32;
     private int cursorCounter;
     private boolean enableBackgroundDrawing = true;
@@ -67,8 +68,7 @@ public class GuiVertTextField extends Gui {
     private GuiPageButtonList.GuiResponder guiResponder;
     private Predicate<String> validator = Predicates.<String>alwaysTrue();
 
-    public GuiVertTextField(int componentId, FontRenderer fontrendererObj, int x, int y, int width, int height)
-    {
+    public GuiVertTextField(int componentId, FontRenderer fontrendererObj, int x, int y, int width, int height) {
         this.id = componentId;
         this.fontRendererInstance = fontrendererObj;
         this.xPosition = x;
@@ -111,6 +111,10 @@ public class GuiVertTextField extends Gui {
 
             this.setCursorPositionEnd();
         }
+    }
+
+    public void setDefaultText(String text) {
+        this.defaultText = text;
     }
 
     /**
@@ -525,6 +529,10 @@ public class GuiVertTextField extends Gui {
         }
 
         if (this.isFocused && flag && mouseButton == 0) {
+            if (this.text.equals(this.defaultText)) {
+                this.setText("");
+            }
+
             int i = this.yPosition - mouseY;
 
             if (this.enableBackgroundDrawing) {

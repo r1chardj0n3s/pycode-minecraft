@@ -26,11 +26,13 @@ package net.mechanicalcat.pycode.gui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
@@ -43,6 +45,8 @@ public class GuiTextArea extends Gui {
     private static final int TEX_WIDTH = 334;
     private static final int TEX_HEIGHT = 238;
 
+    private static final int SCROLL_SCALE = 50;
+
     private final int id;
     private FontRenderer fontRenderer;
     public int xPosition;
@@ -51,6 +55,7 @@ public class GuiTextArea extends Gui {
     public int height;
     public int maxRows;
 
+    private int textYOffset, textXOffset;
     private int xScissor, yScissor, wScissor, hScissor;
 
     /** If this value is true then keyTyped will process the keys. */
@@ -72,6 +77,9 @@ public class GuiTextArea extends Gui {
         this.maxRows = height / fontRenderer.FONT_HEIGHT;
         this.height = maxRows * fontRenderer.FONT_HEIGHT;
 
+        this.textYOffset = 0;
+        this.textXOffset = 0;
+
         ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
         int factor = sr.getScaleFactor();
 
@@ -89,11 +97,27 @@ public class GuiTextArea extends Gui {
     }
 
     /**
-     * Increments the cursor counter
+     * Increments the cursor counter and mouse scroll
      */
-    public void updateCursorCounter() {
+    public void update() {
         // only interested in up to 12 ticks
         this.cursorCounter = (this.cursorCounter + 1) % 12;
+        if (this.isFocused && Mouse.hasWheel()) {
+            int newScroll = Mouse.getDWheel();
+            if (newScroll != 0) {
+                this.scrollBy(newScroll);
+            }
+        }
+    }
+
+    public void scrollBy(int amount) {
+        if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+            // TODO this reversal should probably be simplified??
+            this.textXOffset -= amount;
+        } else {
+            this.textYOffset += amount;
+        }
+        FMLLog.info("text offset = %d, %d", textXOffset, textYOffset);
     }
 
     /**
@@ -139,33 +163,67 @@ public class GuiTextArea extends Gui {
 
     public void drawEditor() {
         String content = getString();
-        int line_width;
 
-        // draw cursor
-        if (this.cursorRow == this.lines.length) {
-            // current line is empty
-            line_width = 0;
+        // first up, determine the scroll offset
+        int xoff = textXOffset / SCROLL_SCALE;
+        int yoff = textYOffset / SCROLL_SCALE;
+        if (yoff > 0) {
+            yoff = 0;
+            textYOffset = 0;
         } else {
-            line_width = this.fontRenderer.getStringWidth(this.lines[this.cursorRow].substring(0, this.cursorColumn));
+            int totHeight = -this.fontRenderer.FONT_HEIGHT * this.lines.length;
+            if (totHeight < height && yoff < totHeight + height) {
+                yoff = totHeight + height;
+                textYOffset = yoff * SCROLL_SCALE;
+            }
         }
-        int cursor_x = this.xPosition + line_width - 2;
-        int cursor_y = this.yPosition + this.cursorRow * this.fontRenderer.FONT_HEIGHT - 2;
-        Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
-        if (this.cursorCounter / 6 % 2 == 0) {
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 0.5F);
+        if (xoff < 0) {
+            xoff = 0;
+            textXOffset = 0;
         } else {
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            int maxWidth = 0;
+            for (String line : this.lines) {
+                int w = this.fontRenderer.getStringWidth(line);
+                if (w > maxWidth) maxWidth = w;
+            }
+            if (maxWidth > width && xoff > maxWidth - width) {
+                xoff = maxWidth - width;
+                textXOffset = xoff * SCROLL_SCALE;
+            }
         }
-        drawModalRectWithCustomSizedTexture(cursor_x, cursor_y, 52, 215, 3, 11, TEX_WIDTH, TEX_HEIGHT);
 
-        ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
-        int factor = sr.getScaleFactor();
-
-        // draw content
+        // offset rendering by the scroll offset
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(-xoff, yoff, 0);
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         GL11.glScissor(xScissor, yScissor, wScissor, hScissor);
-        this.fontRenderer.drawSplitString(content, this.xPosition, this.yPosition, this.width, 0);
+
+        // draw cursor
+        int cursorPos;
+        if (this.cursorRow == this.lines.length) {
+            cursorPos = 0;      // current line is empty
+        } else {
+            cursorPos = this.fontRenderer.getStringWidth(this.lines[this.cursorRow].substring(0, this.cursorColumn));
+        }
+        int cursor_x = this.xPosition + cursorPos;
+        int cursor_y = this.yPosition + this.cursorRow * this.fontRenderer.FONT_HEIGHT + 1;
+        if (this.cursorCounter / 6 % 2 == 0) {
+            this.fontRenderer.drawString("_", cursor_x, cursor_y, 0);
+        } else {
+            this.fontRenderer.drawString("_", cursor_x, cursor_y, 0x55000000);
+        }
+
+        // draw content
+        int x = this.xPosition;
+        int y = this.yPosition;
+        for (String s : this.lines) {
+            this.fontRenderer.drawString(s, x, y, 0);
+            y += this.fontRenderer.FONT_HEIGHT;
+        }
+
+        // reset state
+        GlStateManager.popMatrix();
         GL11.glPopAttrib();
     }
 
@@ -271,7 +329,7 @@ public class GuiTextArea extends Gui {
                 line_width = this.lines[this.cursorRow].length();
                 this.cursorColumn++;
                 if (this.cursorRow < last_line) {
-                    if (this.cursorColumn > line_width || this.cursorColumn > 40) {
+                    if (this.cursorColumn > line_width) {
                         this.cursorColumn = 0;
                         this.moveCursorToRow(this.cursorRow + 1);
                     }
@@ -304,10 +362,8 @@ public class GuiTextArea extends Gui {
                     // allow typing until the (proportional font) hits the side
                     String typedString = Character.toString(typedChar);
                     String s = this.lines[this.cursorRow] + typedString;
-                    if (this.fontRenderer.getStringWidth(s) < this.width) {
-                        this.insertIntoCurrent(typedString);
-                        this.cursorColumn++;
-                    }
+                    this.insertIntoCurrent(typedString);
+                    this.cursorColumn++;
                 }
         }
     }
@@ -357,6 +413,10 @@ public class GuiTextArea extends Gui {
         if (!inside || mouseButton != 0) {
             return;
         }
+
+        // shift for scrolling
+        modX += textXOffset / SCROLL_SCALE;
+        modY -= textYOffset / SCROLL_SCALE;
 
         int row = modY / this.fontRenderer.FONT_HEIGHT;
         if (row >= this.lines.length) {

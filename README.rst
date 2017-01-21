@@ -368,8 +368,7 @@ An example making a little house::
       hand.cube(7, 7, 5, 'planks', type='oak')
       hand.up(1)
       with hand.remember():
-        hand.up(4); hand.back(2); hand.sidle(1)
-        hand.roof(9, 9, 'dark_oak', style='gable')
+        hand.up(4); hand.back(2); hand.sidle(1); hand.roof(9, 9, 'dark_oak', style='gable')
       hand.sidle(-3)
       hand.put('wooden_door')
       hand.forward(3)
@@ -663,7 +662,7 @@ This is not an exhaustive list, and should probably be put into github issues.
 *blocks and hands*
  - spawn error report with traceback on error
  - model replacement (OBJ)
- - inventory?
+ - inventory - with survival mode only able to put blocks from inventory
  - copy book name to hand/block
 *wand*
  - bring up a REPL when activated against air?
