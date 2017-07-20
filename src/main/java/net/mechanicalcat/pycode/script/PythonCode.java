@@ -121,8 +121,8 @@ public class PythonCode {
             // don't pass the player in if it's not expected
             try {
                 func.__call__();
-            } catch (NullPointerException e) {
-                failz0r(world, pos, "Error running code: ", e.getMessage());
+            } catch (RuntimeException e) {
+                failz0r(world, pos, "Error running code: %s", e.toString());
             }
             return;
         }
@@ -130,8 +130,8 @@ public class PythonCode {
         // carry on!
         try {
             func.__call__(Py.java2py(entity));
-        } catch (NullPointerException e) {
-            failz0r(world, pos, "Error running code: %s", e.getMessage());
+        } catch (RuntimeException e) {
+            failz0r(world, pos, "Error running code: %s", e.toString());
         }
     }
 
@@ -148,15 +148,15 @@ public class PythonCode {
         if (co_varnames.__contains__(Py.java2py("target"))) {
             try {
                 func.__call__(Py.java2py(target));
-            } catch (NullPointerException e) {
-                failz0r(world, pos, "Error running code: %s", e.getMessage());
+            } catch (RuntimeException e) {
+                failz0r(world, pos, "Error running code: %s", e.toString());
             }
         } else {
             // don't pass the target in if it's not expected
             try {
                 func.__call__();
-            } catch (NullPointerException e) {
-                failz0r(world, pos, "Error running code: ", e.getMessage());
+            } catch (RuntimeException e) {
+                failz0r(world, pos, "Error running code: %s", e.toString());
             }
         }
     }
@@ -170,8 +170,8 @@ public class PythonCode {
         PyFunction func = (PyFunction)obj;
         try {
             func.__call__();
-        } catch (NullPointerException e) {
-            failz0r(world, pos, "Error running code: ", e.getMessage());
+        } catch (RuntimeException e) {
+            failz0r(world, pos, "Error running code: %s", e.toString());
         }
     }
 
