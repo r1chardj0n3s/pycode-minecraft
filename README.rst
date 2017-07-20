@@ -526,6 +526,8 @@ result; but it also sets the default target of the action for commands like
 CHANGELOG
 =========
 
+**1.9 (unreleased)**
+ - Bug fix in Python code exception handling (thanks suguby!)
 **1.8**
  - Completed the list of entities spawnable
  - Many bugfixes
